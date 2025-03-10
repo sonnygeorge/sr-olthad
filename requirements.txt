@@ -1,0 +1,3 @@
+pydantic
+pyyaml
+transformers
