@@ -1,18 +1,18 @@
 from abc import ABC, abstractmethod
 from typing import (
+    Any,
+    Callable,
+    Coroutine,
     Dict,
     List,
     Literal,
+    Optional,
     Set,
     TypedDict,
 )
 
+
 from pydantic import BaseModel
-
-
-##############
-#### Misc ####
-##############
 
 
 JsonSerializable = (
@@ -39,8 +39,11 @@ class InstructLmMessage(TypedDict):
 class InstructLm(ABC):
     @abstractmethod
     async def generate(
-        self, messages: List[InstructLmMessage], **kwargs
-    ) -> List[InstructLmMessage]:
+        self,
+        messages: List[InstructLmMessage],
+        stream_handler: Optional[Callable[[str], Any]],
+        **kwargs
+    ) -> str:
         pass
 
 
@@ -75,7 +78,9 @@ class Agent(ABC):
     """
 
     @abstractmethod
-    async def __call__(self, input_data: BaseModel, **kwargs) -> AgentReturn:
+    async def __call__(
+        self, input_data: BaseModel, **kwargs
+    ) -> Coroutine[None, None, AgentReturn]:
         pass
 
 
@@ -86,7 +91,9 @@ class InstructLmAgent(Agent):
     """
 
     @abstractmethod
-    async def __call__(self, input_data: BaseModel, **kwargs) -> InstructLmAgentReturn:
+    async def __call__(
+        self, input_data: BaseModel, **kwargs
+    ) -> Coroutine[None, None, InstructLmAgentReturn]:
         pass
 
 
@@ -99,7 +106,7 @@ class MultipleChoiceQuestionAgent(InstructLmAgent):
         pass
 
     @abstractmethod
-    def __call__(
+    async def __call__(
         self, input_data: BaseModel, **kwargs
-    ) -> MultipleChoiceQuestionAgentReturn:
+    ) -> Coroutine[None, None, MultipleChoiceQuestionAgentReturn]:
         pass

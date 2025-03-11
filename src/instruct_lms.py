@@ -1,35 +1,37 @@
-from typing import List
+import os
+from typing import Any, Callable, List, Optional
 
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from openai import AsyncOpenAI
 
 from types_and_models import InstructLm, InstructLmMessage
 
 
-class LocalInstructLm(InstructLm):
-    def __init__(self, model_name: str, device: str):
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name).to(device)
-
-    async def generate(
-        self, messages: List[InstructLmMessage], **kwargs
-    ) -> List[InstructLmMessage]:
-        prompt = self._messages_to_prompt(messages)
-        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
-        outputs = self.model.generate(
-            **inputs,
-            max_length=kwargs.get("max_tokens", 100),
-            temperature=kwargs.get("temperature", 0.7),
-        )
-        response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        return messages + [{"role": "assistant", "content": response}]
-
-
-# TODO
 class OpenAIInstructLm(InstructLm):
-    def __init__(self, api_key: str):
-        self.api_key = api_key
+    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-3.5-turbo"):
+        api_key = os.getenv("OPENAI_API_KEY") if api_key is None else api_key
+        self.client = AsyncOpenAI(api_key=api_key)
+        self.model = model
 
     async def generate(
-        self, messages: List[InstructLmMessage], **kwargs
-    ) -> List[InstructLmMessage]:
-        pass
+        self,
+        messages: List[InstructLmMessage],
+        stream_handler: Optional[Callable[[str], Any]] = None,
+        **kwargs
+        # E.g., temperature, max_tokens, top_p, presence_penalty, frequency_penalty...
+    ) -> str:
+        if stream_handler is not None:
+            response_generator = await self.client.chat.completions.create(
+                model=self.model, messages=messages, stream=True, **kwargs
+            )
+            full_response = ""
+            async for chunk in response_generator:
+                if chunk.choices and chunk.choices[0].delta.content is not None:
+                    chunk_text = chunk.choices[0].delta.content
+                    stream_handler(chunk_text)
+                    full_response += chunk_text
+            return full_response
+        else:  # No need to stream
+            chat_completion = await self.client.chat.completions.create(
+                model=self.model, messages=messages, **kwargs
+            )
+            return chat_completion.choices[0].message.content
