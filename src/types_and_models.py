@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import (
     Any,
     Callable,
-    Coroutine,
     Dict,
     List,
     Literal,
@@ -78,9 +77,7 @@ class Agent(ABC):
     """
 
     @abstractmethod
-    async def __call__(
-        self, input_data: BaseModel, **kwargs
-    ) -> Coroutine[None, None, AgentReturn]:
+    async def __call__(self, input_data: BaseModel, **kwargs) -> AgentReturn:
         pass
 
 
@@ -91,9 +88,7 @@ class InstructLmAgent(Agent):
     """
 
     @abstractmethod
-    async def __call__(
-        self, input_data: BaseModel, **kwargs
-    ) -> Coroutine[None, None, InstructLmAgentReturn]:
+    async def __call__(self, input_data: BaseModel, **kwargs) -> InstructLmAgentReturn:
         pass
 
 
@@ -108,5 +103,5 @@ class MultipleChoiceQuestionAgent(InstructLmAgent):
     @abstractmethod
     async def __call__(
         self, input_data: BaseModel, **kwargs
-    ) -> Coroutine[None, None, MultipleChoiceQuestionAgentReturn]:
+    ) -> MultipleChoiceQuestionAgentReturn:
         pass
