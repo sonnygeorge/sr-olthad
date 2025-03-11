@@ -1,11 +1,15 @@
 import asyncio
+import functools
 import json
+import logging
+import inspect
 import warnings
 import yaml
 from collections import Counter
-from typing import List, Literal
+from typing import Callable, Type, Union, List, Tuple, Optional, Any, TypeVar
 
-from types_and_models import (
+from enums import SerializationMethod
+from schema import (
     JsonSerializable,
     MultipleChoiceQuestionAgent,
     MultipleChoiceQuestionAgentOutputData,
@@ -26,12 +30,12 @@ class StructuredDataStringifier:
     def stringify(
         cls,
         data: JsonSerializable,
-        serialization_method: Literal["json", "yaml"] = "json",
+        serialization_method: SerializationMethod = SerializationMethod.YAML,
         indent: int = 2,
     ) -> str:
-        if serialization_method == "json":
+        if serialization_method == SerializationMethod.JSON:
             return cls._json_stringify(data, indent)
-        elif serialization_method == "yaml":
+        elif serialization_method == SerializationMethod.YAML:
             return cls._yaml_stringify(data, indent)
         else:
             raise ValueError("Invalid serialization method")
@@ -106,5 +110,51 @@ def implicitly_call_multiple_times_and_take_majority_vote(
             )
 
         return method_wrapper
+
+    return decorator
+
+
+def with_retry(
+    permissible_exceptions: Union[Type[Exception], Tuple[Type[Exception], ...]],
+    max_tries: int = 3,
+    logger: Optional[logging.Logger] = None,
+):
+    T = TypeVar("T")
+
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        def log_or_print_exception(e: Exception, tries_remaining: int) -> None:
+            msg = f"Retrying {func.__name__}: {str(e)}, {tries_remaining-1} tries remaining"
+            if logger:
+                logger.warning(msg)
+            else:
+                print(msg)
+
+        @functools.wraps(func)
+        def sync_wrapper(*args: Any, **kwargs: Any) -> T:
+            tries_remaining = max_tries
+            while tries_remaining > 1:
+                try:
+                    return func(*args, **kwargs)
+                except permissible_exceptions as e:
+                    log_or_print_exception(e, tries_remaining)
+                    tries_remaining -= 1
+            return func(*args, **kwargs)  # Last attempt (don't catch exceptions)
+
+        @functools.wraps(func)
+        async def async_wrapper(*args: Any, **kwargs: Any) -> T:
+            tries_remaining = max_tries
+            while tries_remaining > 1:
+                try:
+                    return await func(*args, **kwargs)
+                except permissible_exceptions as e:
+                    log_or_print_exception(e, tries_remaining)
+                    tries_remaining -= 1
+            return await func(*args, **kwargs)  # Last attempt (don't catch exceptions)
+
+        # Check if the function is a coroutine function (async def)
+        if inspect.iscoroutinefunction(func):
+            return async_wrapper
+        else:
+            return sync_wrapper
 
     return decorator

@@ -8,7 +8,7 @@ from pydantic import BaseModel
 sys.path.append("src")
 
 from instruct_lms import OpenAIInstructLm
-from types_and_models import (
+from schema import (
     InstructLmAgent,
     InstructLmAgentReturn,
     InstructLmMessage,
@@ -18,6 +18,8 @@ from types_and_models import (
 )
 from utils import implicitly_call_multiple_times_and_take_majority_vote
 
+
+# TODO: use enums?
 
 load_dotenv()
 

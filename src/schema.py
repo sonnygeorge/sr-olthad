@@ -4,7 +4,6 @@ from typing import (
     Callable,
     Dict,
     List,
-    Literal,
     Optional,
     Set,
     TypedDict,
@@ -12,6 +11,8 @@ from typing import (
 
 
 from pydantic import BaseModel
+
+from enums import InstructLmChatRole
 
 
 JsonSerializable = (
@@ -31,7 +32,7 @@ JsonSerializable = (
 
 
 class InstructLmMessage(TypedDict):
-    role: Literal["user", "system", "assistant"]
+    role: InstructLmChatRole
     content: str
 
 

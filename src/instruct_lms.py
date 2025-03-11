@@ -3,9 +3,10 @@ from typing import Any, Callable, List, Optional
 
 from openai import AsyncOpenAI
 
-from types_and_models import InstructLm, InstructLmMessage
+from schema import InstructLm, InstructLmMessage
 
 
+# TODO: Add type-hinting w/ openai types
 class OpenAIInstructLm(InstructLm):
     def __init__(self, api_key: Optional[str] = None, model: str = "gpt-3.5-turbo"):
         api_key = os.getenv("OPENAI_API_KEY") if api_key is None else api_key
