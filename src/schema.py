@@ -10,13 +10,9 @@ from typing import (
     TypedDict,
 )
 
-
 from pydantic import BaseModel
 
-from enums import InstructLmChatRole
-
-
-JinjaTemplate: TypeAlias = str
+from enums import InstructLmChatRole, PromptType
 
 
 JsonSerializable = (
@@ -28,6 +24,19 @@ JsonSerializable = (
     | List["JsonSerializable"]
     | Dict[str, "JsonSerializable"]
 )
+
+JinjaTemplateFlavoredString: TypeAlias = str
+
+
+class RegistrablePrompt(BaseModel):
+    type: PromptType
+    prompt: str
+
+
+# E.g. "1.0" where the 1st number changes for major strategy changes
+PromptVersionString: TypeAlias = str
+
+PromptRegistry = Dict[PromptVersionString, List[RegistrablePrompt]]
 
 
 ######################
