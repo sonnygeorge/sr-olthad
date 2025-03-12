@@ -29,6 +29,11 @@ from utils import StructuredDataStringifier
 
 
 class SrOlthad:
+    """
+    Main class for 'Structured Reasoning with Open-Language Task Hierarchies of Any Depth'
+    (sr-OLTHAD).
+    """
+
     def __init__(self, task_description: str):
         self.olthad_traversal = OlthadTraversal(task_description)
         self.has_been_called_at_least_once_before = False
