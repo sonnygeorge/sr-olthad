@@ -35,7 +35,7 @@ def test_instruct_lm_agent_types_and_async_voting():
         multiple_choice_options = {"A", "B", "C", "D"}
 
         @implicitly_call_multiple_times_and_take_majority_vote(
-            num_calls=9, max_async_calls=3
+            n_calls=9, max_async_calls=3
         )
         async def __call__(self, input_data, **kwargs):
             print("Invoking ExampleMultipleChoiceQuestionAgent")

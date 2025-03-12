@@ -16,7 +16,6 @@ class TaskNode(BaseModel):
 
 @dataclass
 class OlthadTraversal:
-    # TODO: Separate file? traversal.py?
     # TODO: Docstrings, unit tests, & update(s) used after the forgetter is called
     # TODO: Could this be made marginally cleaner by having `TaskNode`s have their own
     # next_planned_subtask_idx attr, but never printing it?

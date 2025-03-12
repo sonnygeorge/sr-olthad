@@ -7,6 +7,6 @@ class SerializationMethod(StrEnum):
 
 
 class InstructLmChatRole(StrEnum):
-    SYSTEM = "system"
+    SYS = "system"
     USER = "user"
     ASSISTANT = "assistant"

@@ -17,7 +17,7 @@ from sr_olthad.agents import (
     Forgetter,
     ForgetterInputData,
 )
-from sr_olthad.schema import OlthadTraversal, TaskNode
+from sr_olthad.olthad import OlthadTraversal, TaskNode
 from schema import JsonSerializable
 from utils import StructuredDataStringifier, with_retry
 

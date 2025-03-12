@@ -6,6 +6,7 @@ from typing import (
     List,
     Optional,
     Set,
+    TypeAlias,
     TypedDict,
 )
 
@@ -13,6 +14,9 @@ from typing import (
 from pydantic import BaseModel
 
 from enums import InstructLmChatRole
+
+
+JinjaTemplate: TypeAlias = str
 
 
 JsonSerializable = (

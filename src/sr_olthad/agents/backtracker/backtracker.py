@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from sr_olthad.enums import BacktrackedFromTaskStatus
-from sr_olthad.schema import OlthadTraversal, TaskNode
+from sr_olthad.olthad import OlthadTraversal, TaskNode
 from schema import Agent, AgentReturn
 
 
