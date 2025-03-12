@@ -19,7 +19,7 @@ from sr_olthad.agents import (
 )
 from sr_olthad.olthad import OlthadTraversal, TaskNode
 from schema import JsonSerializable
-from utils import StructuredDataStringifier, with_retry
+from utils import StructuredDataStringifier
 
 
 # TODO: Handle notepad internally? (i.e., decouple internal functions from environment "skills")
@@ -40,14 +40,7 @@ class SrOlthad:
 
     async def _summarize_attempt(self, env_state: str) -> None:
         attempt_summarizer_input = AttemptSummarizerInputData(env_state=env_state)
-        # Wrap attempt_summarizer with retry decorator
-        apply_attempt_summarizer = with_retry(
-            permissible_exceptions=Exception,  # TODO: Update permissible exceptions
-            max_tries=cfg.MAX_ATTEMPT_SUMMARIZER_TRIES,
-            logger=logger,
-        )(self.attempt_summarizer)
-        # Apply attempt_summarizer with implicit retries
-        attempt_summarizer_return = await apply_attempt_summarizer(
+        attempt_summarizer_return = await self.attempt_summarizer(
             attempt_summarizer_input
         )
         # Update the next-most planned subtask after the attempt summarization
@@ -62,14 +55,7 @@ class SrOlthad:
             env_state=env_state,
             olthad_traversal=self.olthad_traversal,
         )
-        # Wrap backtracker with retry decorator
-        apply_backtracker = with_retry(
-            permissible_exceptions=Exception,  # TODO: Update permissible exceptions
-            max_tries=cfg.MAX_BACKTRACKER_TRIES,
-            logger=logger,
-        )(self.backtracker)
-        # Apply backtracker with implicit retries
-        backtracker_return = await apply_backtracker(backtracker_input_data)
+        backtracker_return = await self.backtracker(backtracker_input_data)
         # Backtrack if needed
         chosen_status = backtracker_return.output_data.chosen_status
         retrospective = backtracker_return.output_data.retrospective
@@ -86,14 +72,8 @@ class SrOlthad:
             env_state=env_state,
             olthad_traversal=self.olthad_traversal,
         )
-        # Wrap planner with retry decorator
-        apply_planner = with_retry(
-            permissible_exceptions=Exception,  # TODO: Update permissible exceptions (see planner.py)
-            max_tries=cfg.MAX_PLANNER_TRIES,
-            logger=logger,
-        )(self.planner)
         # Apply planner with implicit retries
-        planner_return = await apply_planner(planner_input_data)
+        planner_return = await self.planner(planner_input_data)
         # TODO: Handle `None` `new_plan`?
         self.olthad_traversal.update_planned_subtasks(
             new_planned_subtasks=planner_return.output_data.new_plan
