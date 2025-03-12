@@ -43,7 +43,7 @@ Now, there are many possible reasons why answer choice "B" might be better. Here
 2. There is some—now more useful—thing that falls outside of the semantic scope of how the task is phrased—regardless of whether, by virtue of some now-evident reason:
     1. **Only a _slight_ semantic tweak to the task is warranted** 
         - E.g., let's say the task in question was to 'pick strawberries' in order to 'get some fruit.' If it has become evident that the nearest available fruit bush is raspberry, adjusting 'pick strawberries' to 'pick raspberries' may now be more appropriate.
-    2. Or, **a semantically different task should replace it (at least for now)**.    
+    2. Or, **a semantically different task should replace it (at least for now)**.
         - E.g., the task, although perhaps still useful as-is, should be shelved in favor of something else
         - E.g., the utility of the task has been rendered moot altogether (e.g., if the task was to 'find a TV show to help Lisa fall asleep' and it was clear that Lisa had already fallen asleep).
 3. Something has emerged that makes the task significantly harder than perhaps was previously assumed, making it less worthwhile in light of potentially easier alternatives.
