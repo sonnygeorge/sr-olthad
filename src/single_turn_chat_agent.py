@@ -1,4 +1,3 @@
-import json
 import logging
 from typing import Any, Callable, Generic, List, Optional, Type, TypeVar
 
@@ -45,7 +44,7 @@ class SingleTurnChatAgent(InstructLmAgent, Generic[InputDataT, OutputDataT]):
             SingleTurnChatAgent(
                 ...,  # Other stuff
                 sys_prompt=sys_prompt,
-                user_prompt_template="Add {first_number} and {second_number}.",
+                user_prompt_template=Template("Add {first_number} and {second_number}."),
                 input_data_model=AdditionAgentInputData,
                 output_data_model=AdditionAgentOutputData,
             )
@@ -70,7 +69,7 @@ class SingleTurnChatAgent(InstructLmAgent, Generic[InputDataT, OutputDataT]):
         self.output_data_model = output_data_model
         self.sys_prompt = sys_prompt
         self.user_prompt_template = user_prompt_template
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger
 
     def _prepare_messages(self, input_data: InputDataT) -> List[InstructLmMessage]:
         user_prompt = self.user_prompt_template.render(**input_data.model_dump())
