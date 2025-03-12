@@ -54,6 +54,8 @@ Think things through step-by-step, considering each of the above points as you g
 ```json
 {output_json_format}
 ```
+
+Where your chosen answer is either "A" or "B" and your reasoning is an explanation of the nuance(s) behind your choice in string format.
 """
 
 USER_1_0 = """CURRENT ACTOR/ENVIRONMENT STATE:
