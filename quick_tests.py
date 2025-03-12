@@ -3,6 +3,8 @@ import sys
 
 import rich
 from dotenv import load_dotenv
+from jinja2 import Template
+from loguru import logger
 from pydantic import BaseModel
 
 sys.path.append("src")
@@ -16,6 +18,7 @@ from schema import (
     MultipleChoiceQuestionAgentOutputData,
     MultipleChoiceQuestionAgentReturn,
 )
+from single_turn_chat_agent import SingleTurnChatAgent
 from utils import implicitly_call_multiple_times_and_take_majority_vote
 
 
@@ -66,7 +69,7 @@ def test_instruct_lm_agent_types_and_async_voting():
 
 
 def test_openai_instruct_lm():
-    lm = OpenAIInstructLm()
+    lm = OpenAIInstructLm(model="gpt-3.5-turbo")
     messages = [
         InstructLmMessage(role="system", content="You are a helpful assistant."),
         InstructLmMessage(role="user", content="What is the meaning of life?"),
@@ -88,6 +91,41 @@ def test_openai_instruct_lm():
     print(response)
 
 
+def test_single_turn_chat_agent():
+    class AdditionAgentInputData(BaseModel):
+        first_number: int
+        second_number: int
+
+    class AdditionAgentOutputData(BaseModel):
+        sum_of_numbers: int
+
+    sys_prompt = """You are a helpful assistant that adds numbers.
+    Give your answer in this JSON format: {"sum_of_numbers": (int)}."""
+
+    # Adding this type hint allows type-checkers to know the input/output data types
+    addition_agent: SingleTurnChatAgent[
+        AdditionAgentInputData, AdditionAgentOutputData
+    ] = SingleTurnChatAgent(
+        instruct_lm=OpenAIInstructLm(model="gpt-3.5-turbo"),
+        sys_prompt=sys_prompt,
+        user_prompt_template=Template("Add {first_number} and {second_number}."),
+        input_data_model=AdditionAgentInputData,
+        output_data_model=AdditionAgentOutputData,
+        logger=logger,
+    )
+
+    sum_of_numbers = asyncio.run(
+        addition_agent(
+            input_data=AdditionAgentInputData(first_number=2, second_number=3),
+            stream_handler=lambda s: print(s, end="", flush=True),
+            max_tokens=100,
+            n_tries_to_get_valid_response=3,
+        )
+    ).output_data.sum_of_numbers
+    print("\n\n", sum_of_numbers)
+
+
 if __name__ == "__main__":
     # test_instruct_lm_agent_types_and_async_voting()
-    test_openai_instruct_lm()
+    # test_openai_instruct_lm()
+    test_single_turn_chat_agent()
