@@ -1,3 +1,9 @@
+"""Single location for tweakable hyperparameters for the sr-OLTHAD system.
+
+TODO: Make the UX more like hunggingface's `TrainingArguments` class & make generally
+sensible static values like these be the default values.
+"""
+
 from enums import SerializationMethod
 
 STRINGIFY_ENV_STATE_SERIALIZATION_METHOD: SerializationMethod = SerializationMethod.YAML
@@ -7,7 +13,7 @@ class MaxValidOutputTries:
     """Max tries to get a valid output for sr-OLTHAD `InstructLmAgents`."""
 
     # Attempt summarizer
-    ATTEMPT_SUMMARIZER: int = 3
+    ATTEMPT_SUMMARIZER: int = 2
     # Backtracker
     EXHAUSTIVE_EFFORT_CLF: int = 2
     MOST_WORTHWHILE_PURSUIT_CLF: int = 2
