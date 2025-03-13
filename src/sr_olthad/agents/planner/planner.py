@@ -8,7 +8,7 @@ from sr_olthad.task_node import TaskNode
 
 class PlannerInputData(BaseModel):
     env_state: str
-    olthad: TaskNode
+    olthad: TaskNode  # I.e., the root task node w/ all the descendants
 
 
 class PlannerOutputData(BaseModel):
