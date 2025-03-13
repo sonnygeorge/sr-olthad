@@ -10,6 +10,9 @@ from schema import (
     InstructLmAgent,
     InstructLmMessage,
     InstructLmAgentReturn,
+    MultipleChoiceQuestionAgent,
+    MultipleChoiceQuestionAgentOutputData,
+    MultipleChoiceQuestionAgentReturn,
 )
 from utils import detect_extract_and_parse_json_from_text, with_retry
 
@@ -113,3 +116,45 @@ class SingleTurnChatAgent(InstructLmAgent, Generic[InputDataT, OutputDataT]):
             messages=messages, stream_handler=stream_handler, **kwargs
         )
         return SingleTurnChatAgentReturn(output_data=output_data, messages=messages)
+
+
+class SingleTurnChatMultipleChoiceAgent(
+    SingleTurnChatAgent[InputDataT, MultipleChoiceQuestionAgentOutputData],
+    MultipleChoiceQuestionAgent,
+):
+    """Multiple-choice variant of a `SingleTurnChatAgent`"""
+
+    multiple_choice_options: List[str]
+
+    def __init__(
+        self,
+        multiple_choice_options: List[str],
+        instruct_lm: InstructLm,
+        input_data_model: Type[InputDataT],
+        user_prompt_template: Template,
+        sys_prompt: Optional[str] = None,
+        logger: Optional[logging.Logger] = None,
+    ):
+        super().__init__(
+            instruct_lm=instruct_lm,
+            input_data_model=input_data_model,
+            output_data_model=MultipleChoiceQuestionAgentOutputData,
+            user_prompt_template=user_prompt_template,
+            sys_prompt=sys_prompt,
+            logger=logger,
+        )
+        self.multiple_choice_options = multiple_choice_options
+
+    async def __call__(
+        self,
+        input_data: InputDataT,
+        n_tries_to_get_valid_response: int = 1,
+        stream_handler: Optional[Callable[[str], Any]] = None,
+        **kwargs,  # kwargs for the InstructLm.generate method
+    ) -> MultipleChoiceQuestionAgentReturn:
+        return await super().__call__(
+            input_data=input_data,
+            n_tries_to_get_valid_response=n_tries_to_get_valid_response,
+            stream_handler=stream_handler,
+            **kwargs,
+        )
