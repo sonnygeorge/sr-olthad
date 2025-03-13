@@ -1,5 +1,6 @@
 import asyncio
 import sys
+from typing import Optional
 
 import rich
 from dotenv import load_dotenv
@@ -17,6 +18,7 @@ from schema import (
     MultipleChoiceQuestionAgent,
     MultipleChoiceQuestionAgentOutputData,
     MultipleChoiceQuestionAgentReturn,
+    LmStreamHandler,
 )
 from single_turn_chat_agent import SingleTurnChatAgent
 from utils import implicitly_call_multiple_times_and_take_majority_vote
@@ -25,6 +27,13 @@ from utils import implicitly_call_multiple_times_and_take_majority_vote
 # TODO: use enums?
 
 load_dotenv()
+
+
+class PrintOneLmStreamHandler(LmStreamHandler):
+    def __call__(self, chunk_str: str, async_call_idx: Optional[int] = None):
+        # I.e. don't print more than the first of a series of async calls
+        if async_call_idx is None or async_call_idx == 0:
+            print(chunk_str, end="", flush=True)
 
 
 def test_instruct_lm_agent_types_and_async_voting():
@@ -37,18 +46,24 @@ def test_instruct_lm_agent_types_and_async_voting():
     class ExampleMultipleChoiceQuestionAgent(MultipleChoiceQuestionAgent):
         multiple_choice_options = {"A", "B", "C", "D"}
 
-        @implicitly_call_multiple_times_and_take_majority_vote(
-            n_calls=9, max_async_calls=3
-        )
-        async def __call__(self, input_data, **kwargs):
+        async def _call(self, input_data, stream_handler=None):
             print("Invoking ExampleMultipleChoiceQuestionAgent")
-            await asyncio.sleep(0.5)  # Simulate async work
+            await asyncio.sleep(0.35)
             return MultipleChoiceQuestionAgentReturn(
                 output_data=MultipleChoiceQuestionAgentOutputData(
                     chosen="A", reasoning="A is best"
                 ),
                 messages=[{"role": "assistant", "content": "A"}],
             )
+
+        # @implicitly_call_multiple_times_and_take_majority_vote(
+        #     n_calls=9, max_async_calls=3
+        # )
+        async def __call__(self, input_data, **kwargs):
+            call = implicitly_call_multiple_times_and_take_majority_vote(
+                n_calls=9, max_async_calls=3
+            )(self._call)
+            return await call(self, input_data, **kwargs)
 
     class ExampleInstructLmAgent(InstructLmAgent):
         async def __call__(
@@ -79,7 +94,7 @@ def test_openai_instruct_lm():
     response = asyncio.run(
         lm.generate(
             messages,
-            stream_handler=lambda s: print(s, end="", flush=True),
+            stream_handler=PrintOneLmStreamHandler(),
             max_tokens=15,
         )
     )
@@ -115,10 +130,13 @@ def test_single_turn_chat_agent():
         logger=logger,
     )
 
+    def stream_handler(chunk_str: str, async_call_num: Optional[int] = None):
+        print(chunk_str, end="", flush=True)
+
     sum_of_numbers = asyncio.run(
         addition_agent(
             input_data=AdditionAgentInputData(first_number=2, second_number=3),
-            stream_handler=lambda s: print(s, end="", flush=True),
+            stream_handler=stream_handler,
             max_tokens=100,
         )
     ).output_data.sum_of_numbers
@@ -177,8 +195,62 @@ def print_backtracker_agent_prompts():
     print(cfg.SuccessfulCompletionClfConfig.USER_PROMPT_TEMPLATE.render())
 
 
+def test_backtracker_successful_completion_clf():
+    from sr_olthad.enums import TaskStatus
+    from sr_olthad.agents import Backtracker, BacktrackerInputData
+    from sr_olthad.task_node import TaskNode
+
+    env_state = (
+        'Mr. Stevens handed you a sack of apples. Your inventory now is: {"apples": 9}.'
+    )
+    task_in_question = TaskNode(
+        task="1.3.1",
+        description="Acquire an Apple.",
+        status=TaskStatus.IN_PROGRESS,
+        retrospective=None,
+        subtasks=None,
+    )
+    olthad = TaskNode(
+        task="1",
+        description="Acquire Fruit.",
+        status=TaskStatus.IN_PROGRESS,
+        retrospective=None,
+        subtasks=[
+            TaskNode(
+                task="1.1",
+                description="Acquire an Orange.",
+                status=TaskStatus.SUCCESS,
+                retrospective="You acquired an orange by picking it from a tree.",
+                subtasks=None,
+            ),
+            task_in_question,
+        ],
+    )
+
+    def wait_for_user_to_proceed():
+        input("Press Enter to continue...")
+        return
+
+    backtracker_input_data = BacktrackerInputData(
+        env_state=env_state,
+        olthad=olthad,
+        task_in_question=task_in_question,
+    )
+
+    backtracker = Backtracker()  # Initialize the backtracker agent w/ default configs
+    return_obj = asyncio.run(
+        backtracker(
+            input_data=backtracker_input_data,
+            stream_handler=PrintOneLmStreamHandler(),
+            callback_after_each_lm_step=wait_for_user_to_proceed,
+        )
+    )
+    rich.print(return_obj)
+
+
 if __name__ == "__main__":
     # test_instruct_lm_agent_types_and_async_voting()
     # test_openai_instruct_lm()
     # test_single_turn_chat_agent()
-    print_backtracker_agent_prompts()
+    # print_backtracker_agent_prompts()
+    test_backtracker_successful_completion_clf()

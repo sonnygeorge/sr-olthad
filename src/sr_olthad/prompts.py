@@ -7,7 +7,7 @@ from sr_olthad.task_node import TaskNode
 # for LMs to know to output somethng that can be parsed with this Pydantic model.
 BINARY_OUTPUT_JSON_FORMAT_SPEC = """{
     "chosen": "(str) Your answer choice",
-    "reasoning": "(str) Explanation of the nuance(s) behind your choice",
+    "reasoning": "(str) A BRIEF summary of your earlier reasoning",
 }"""
 
 EXAMPLE_TASK_IN_QUESTION = TaskNode(

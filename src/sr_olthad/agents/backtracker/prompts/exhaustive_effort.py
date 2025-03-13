@@ -13,11 +13,11 @@ from sr_olthad.prompts import SysPromptInsertionField
 EFFORT_WAS_EXHAUSTIVE_OPTIONS: BinaryChoiceOptions = {
     BinaryCaseStr.TRUE: MultipleChoiceQuestionAgentOption(
         letter="A",
-        text="",  # TODO
+        text="TODO",  # TODO
     ),
     BinaryCaseStr.FALSE: MultipleChoiceQuestionAgentOption(
         letter="B",
-        text="",  # TODO
+        text="TODO",  # TODO
     ),
 }
 
@@ -33,7 +33,7 @@ SYS_PROMPT_INSERTION_FIELDS_NEEDED = [
 ######################
 
 
-V1_0_QUESTION = ""  # TODO
+V1_0_QUESTION = "TODO"  # TODO
 
 SYS_1_0 = f"""You are a helpful AI assistant who plays a crucial role in a decision-making system designed to help an actor achieve any-horizon goals through hierarchical temporal reasoning. Your specific job is as follows.
 
@@ -73,13 +73,13 @@ Think things through step-by-step, considering each of the above points as you g
 ```"""
 
 USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:
-{{env_state}}
+{{{{env_state}}}}
 
 PROGRESS/PLANS:
-{{olthad}}
+{{{{olthad}}}}
 
 TASK IN QUESTION:
-{{task_in_question}}
+{{{{task_in_question}}}}
 
 {V1_0_QUESTION}
 {EFFORT_WAS_EXHAUSTIVE_OPTIONS[BinaryCaseStr.TRUE].letter}. {EFFORT_WAS_EXHAUSTIVE_OPTIONS[BinaryCaseStr.TRUE].text}

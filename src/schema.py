@@ -6,8 +6,6 @@ from typing import (
     Dict,
     List,
     Optional,
-    Protocol,
-    Set,
     TypeAlias,
     TypedDict,
 )
@@ -39,12 +37,20 @@ class InstructLmMessage(TypedDict):
     content: str
 
 
+# 1st arg is stream chunk string
+# 2nd is what number async call is streaming (`None` if not running multiple async calls)
+class LmStreamHandler(ABC):
+    @abstractmethod
+    def __call__(self, chunk_str: str, async_call_idx: Optional[int] = None):
+        pass
+
+
 class InstructLm(ABC):
     @abstractmethod
     async def generate(
         self,
         messages: List[InstructLmMessage],
-        stream_handler: Optional[Callable[[str], Any]],
+        stream_handler: Optional[LmStreamHandler],
         **kwargs
     ) -> str:
         pass

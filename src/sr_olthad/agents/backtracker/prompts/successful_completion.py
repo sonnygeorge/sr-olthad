@@ -7,6 +7,7 @@ from schema import (
     PromptRegistry,
     MultipleChoiceQuestionAgentOption,
 )
+from sr_olthad.enums import AttemptedTaskStatus
 from sr_olthad.prompts import SysPromptInsertionField
 
 
@@ -35,28 +36,28 @@ SYS_PROMPT_INSERTION_FIELDS_NEEDED = [
 
 V1_0_QUESTION = "Given this up-to-date state of everything, can the task in question be considered done? I.e., which statement is more true?"
 
-SYS_1_0 = f"""You are a helpful AI assistant who plays a crucial role in a decision-making system designed to help an actor achieve any-horizon goals through hierarchical temporal reasoning. Your specific job is as follows.
+SYS_1_0 = f"""You are a helpful AI agent who plays a crucial role in a hierarchical reasoning and acting system. Your specific job is as follows.
 
 You will be given:
 
-1. Information representing the current state of the actor and environment:
+1. Information representing/describing the current, up-to-date state of the environment:
 
 ```text
 CURRENT ACTOR/ENVIRONMENT STATE:
 ...
 ```
 
-2. Followed by a hierarchical representation of the actor's progress and future plans towards a highest-level goal, e.g.:
+2. A representation of the ongoing progress/plans, e.g.:
 
 ```text
 PROGRESS/PLANS:
 {{{{ {SysPromptInsertionField.OLTHAD_EXAMPLE} }}}}
 ```
 
-3. Followed by an indication of which in-progress task is the task you will be considering, e.g.,:
+3. Followed by an indication of which in-progress task to which you will consider assigning the "{AttemptedTaskStatus.SUCCESS}" status. E.g.,:
 
 ```text
-TASK IN QUESTION:
+TASK WHOSE STATUS IS IN QUESTION:
 {{{{ {SysPromptInsertionField.TASK_IN_QUESTION_EXAMPLE} }}}}
 ```
 
@@ -66,20 +67,20 @@ Finally, you will be asked the following:
 {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.TRUE].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.TRUE].text}
 {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.FALSE].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.FALSE].text}
 
-Think things through step-by-step, considering each of the above points as you go. Finally, provide your final response in a JSON that strictly adheres to the following format:
+You will answer by first carefully thinking things through step-by-step. Only after you've thoroughly reasoned through things, provide your final response in a JSON that strictly adheres to the following format:
 
 ```json
 {{{{ {SysPromptInsertionField.BINARY_OUTPUT_JSON_FORMAT_SPEC} }}}}
 ```"""
 
 USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:
-{{env_state}}
+{{{{env_state}}}}
 
 PROGRESS/PLANS:
-{{olthad}}
+{{{{olthad}}}}
 
-TASK IN QUESTION:
-{{task_in_question}}
+TASK WHOSE STATUS IS IN QUESTION:
+{{{{task_in_question}}}}
 
 {V1_0_QUESTION}
 {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.TRUE].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.TRUE].text}

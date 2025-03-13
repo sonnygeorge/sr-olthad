@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Callable, Generic, List, Optional, Type, TypeVar
+from typing import Generic, List, Optional, Type, TypeVar
 
 from jinja2 import Template
 from pydantic import BaseModel, ValidationError
@@ -13,6 +13,9 @@ from schema import (
     MultipleChoiceQuestionAgent,
     MultipleChoiceQuestionAgentOutputData,
     MultipleChoiceQuestionAgentReturn,
+    BinaryChoiceOptions,
+    NonBinaryChoiceOptions,
+    LmStreamHandler,
 )
 from utils import (
     detect_extract_and_parse_json_from_text,
@@ -87,6 +90,7 @@ class SingleTurnChatAgent(InstructLmAgent, Generic[InputDataT, OutputDataT]):
         )(self._get_valid_response)
 
     def _prepare_messages(self, input_data: InputDataT) -> List[InstructLmMessage]:
+        # TODO: Raise error if model and template fields don't match up
         user_prompt = self.user_prompt_template.render(**input_data.model_dump())
         messages = [
             InstructLmMessage(role=InstructLmChatRole.SYS, content=self.sys_prompt),
@@ -99,7 +103,7 @@ class SingleTurnChatAgent(InstructLmAgent, Generic[InputDataT, OutputDataT]):
     async def _get_valid_response(
         self,
         messages: List[InstructLmMessage],
-        stream_handler: Optional[Callable[[str], Any]] = None,
+        stream_handler: Optional[LmStreamHandler] = None,
         **kwargs,
     ) -> OutputDataT:
         response = await self.instruct_lm.generate(
@@ -112,7 +116,7 @@ class SingleTurnChatAgent(InstructLmAgent, Generic[InputDataT, OutputDataT]):
     async def __call__(
         self,
         input_data: InputDataT,
-        stream_handler: Optional[Callable[[str], Any]] = None,
+        stream_handler: Optional[LmStreamHandler] = None,
         **kwargs,  # kwargs for the InstructLm.generate method
     ) -> SingleTurnChatAgentReturn[OutputDataT]:
         messages = self._prepare_messages(input_data=input_data)
@@ -128,11 +132,9 @@ class SingleTurnChatMultipleChoiceAgent(
 ):
     """Multiple-choice variant of a `SingleTurnChatAgent`"""
 
-    multiple_choice_options: List[str]
-
     def __init__(
         self,
-        multiple_choice_options: List[str],
+        multiple_choice_options: BinaryChoiceOptions | NonBinaryChoiceOptions,
         instruct_lm: InstructLm,
         input_data_model: Type[InputDataT],
         user_prompt_template: Template,
@@ -151,21 +153,25 @@ class SingleTurnChatMultipleChoiceAgent(
             max_tries_to_get_valid_response=max_tries_to_get_valid_response,
             logger=logger,
         )
-        self.multiple_choice_options = multiple_choice_options
-        # Decorate self with implicit voting decorator
-        self = implicitly_call_multiple_times_and_take_majority_vote(
-            n_calls=n_implicit_calls_for_voting,
-            max_async_calls=max_implicit_async_calls_for_voting,
-        )(self)
+        self._multiple_choice_options = multiple_choice_options
+        self.n_implicit_calls_for_voting = n_implicit_calls_for_voting
+        self.max_implicit_async_calls_for_voting = max_implicit_async_calls_for_voting
+
+    @property  # This is a property to conform w/ the `MultipleChoiceQuestionAgent` ABC
+    def multiple_choice_options(self) -> BinaryChoiceOptions | NonBinaryChoiceOptions:
+        return self._multiple_choice_options
 
     async def __call__(
         self,
         input_data: InputDataT,
-        stream_handler: Optional[Callable[[str], Any]] = None,
+        stream_handler: Optional[LmStreamHandler] = None,
         **kwargs,  # kwargs for the InstructLm.generate method
     ) -> MultipleChoiceQuestionAgentReturn:
-        return await super().__call__(
-            input_data=input_data,
-            stream_handler=stream_handler,
-            **kwargs,
+        call = implicitly_call_multiple_times_and_take_majority_vote(
+            n_calls=self.n_implicit_calls_for_voting,
+            max_async_calls=self.max_implicit_async_calls_for_voting,
+            logger=self.logger,
+        )(super().__call__)
+        return await call(
+            self, input_data=input_data, stream_handler=stream_handler, **kwargs
         )

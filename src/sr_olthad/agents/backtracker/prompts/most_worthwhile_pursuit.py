@@ -84,13 +84,13 @@ Think things through step-by-step, considering each of the above points as you g
 ```"""
 
 USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:
-{{env_state}}
+{{{{env_state}}}}
 
 PROGRESS/PLANS:
-{{olthad}}
+{{{{olthad}}}}
 
 TASK IN QUESTION:
-{{task_in_question}}
+{{{{task_in_question}}}}
 
 {V1_0_QUESTION}
 {IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.TRUE].letter}. {IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.TRUE].text}

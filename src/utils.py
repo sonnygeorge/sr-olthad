@@ -17,6 +17,9 @@ from schema import (
     MultipleChoiceQuestionAgent,
     MultipleChoiceQuestionAgentOutputData,
     MultipleChoiceQuestionAgentReturn,
+    LmStreamHandler,
+    BinaryChoiceOptions,
+    NonBinaryChoiceOptions,
 )
 
 
@@ -80,8 +83,25 @@ def detect_extract_and_parse_json_from_text(
         raise ValueError(f"Error processing text: {str(e)}")
 
 
+def extract_letter_from_multiple_choice_question_agent_output_data(
+    output_data: MultipleChoiceQuestionAgentOutputData,
+    options: BinaryChoiceOptions | NonBinaryChoiceOptions,
+) -> str:
+    chosen = output_data.chosen
+    for option in options.values():
+        option_letter_clean = "".join(c for c in option.letter if c.isalpha()).lower()
+        option_text_clean = "".join(c for c in option.text if c.isalpha()).lower()
+        chosen_clean = "".join(c for c in chosen if c.isalpha()).lower()
+        if option_letter_clean == chosen_clean:  # Only the letter was output
+            return option.letter
+        if option_text_clean in chosen_clean:
+            return option.letter
+    # TODO: fuzzy matching -- (possibly, certainly not urgent)
+    raise ValueError("Chosen answer not found in the provided options")
+
+
 def implicitly_call_multiple_times_and_take_majority_vote(
-    n_calls: int = 3, max_async_calls: int = 30
+    n_calls: int = 3, max_async_calls: int = 30, logger: Optional[logging.Logger] = None
 ):
     """
     Decorator to wrap `MultipleChoiceQuestionAgent.__call__` implicitly invokes and
@@ -103,15 +123,36 @@ def implicitly_call_multiple_times_and_take_majority_vote(
         return identity_decorator
 
     def decorator(agent_callable: MultipleChoiceQuestionAgent):
-        async def method_wrapper(self: MultipleChoiceQuestionAgent, *args, **kwargs):
+        async def method_wrapper(
+            self: MultipleChoiceQuestionAgent,  # TODO: How self is (not) handled is kind of cursed...
+            input_data: BaseModel,
+            stream_handler: Optional[LmStreamHandler] = None,
+            **kwargs,
+        ):
             # Invoke the decorated method multiple times asynchronously
             semaphore = asyncio.Semaphore(max_async_calls)
 
-            async def bounded_call():
+            # TODO: This is hardly readable/ugly...
+            async def semaphore_bounded_call(
+                stream_handler: Optional[LmStreamHandler] = None,
+            ):
                 async with semaphore:
-                    return await agent_callable(self, *args, **kwargs)
+                    return await agent_callable.__call__(
+                        input_data=input_data, stream_handler=stream_handler, **kwargs
+                    )
 
-            async_tasks = [bounded_call() for _ in range(n_calls)]
+            async_tasks = [
+                semaphore_bounded_call(
+                    stream_handler=(
+                        None
+                        if stream_handler is None
+                        else functools.partial(
+                            stream_handler, async_call_idx=async_call_idx
+                        )
+                    ),
+                )
+                for async_call_idx in range(n_calls)
+            ]
             return_objs: List[MultipleChoiceQuestionAgentReturn] = await asyncio.gather(
                 *async_tasks, return_exceptions=True
             )
@@ -125,7 +166,10 @@ def implicitly_call_multiple_times_and_take_majority_vote(
                     exceptions.append(return_obj)
                     continue
                 valid_return_objs.append(return_obj)
-                counter[return_obj.output_data.chosen] += 1
+                chosen = extract_letter_from_multiple_choice_question_agent_output_data(
+                    return_obj.output_data, self.multiple_choice_options
+                )
+                counter[chosen] += 1
 
             if len(valid_return_objs) == 0:
                 warning = "All invoked agent calls failed. Returning first exception."
@@ -141,7 +185,7 @@ def implicitly_call_multiple_times_and_take_majority_vote(
                 if return_obj.output_data.chosen == voted_answer_choice:
                     reasons_for_winning_vote.append(return_obj.output_data.reasoning)
             winning_votes_str = StructuredDataStringifier.stringify(
-                reasons_for_winning_vote, serialization_method="yaml"
+                reasons_for_winning_vote, serialization_method=SerializationMethod.JSON
             )
             reasoning = (
                 f"'{voted_answer_choice}' was chosen since, in a multi-agent vote, it"
