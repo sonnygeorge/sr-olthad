@@ -5,14 +5,14 @@ from sr_olthad.agents.backtracker.backtracker import (
     BacktrackerReturn,
 )
 from sr_olthad.agents.backtracker.prompts.exhaustive_effort import (
-    PROMPT_REGISTRY as EXHSTVE_EFFRT_PROMPT_REGISTRY,
+    PROMPT_REGISTRY as EXHAUSTIVE_EFFORT_CLF_PROMPT_REGISTRY,
 )
 from sr_olthad.agents.backtracker.prompts.most_worthwhile_pursuit import (
-    PROMPT_REGISTRY as WRTHWHL_PURST_PROMPT_REGISTRY,
+    PROMPT_REGISTRY as WORTHWHILE_PURSUIT_CLF_PROMPT_REGISTRY,
 )
 from sr_olthad.agents.backtracker.prompts.partial_success import (
-    PROMPT_REGISTRY as PRTL_SCCSS_PROMPT_REGISTRY,
+    PROMPT_REGISTRY as PARTIAL_SUCCESS_CLF_PROMPT_REGISTRY,
 )
 from sr_olthad.agents.backtracker.prompts.successful_completion import (
-    PROMPT_REGISTRY as SCCSS_CMPLTN_PROMPT_REGISTRY,
+    PROMPT_REGISTRY as SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY,
 )
