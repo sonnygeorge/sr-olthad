@@ -125,15 +125,60 @@ def test_single_turn_chat_agent():
     print("\n\n", sum_of_numbers)
 
 
-def print_most_worthwhile_pursuit_prompts():
+def print_backtracker_agent_prompts():
     from sr_olthad.agents.config import BacktrackerConfig as cfg
 
+    print("\n###############################################" * 2)
+    print("######### Exhaustive Effort Classifier ########")
+    print("###############################################\n" * 2)
+    print("***********")
+    print("*** SYS ***")
+    print("***********\n")
+    print(cfg.ExhaustiveEffortClfConfig.SYS_PROMPT)
+    print("\n************")
+    print("*** USER ***")
+    print("************\n")
+    print(cfg.ExhaustiveEffortClfConfig.USER_PROMPT_TEMPLATE.render())
+
+    print("\n################################################" * 2)
+    print("###### Most Worthwhile Pursuit Classifier ######")
+    print("################################################\n" * 2)
+    print("***********")
+    print("*** SYS ***")
+    print("***********\n")
     print(cfg.MostWorthwhilePursuitClfConfig.SYS_PROMPT)
+    print("\n************")
+    print("*** USER ***")
+    print("************\n")
     print(cfg.MostWorthwhilePursuitClfConfig.USER_PROMPT_TEMPLATE.render())
+
+    print("\n###############################################" * 2)
+    print("########## Partial Success Classifier #########")
+    print("###############################################\n" * 2)
+    print("***********")
+    print("*** SYS ***")
+    print("***********\n")
+    print(cfg.PartialSuccessClfConfig.SYS_PROMPT)
+    print("\n************")
+    print("*** USER ***")
+    print("************\n")
+    print(cfg.PartialSuccessClfConfig.USER_PROMPT_TEMPLATE.render())
+
+    print("\n##############################################" * 2)
+    print("###### Successful Completion Classifier ######")
+    print("##############################################\n" * 2)
+    print("***********")
+    print("*** SYS ***")
+    print("***********\n")
+    print(cfg.SuccessfulCompletionClfConfig.SYS_PROMPT)
+    print("\n************")
+    print("*** USER ***")
+    print("************\n")
+    print(cfg.SuccessfulCompletionClfConfig.USER_PROMPT_TEMPLATE.render())
 
 
 if __name__ == "__main__":
     # test_instruct_lm_agent_types_and_async_voting()
     # test_openai_instruct_lm()
     # test_single_turn_chat_agent()
-    print_most_worthwhile_pursuit_prompts()
+    print_backtracker_agent_prompts()

@@ -4,8 +4,14 @@ from pydantic import BaseModel
 from schema import Agent, AgentReturn
 from single_turn_chat_agent import SingleTurnChatMultipleChoiceAgent
 from sr_olthad.agents.config import BacktrackerConfig as cfg
-from sr_olthad.agents.config import BINARY_CHOICE_OPTIONS
+from sr_olthad.agents.backtracker.prompts import (
+    WAS_SUCCESSFULLY_COMPLETED_OPTIONS,
+    IS_MOST_WORTHWHILE_OPTIONS,
+    EFFORT_WAS_EXHAUSTIVE_OPTIONS,
+    WAS_PARTIAL_SUCCESS_OPTIONS,
+)
 from sr_olthad.enums import BacktrackedFromTaskStatus
+
 from sr_olthad.task_node import TaskNode
 
 
@@ -30,7 +36,7 @@ class Backtracker(Agent):
             BacktrackerInputData
         ] = SingleTurnChatMultipleChoiceAgent(
             instruct_lm=cfg.ExhaustiveEffortClfConfig.INSTRUCT_LM,
-            multiple_choice_options=BINARY_CHOICE_OPTIONS,
+            multiple_choice_options=EFFORT_WAS_EXHAUSTIVE_OPTIONS,
             sys_prompt=cfg.ExhaustiveEffortClfConfig.SYS_PROMPT,
             user_prompt_template=cfg.ExhaustiveEffortClfConfig.USER_PROMPT_TEMPLATE,
             n_implicit_calls_for_voting=cfg.ExhaustiveEffortClfConfig.N_CALLS_FOR_VOTING,
@@ -44,7 +50,7 @@ class Backtracker(Agent):
             BacktrackerInputData
         ] = SingleTurnChatMultipleChoiceAgent(
             instruct_lm=cfg.MostWorthwhilePursuitClfConfig.INSTRUCT_LM,
-            multiple_choice_options=BINARY_CHOICE_OPTIONS,
+            multiple_choice_options=IS_MOST_WORTHWHILE_OPTIONS,
             sys_prompt=cfg.MostWorthwhilePursuitClfConfig.SYS_PROMPT,
             user_prompt_template=cfg.MostWorthwhilePursuitClfConfig.USER_PROMPT_TEMPLATE,
             n_implicit_calls_for_voting=cfg.MostWorthwhilePursuitClfConfig.N_CALLS_FOR_VOTING,
@@ -57,7 +63,7 @@ class Backtracker(Agent):
             BacktrackerInputData
         ] = SingleTurnChatMultipleChoiceAgent(
             instruct_lm=cfg.PartialSuccessClfConfig.INSTRUCT_LM,
-            multiple_choice_options=BINARY_CHOICE_OPTIONS,
+            multiple_choice_options=WAS_PARTIAL_SUCCESS_OPTIONS,
             sys_prompt=cfg.PartialSuccessClfConfig.SYS_PROMPT,
             user_prompt_template=cfg.PartialSuccessClfConfig.USER_PROMPT_TEMPLATE,
             n_implicit_calls_for_voting=cfg.PartialSuccessClfConfig.N_CALLS_FOR_VOTING,
@@ -70,7 +76,7 @@ class Backtracker(Agent):
             BacktrackerInputData
         ] = SingleTurnChatMultipleChoiceAgent(
             instruct_lm=cfg.SuccessfulCompletionClfConfig.INSTRUCT_LM,
-            multiple_choice_options=BINARY_CHOICE_OPTIONS,
+            multiple_choice_options=WAS_SUCCESSFULLY_COMPLETED_OPTIONS,
             sys_prompt=cfg.SuccessfulCompletionClfConfig.SYS_PROMPT,
             user_prompt_template=cfg.SuccessfulCompletionClfConfig.USER_PROMPT_TEMPLATE,
             n_implicit_calls_for_voting=cfg.SuccessfulCompletionClfConfig.N_CALLS_FOR_VOTING,

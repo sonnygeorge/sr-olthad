@@ -1,25 +1,41 @@
-from enum import StrEnum
-
 from jinja2 import Template
 
+from enums import BinaryCaseStr
 from schema import (
+    BinaryChoiceOptions,
     SingleTurnPromptTemplates,
     PromptRegistry,
-    MultipleChoiceQuestionAgentOutputData,
+    MultipleChoiceQuestionAgentOption,
 )
+from sr_olthad.prompts import SysPromptInsertionField
 
 
-class SysPromptInsertions(StrEnum):
-    OLTHAD_EXAMPLE = "olthad_example"
-    TASK_IN_QUESTION_EXAMPLE = "task_in_question_example"
-    OUTPUT_JSON_FORMAT = "output_json_format"
+IS_MOST_WORTHWHILE_OPTIONS: BinaryChoiceOptions = {
+    BinaryCaseStr.TRUE: MultipleChoiceQuestionAgentOption(
+        letter="A",
+        text="The task in question is, at this time, the most worthwhile objective for the actor to be pursuing.",
+    ),
+    BinaryCaseStr.FALSE: MultipleChoiceQuestionAgentOption(
+        letter="B",
+        text="The task in question should be dropped, at least temporarily, in favor of something else.",
+    ),
+}
+
+SYS_PROMPT_INSERTION_FIELDS_NEEDED = [
+    SysPromptInsertionField.OLTHAD_EXAMPLE,
+    SysPromptInsertionField.TASK_IN_QUESTION_EXAMPLE,
+    SysPromptInsertionField.BINARY_OUTPUT_JSON_FORMAT_SPEC,
+]
 
 
 ######################
 ######## v1.0 ########
 ######################
 
-SYS_1_0 = """You are a helpful AI assistant who plays a crucial role in a decision-making system designed to help an actor achieve any-horizon goals through hierarchical temporal reasoning. Your specific job is as follows.
+
+V1_0_QUESTION = "Given the current state of everything, which statement is more true?"
+
+SYS_1_0 = f"""You are a helpful AI assistant who plays a crucial role in a decision-making system designed to help an actor achieve any-horizon goals through hierarchical temporal reasoning. Your specific job is as follows.
 
 You will be given:
 
@@ -34,21 +50,21 @@ CURRENT ACTOR/ENVIRONMENT STATE:
 
 ```text
 PROGRESS/PLANS:
-{{olthad_example}}
+{{{{ {SysPromptInsertionField.OLTHAD_EXAMPLE} }}}}
 ```
 
 3. Followed by an indication of which in-progress task is the task you will be considering, e.g.,:
 
 ```text
 TASK IN QUESTION:
-{{task_in_question_example}}
+{{{{ {SysPromptInsertionField.TASK_IN_QUESTION_EXAMPLE} }}}}
 ```
 
-Finally, you will asked the following:
+Finally, you will be asked the following:
 
-Given the current state of everything, which statement is more true?
-A. The task in question is, at this time, the most worthwhile objective for the actor to be pursuing.
-B. The task in question should be dropped, at least temporarily, in favor of something else.
+{V1_0_QUESTION}
+{IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.TRUE].letter}. {IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.TRUE].text}
+{IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.FALSE].letter}. {IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.FALSE].text}
 
 Now, there are many possible reasons why answer choice "B" might be better. Here are a few examples:
 1. The task was foolishly proposed/poorly conceived in the first place (e.g., was not the best idea or was ambiguously phrased).
@@ -64,10 +80,10 @@ Now, there are many possible reasons why answer choice "B" might be better. Here
 Think things through step-by-step, considering each of the above points as you go. Finally, provide your final response in a JSON that strictly adheres to the following format:
 
 ```json
-{{output_json_format}}
+{{{{ {SysPromptInsertionField.BINARY_OUTPUT_JSON_FORMAT_SPEC} }}}}
 ```"""
 
-USER_1_0 = """CURRENT ACTOR/ENVIRONMENT STATE:
+USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:
 {{env_state}}
 
 PROGRESS/PLANS:
@@ -76,9 +92,9 @@ PROGRESS/PLANS:
 TASK IN QUESTION:
 {{task_in_question}}
 
-Given the current state of everything, which statement is more true?
-A. The task in question is, at this time, the most worthwhile objective for the actor to be pursuing.
-B. The task in question should be dropped, at least temporarily, in favor of something else.
+{V1_0_QUESTION}
+{IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.TRUE].letter}. {IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.TRUE].text}
+{IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.FALSE].letter}. {IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.FALSE].text}
 """
 
 V1_0_PROMPTS = SingleTurnPromptTemplates(
@@ -86,9 +102,11 @@ V1_0_PROMPTS = SingleTurnPromptTemplates(
     user_prompt_template=Template(USER_1_0),
 )
 
+
 ######################
 ###### Registry ######
 ######################
+
 
 PROMPT_REGISTRY: PromptRegistry = {
     "1.0": V1_0_PROMPTS,

@@ -136,11 +136,11 @@ class SingleTurnChatMultipleChoiceAgent(
         instruct_lm: InstructLm,
         input_data_model: Type[InputDataT],
         user_prompt_template: Template,
-        n_implicit_calls_for_voting: int = 1,
-        max_implicit_async_calls_for_voting: int = 5,
         sys_prompt: Optional[str] = None,
-        max_tries_to_get_valid_response: int = 1,
+        n_implicit_calls_for_voting: int = 1,
         logger: Optional[logging.Logger] = None,
+        max_implicit_async_calls_for_voting: int = 5,
+        max_tries_to_get_valid_response: int = 1,
     ):
         super().__init__(
             instruct_lm=instruct_lm,

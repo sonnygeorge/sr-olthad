@@ -6,6 +6,7 @@ from typing import (
     Dict,
     List,
     Optional,
+    Protocol,
     Set,
     TypeAlias,
     TypedDict,
@@ -14,7 +15,7 @@ from typing import (
 from jinja2 import Template
 from pydantic import BaseModel
 
-from enums import InstructLmChatRole
+from enums import InstructLmChatRole, BinaryCaseStr
 
 
 JsonSerializable = (
@@ -27,25 +28,10 @@ JsonSerializable = (
     | Dict[str, "JsonSerializable"]
 )
 
-#################
-#### Prompts ####
-#################
 
-
-@dataclass
-class SingleTurnPromptTemplates:
-    user_prompt_template: Template
-    sys_prompt_template: Optional[Template] = None
-
-
-# E.g. "1.0" where the 1st number changes for major strategy changes
-PromptVersionString: TypeAlias = str
-PromptRegistry = Dict[PromptVersionString, SingleTurnPromptTemplates]
-
-
-######################
-#### Instruct LMs ####
-######################
+#####################
+#### Instruct LM ####
+#####################
 
 
 class InstructLmMessage(TypedDict):
@@ -64,28 +50,13 @@ class InstructLm(ABC):
         pass
 
 
-################
-#### Agents ####
-################
-
-
-class MultipleChoiceQuestionAgentOutputData(BaseModel):
-    chosen: str
-    reasoning: str
+####################
+#### Base Agent ####
+####################
 
 
 class AgentReturn(BaseModel):
     output_data: BaseModel
-
-
-class InstructLmAgentReturn(AgentReturn):
-    output_data: BaseModel
-    messages: List[InstructLmMessage] | List[List[InstructLmMessage]]
-
-
-class MultipleChoiceQuestionAgentReturn(InstructLmAgentReturn):
-    output_data: MultipleChoiceQuestionAgentOutputData
-    messages: List[InstructLmMessage] | List[List[InstructLmMessage]]
 
 
 class Agent(ABC):
@@ -99,6 +70,16 @@ class Agent(ABC):
         pass
 
 
+##########################
+#### InstructLm Agent ####
+##########################
+
+
+class InstructLmAgentReturn(AgentReturn):
+    output_data: BaseModel
+    messages: List[InstructLmMessage] | List[List[InstructLmMessage]]
+
+
 class InstructLmAgent(Agent):
     """
     An `Agent` that uses a single-turn conversation with an instruction-tuned LM for
@@ -110,12 +91,38 @@ class InstructLmAgent(Agent):
         pass
 
 
+########################################
+#### Multiple Choice Question Agent ####
+########################################
+
+
+class MultipleChoiceQuestionAgentOutputData(BaseModel):
+    chosen: str
+    reasoning: str
+
+
+class MultipleChoiceQuestionAgentReturn(InstructLmAgentReturn):
+    output_data: MultipleChoiceQuestionAgentOutputData
+    messages: List[InstructLmMessage] | List[List[InstructLmMessage]]
+
+
+class MultipleChoiceQuestionAgentOption(BaseModel, frozen=True):
+    """Immutable configuration type for options in a multiple-choice question."""
+
+    letter: str
+    text: str
+
+
+BinaryChoiceOptions = Dict[BinaryCaseStr, MultipleChoiceQuestionAgentOption]
+NonBinaryChoiceOptions = Dict[str, MultipleChoiceQuestionAgentOption]
+
+
 class MultipleChoiceQuestionAgent(InstructLmAgent):
     """A `InstructLmAgent` that answers a multiple-choice question."""
 
     @property
     @abstractmethod
-    def multiple_choice_options(self) -> Set[str]:
+    def multiple_choice_options(self) -> BinaryChoiceOptions | NonBinaryChoiceOptions:
         pass
 
     @abstractmethod
@@ -123,3 +130,19 @@ class MultipleChoiceQuestionAgent(InstructLmAgent):
         self, input_data: BaseModel, **kwargs
     ) -> MultipleChoiceQuestionAgentReturn:
         pass
+
+
+#################
+#### Prompts ####
+#################
+
+
+@dataclass
+class SingleTurnPromptTemplates:
+    user_prompt_template: Template
+    sys_prompt_template: Optional[Template] = None
+
+
+# E.g. "1.0" where the 1st number changes for major strategy changes
+PromptVersionString: TypeAlias = str
+PromptRegistry = Dict[PromptVersionString, SingleTurnPromptTemplates]
