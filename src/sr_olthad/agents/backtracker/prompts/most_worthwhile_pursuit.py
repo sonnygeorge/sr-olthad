@@ -1,7 +1,6 @@
-from typing import List
+from jinja2 import Template
 
-from enums import PromptType
-from schema import RegistrablePrompt, PromptRegistry
+from schema import SingleTurnPrompts, PromptRegistry
 
 ######################
 ######## v1.0 ########
@@ -72,15 +71,15 @@ A. The task in question is, at this time, the most worthwhile objective for the 
 B. The task in question should be dropped, at least temporarily, in favor of something else.
 """
 
-V1_0: List[RegistrablePrompt] = [
-    RegistrablePrompt(type=PromptType.SYS, prompt=SYS_1_0),
-    RegistrablePrompt(type=PromptType.USER, prompt=USER_1_0),
-]
+V1_0_PROMPTS = SingleTurnPrompts(
+    sys_prompt=SYS_1_0,
+    user_prompt=Template(USER_1_0),
+)
 
 ######################
 ###### Registry ######
 ######################
 
 PROMPT_REGISTRY: PromptRegistry = {
-    "1.0": V1_0,
+    "1.0": V1_0_PROMPTS,
 }
