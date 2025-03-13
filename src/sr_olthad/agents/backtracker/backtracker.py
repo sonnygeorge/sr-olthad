@@ -3,9 +3,10 @@ from pydantic import BaseModel
 
 from schema import Agent, AgentReturn
 from single_turn_chat_agent import SingleTurnChatMultipleChoiceAgent
-from sr_olthad.config import BacktrackerConfig as cfg
+from sr_olthad.agents.config import BacktrackerConfig as cfg
+from sr_olthad.agents.config import BINARY_CHOICE_OPTIONS
 from sr_olthad.enums import BacktrackedFromTaskStatus
-from sr_olthad.olthad import TaskNode
+from sr_olthad.task_node import TaskNode
 
 
 class BacktrackerInputData(BaseModel):
@@ -22,9 +23,6 @@ class BacktrackerReturn(AgentReturn):
     output_data: BacktrackerOutputData
 
 
-BACKTRACKER_MULTIPLE_CHOICE_OPTIONS = ["A", "B"]
-
-
 class Backtracker(Agent):
     def __init__(self):
         # Initialize exhaustive effort classifier
@@ -32,9 +30,9 @@ class Backtracker(Agent):
             BacktrackerInputData
         ] = SingleTurnChatMultipleChoiceAgent(
             instruct_lm=cfg.ExhaustiveEffortClfConfig.INSTRUCT_LM,
-            multiple_choice_options=BACKTRACKER_MULTIPLE_CHOICE_OPTIONS,
-            sys_prompt=cfg.ExhaustiveEffortClfConfig.PROMPTS.sys_prompt,
-            user_prompt_template=cfg.ExhaustiveEffortClfConfig.PROMPTS.user_prompt,
+            multiple_choice_options=BINARY_CHOICE_OPTIONS,
+            sys_prompt=cfg.ExhaustiveEffortClfConfig.SYS_PROMPT,
+            user_prompt_template=cfg.ExhaustiveEffortClfConfig.USER_PROMPT_TEMPLATE,
             n_implicit_calls_for_voting=cfg.ExhaustiveEffortClfConfig.N_CALLS_FOR_VOTING,
             max_implicit_async_calls_for_voting=cfg.ExhaustiveEffortClfConfig.MAX_ASYNC_CALL_FOR_VOTING,
             input_data_model=BacktrackerInputData,  # FIXME
@@ -46,9 +44,9 @@ class Backtracker(Agent):
             BacktrackerInputData
         ] = SingleTurnChatMultipleChoiceAgent(
             instruct_lm=cfg.MostWorthwhilePursuitClfConfig.INSTRUCT_LM,
-            multiple_choice_options=BACKTRACKER_MULTIPLE_CHOICE_OPTIONS,
-            sys_prompt=cfg.MostWorthwhilePursuitClfConfig.PROMPTS.sys_prompt,
-            user_prompt_template=cfg.MostWorthwhilePursuitClfConfig.PROMPTS.user_prompt,
+            multiple_choice_options=BINARY_CHOICE_OPTIONS,
+            sys_prompt=cfg.MostWorthwhilePursuitClfConfig.SYS_PROMPT,
+            user_prompt_template=cfg.MostWorthwhilePursuitClfConfig.USER_PROMPT_TEMPLATE,
             n_implicit_calls_for_voting=cfg.MostWorthwhilePursuitClfConfig.N_CALLS_FOR_VOTING,
             max_implicit_async_calls_for_voting=cfg.MostWorthwhilePursuitClfConfig.MAX_ASYNC_CALL_FOR_VOTING,
             input_data_model=BacktrackerInputData,  # FIXME
@@ -59,9 +57,9 @@ class Backtracker(Agent):
             BacktrackerInputData
         ] = SingleTurnChatMultipleChoiceAgent(
             instruct_lm=cfg.PartialSuccessClfConfig.INSTRUCT_LM,
-            multiple_choice_options=BACKTRACKER_MULTIPLE_CHOICE_OPTIONS,
-            sys_prompt=cfg.PartialSuccessClfConfig.PROMPTS.sys_prompt,
-            user_prompt_template=cfg.PartialSuccessClfConfig.PROMPTS.user_prompt,
+            multiple_choice_options=BINARY_CHOICE_OPTIONS,
+            sys_prompt=cfg.PartialSuccessClfConfig.SYS_PROMPT,
+            user_prompt_template=cfg.PartialSuccessClfConfig.USER_PROMPT_TEMPLATE,
             n_implicit_calls_for_voting=cfg.PartialSuccessClfConfig.N_CALLS_FOR_VOTING,
             max_implicit_async_calls_for_voting=cfg.PartialSuccessClfConfig.MAX_ASYNC_CALL_FOR_VOTING,
             input_data_model=BacktrackerInputData,  # FIXME
@@ -72,9 +70,9 @@ class Backtracker(Agent):
             BacktrackerInputData
         ] = SingleTurnChatMultipleChoiceAgent(
             instruct_lm=cfg.SuccessfulCompletionClfConfig.INSTRUCT_LM,
-            multiple_choice_options=BACKTRACKER_MULTIPLE_CHOICE_OPTIONS,
-            sys_prompt=cfg.SuccessfulCompletionClfConfig.PROMPTS.sys_prompt,
-            user_prompt_template=cfg.SuccessfulCompletionClfConfig.PROMPTS.user_prompt,
+            multiple_choice_options=BINARY_CHOICE_OPTIONS,
+            sys_prompt=cfg.SuccessfulCompletionClfConfig.SYS_PROMPT,
+            user_prompt_template=cfg.SuccessfulCompletionClfConfig.USER_PROMPT_TEMPLATE,
             n_implicit_calls_for_voting=cfg.SuccessfulCompletionClfConfig.N_CALLS_FOR_VOTING,
             max_implicit_async_calls_for_voting=cfg.SuccessfulCompletionClfConfig.MAX_ASYNC_CALL_FOR_VOTING,
             input_data_model=BacktrackerInputData,  # FIXME

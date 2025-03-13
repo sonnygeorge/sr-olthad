@@ -1,6 +1,19 @@
+from enum import StrEnum
+
 from jinja2 import Template
 
-from schema import SingleTurnPrompts, PromptRegistry
+from schema import (
+    SingleTurnPromptTemplates,
+    PromptRegistry,
+    MultipleChoiceQuestionAgentOutputData,
+)
+
+
+class SysPromptInsertions(StrEnum):
+    OLTHAD_EXAMPLE = "olthad_example"
+    TASK_IN_QUESTION_EXAMPLE = "task_in_question_example"
+    OUTPUT_JSON_FORMAT = "output_json_format"
+
 
 ######################
 ######## v1.0 ########
@@ -21,14 +34,14 @@ CURRENT ACTOR/ENVIRONMENT STATE:
 
 ```text
 PROGRESS/PLANS:
-{olthad_example}
+{{olthad_example}}
 ```
 
 3. Followed by an indication of which in-progress task is the task you will be considering, e.g.,:
 
 ```text
 TASK IN QUESTION:
-{task_in_question_example}
+{{task_in_question_example}}
 ```
 
 Finally, you will asked the following:
@@ -51,29 +64,26 @@ Now, there are many possible reasons why answer choice "B" might be better. Here
 Think things through step-by-step, considering each of the above points as you go. Finally, provide your final response in a JSON that strictly adheres to the following format:
 
 ```json
-{output_json_format}
-```
-
-Where your chosen answer is either "A" or "B" and your reasoning is an explanation of the nuance(s) behind your choice in string format.
-"""
+{{output_json_format}}
+```"""
 
 USER_1_0 = """CURRENT ACTOR/ENVIRONMENT STATE:
-{env_state}
+{{env_state}}
 
 PROGRESS/PLANS:
-{olthad}
+{{olthad}}
 
 TASK IN QUESTION:
-{task_in_question}
+{{task_in_question}}
 
 Given the current state of everything, which statement is more true?
 A. The task in question is, at this time, the most worthwhile objective for the actor to be pursuing.
 B. The task in question should be dropped, at least temporarily, in favor of something else.
 """
 
-V1_0_PROMPTS = SingleTurnPrompts(
-    sys_prompt=SYS_1_0,
-    user_prompt=Template(USER_1_0),
+V1_0_PROMPTS = SingleTurnPromptTemplates(
+    sys_prompt_template=Template(SYS_1_0),
+    user_prompt_template=Template(USER_1_0),
 )
 
 ######################

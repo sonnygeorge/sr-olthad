@@ -25,6 +25,7 @@ class StructuredDataStringifier:
     def _json_stringify(cls, data: JsonSerializable, indent: int) -> str:
         return json.dumps(data, indent=indent)
 
+    # TODO: `pyyaml`` doesn't serialize `StrEnums` as strings properly
     @classmethod
     def _yaml_stringify(cls, data: JsonSerializable, indent: int) -> str:
         return yaml.dump(data, indent=indent, sort_keys=False)
@@ -34,7 +35,7 @@ class StructuredDataStringifier:
         cls,
         data: JsonSerializable,
         serialization_method: SerializationMethod = SerializationMethod.YAML,
-        indent: int = 2,
+        indent: int = 4,
     ) -> str:
         if serialization_method == SerializationMethod.JSON:
             return cls._json_stringify(data, indent)

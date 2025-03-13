@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import (
     Any,
     Callable,
@@ -31,14 +32,15 @@ JsonSerializable = (
 #################
 
 
-class SingleTurnPrompts(BaseModel):
-    sys_prompt: Optional[str] = None
-    user_prompt: Template
+@dataclass
+class SingleTurnPromptTemplates:
+    user_prompt_template: Template
+    sys_prompt_template: Optional[Template] = None
 
 
 # E.g. "1.0" where the 1st number changes for major strategy changes
 PromptVersionString: TypeAlias = str
-PromptRegistry = Dict[PromptVersionString, SingleTurnPrompts]
+PromptRegistry = Dict[PromptVersionString, SingleTurnPromptTemplates]
 
 
 ######################

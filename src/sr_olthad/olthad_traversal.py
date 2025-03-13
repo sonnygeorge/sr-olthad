@@ -1,62 +1,17 @@
 from dataclasses import dataclass
-from typing import Dict, Generator, List, Optional, Tuple
-
-from pydantic import BaseModel
+from typing import Dict, List, Optional
 
 from sr_olthad.enums import AttemptedTaskStatus, BacktrackedFromTaskStatus, TaskStatus
-
-
-class TaskNode(BaseModel):
-    task: str
-    description: str
-    status: TaskStatus
-    retrospective: Optional[str] = None
-    subtasks: Optional[List["TaskNode"]] = None
-
-    def iter_in_progress_descendants(
-        self,
-    ) -> Generator[Tuple["TaskNode", "TaskNode"], None, None]:
-        if self.status != TaskStatus.IN_PROGRESS:
-            raise ValueError(
-                "This method should only be called if the node is in-progress"
-            )
-
-        rebuild_root = TaskNode(
-            task=self.task,
-            description=self.description,
-            status=self.status,
-            retrospective=self.retrospective,
-            subtasks=None,
-        )
-
-        cur_rebuild_node = rebuild_root
-        cur_self_node = self
-        while True:
-            yield rebuild_root, cur_rebuild_node
-            cur_rebuild_node.subtasks = []
-            idx_of_in_progress_subtask = None
-            for i, subtask in enumerate(cur_self_node.subtasks):
-                rebuilt_subtask = TaskNode(
-                    task=subtask.task,
-                    description=subtask.description,
-                    status=subtask.status,
-                    retrospective=subtask.retrospective,
-                    subtasks=None,
-                )
-                cur_rebuild_node.subtasks.append(rebuilt_subtask)
-
-                if rebuilt_subtask.status == TaskStatus.IN_PROGRESS:
-                    idx_of_in_progress_subtask = i
-
-            if idx_of_in_progress_subtask is None:
-                break
-            else:
-                cur_self_node = cur_self_node.subtasks[idx_of_in_progress_subtask]
-                cur_rebuild_node = cur_rebuild_node.subtasks[idx_of_in_progress_subtask]
+from sr_olthad.task_node import TaskNode
 
 
 @dataclass
 class OlthadTraversal:
+    """
+    Abstraction responsible for traversing an OLTHAD (Open-Language Task Hierarchy of
+    Any Depth).
+    """
+
     # TODO: Docstrings, unit tests, & update(s) used after the forgetter is called
     # TODO: Could this be made marginally cleaner by having `TaskNode`s have their own
     # next_planned_subtask_idx attr, but never printing it?

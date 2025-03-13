@@ -7,9 +7,16 @@ class AttemptedTaskStatus(StrEnum):
     PARTIAL_SUCCESS = "Attempted (partial success)"
 
 
-class BacktrackedFromTaskStatus(AttemptedTaskStatus):
+class BacktrackedFromTaskStatus(StrEnum):
+    IN_PROGRESS = AttemptedTaskStatus.IN_PROGRESS
+    SUCCESS = AttemptedTaskStatus.SUCCESS
+    PARTIAL_SUCCESS = AttemptedTaskStatus.PARTIAL_SUCCESS
     DROPPED = "Dropped"
 
 
-class TaskStatus(BacktrackedFromTaskStatus):
+class TaskStatus(StrEnum):
+    IN_PROGRESS = AttemptedTaskStatus.IN_PROGRESS
+    SUCCESS = AttemptedTaskStatus.SUCCESS
+    PARTIAL_SUCCESS = AttemptedTaskStatus.PARTIAL_SUCCESS
+    DROPPED = BacktrackedFromTaskStatus.DROPPED
     PLANNED = "Tentatively planned"

@@ -111,6 +111,7 @@ def test_single_turn_chat_agent():
         user_prompt_template=Template("Add {first_number} and {second_number}."),
         input_data_model=AdditionAgentInputData,
         output_data_model=AdditionAgentOutputData,
+        max_tries_to_get_valid_response=3,
         logger=logger,
     )
 
@@ -119,13 +120,20 @@ def test_single_turn_chat_agent():
             input_data=AdditionAgentInputData(first_number=2, second_number=3),
             stream_handler=lambda s: print(s, end="", flush=True),
             max_tokens=100,
-            n_tries_to_get_valid_response=3,
         )
     ).output_data.sum_of_numbers
     print("\n\n", sum_of_numbers)
 
 
+def print_most_worthwhile_pursuit_prompts():
+    from sr_olthad.agents.config import BacktrackerConfig as cfg
+
+    print(cfg.MostWorthwhilePursuitClfConfig.SYS_PROMPT)
+    print(cfg.MostWorthwhilePursuitClfConfig.USER_PROMPT_TEMPLATE.render())
+
+
 if __name__ == "__main__":
     # test_instruct_lm_agent_types_and_async_voting()
     # test_openai_instruct_lm()
-    test_single_turn_chat_agent()
+    # test_single_turn_chat_agent()
+    print_most_worthwhile_pursuit_prompts()

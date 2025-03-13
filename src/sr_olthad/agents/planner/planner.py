@@ -3,12 +3,12 @@ from typing import List
 from pydantic import BaseModel
 
 from schema import InstructLmAgentReturn, InstructLmMessage
-from sr_olthad.olthad import OlthadTraversal, TaskNode
+from sr_olthad.task_node import TaskNode
 
 
 class PlannerInputData(BaseModel):
     env_state: str
-    olthad_traversal: OlthadTraversal
+    olthad: TaskNode
 
 
 class PlannerOutputData(BaseModel):

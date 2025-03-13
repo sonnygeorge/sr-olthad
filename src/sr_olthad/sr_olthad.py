@@ -3,7 +3,7 @@ from typing import List, Optional
 from loguru import logger
 from pydantic import BaseModel
 
-import sr_olthad.config as cfg
+import sr_olthad.config as config
 from sr_olthad.enums import AttemptedTaskStatus, BacktrackedFromTaskStatus, TaskStatus
 from sr_olthad.agents import (
     AttemptSummarizer,
@@ -17,7 +17,8 @@ from sr_olthad.agents import (
     Forgetter,
     ForgetterInputData,
 )
-from sr_olthad.olthad import OlthadTraversal, TaskNode
+from sr_olthad.task_node import TaskNode
+from sr_olthad.olthad_traversal import OlthadTraversal
 from schema import JsonSerializable
 from utils import StructuredDataStringifier
 
@@ -75,7 +76,7 @@ class SrOlthad:
     async def _update_plan(self, env_state: str) -> None:
         planner_input_data = PlannerInputData(
             env_state=env_state,
-            olthad_traversal=self.olthad_traversal,
+            olthad=self.olthad_traversal,
         )
         # Apply planner with implicit retries
         planner_return = await self.planner(planner_input_data)
@@ -116,7 +117,7 @@ class SrOlthad:
         if not isinstance(env_state, str):
             env_state = StructuredDataStringifier.stringify(
                 env_state,
-                serialization_method=cfg.STRINGIFY_ENV_STATE_SERIALIZATION_METHOD,
+                serialization_method=config.STRINGIFY_ENV_STATE_SERIALIZATION_METHOD,
             )
 
         # Summarize previous attempt unless it's the initial call
