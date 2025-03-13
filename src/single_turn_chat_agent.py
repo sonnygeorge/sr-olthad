@@ -14,7 +14,11 @@ from schema import (
     MultipleChoiceQuestionAgentOutputData,
     MultipleChoiceQuestionAgentReturn,
 )
-from utils import detect_extract_and_parse_json_from_text, with_retry
+from utils import (
+    detect_extract_and_parse_json_from_text,
+    with_retry,
+    implicitly_call_multiple_times_and_take_majority_vote,
+)
 
 
 InputDataT = TypeVar("InputDataT", bound=BaseModel)
@@ -65,6 +69,7 @@ class SingleTurnChatAgent(InstructLmAgent, Generic[InputDataT, OutputDataT]):
         output_data_model: Type[OutputDataT],
         user_prompt_template: Template,
         sys_prompt: Optional[str] = None,
+        max_tries_to_get_valid_response: int = 1,
         logger: Optional[logging.Logger] = None,
     ):
         self.instruct_lm = instruct_lm
@@ -73,6 +78,13 @@ class SingleTurnChatAgent(InstructLmAgent, Generic[InputDataT, OutputDataT]):
         self.sys_prompt = sys_prompt
         self.user_prompt_template = user_prompt_template
         self.logger = logger
+        # Decorate the `_get_valid_response` method with retry logic
+        self._get_valid_response = with_retry(
+            # TODO: Update expections to be more precise
+            permissible_exceptions=(ValidationError, ValueError, Exception),
+            max_tries=max_tries_to_get_valid_response,
+            logger=self.logger,
+        )(self._get_valid_response)
 
     def _prepare_messages(self, input_data: InputDataT) -> List[InstructLmMessage]:
         user_prompt = self.user_prompt_template.render(**input_data.model_dump())
@@ -100,19 +112,11 @@ class SingleTurnChatAgent(InstructLmAgent, Generic[InputDataT, OutputDataT]):
     async def __call__(
         self,
         input_data: InputDataT,
-        n_tries_to_get_valid_response: int = 1,
         stream_handler: Optional[Callable[[str], Any]] = None,
         **kwargs,  # kwargs for the InstructLm.generate method
     ) -> SingleTurnChatAgentReturn[OutputDataT]:
         messages = self._prepare_messages(input_data=input_data)
-        # Wrap the `_get_valid_response` method with retry logic
-        get_valid_response_with_retry = with_retry(
-            # TODO: Update expections to be more precise
-            permissible_exceptions=(ValidationError, ValueError, Exception),
-            max_tries=n_tries_to_get_valid_response,
-            logger=self.logger,
-        )(self._get_valid_response)
-        output_data = await get_valid_response_with_retry(
+        output_data = await self._get_valid_response(
             messages=messages, stream_handler=stream_handler, **kwargs
         )
         return SingleTurnChatAgentReturn(output_data=output_data, messages=messages)
@@ -132,7 +136,10 @@ class SingleTurnChatMultipleChoiceAgent(
         instruct_lm: InstructLm,
         input_data_model: Type[InputDataT],
         user_prompt_template: Template,
+        n_implicit_calls_for_voting: int = 1,
+        max_implicit_async_calls_for_voting: int = 5,
         sys_prompt: Optional[str] = None,
+        max_tries_to_get_valid_response: int = 1,
         logger: Optional[logging.Logger] = None,
     ):
         super().__init__(
@@ -141,20 +148,24 @@ class SingleTurnChatMultipleChoiceAgent(
             output_data_model=MultipleChoiceQuestionAgentOutputData,
             user_prompt_template=user_prompt_template,
             sys_prompt=sys_prompt,
+            max_tries_to_get_valid_response=max_tries_to_get_valid_response,
             logger=logger,
         )
         self.multiple_choice_options = multiple_choice_options
+        # Decorate self with implicit voting decorator
+        self = implicitly_call_multiple_times_and_take_majority_vote(
+            n_calls=n_implicit_calls_for_voting,
+            max_async_calls=max_implicit_async_calls_for_voting,
+        )(self)
 
     async def __call__(
         self,
         input_data: InputDataT,
-        n_tries_to_get_valid_response: int = 1,
         stream_handler: Optional[Callable[[str], Any]] = None,
         **kwargs,  # kwargs for the InstructLm.generate method
     ) -> MultipleChoiceQuestionAgentReturn:
         return await super().__call__(
             input_data=input_data,
-            n_tries_to_get_valid_response=n_tries_to_get_valid_response,
             stream_handler=stream_handler,
             **kwargs,
         )

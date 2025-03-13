@@ -23,6 +23,11 @@ from sr_olthad.agents.planner import PLANNER_PROMPT_REGISTRY
 STRINGIFY_ENV_STATE_SERIALIZATION_METHOD: SerializationMethod = SerializationMethod.YAML
 
 
+###############################
+#### Sys Prompt Insertions ####
+###############################
+
+
 ################
 #### Agents ####
 ################
