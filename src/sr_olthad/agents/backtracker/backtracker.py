@@ -12,9 +12,15 @@ from sr_olthad.agents.backtracker.prompts import (
     EFFORT_WAS_EXHAUSTIVE_OPTIONS,
     WAS_PARTIAL_SUCCESS_OPTIONS,
 )
-from sr_olthad.enums import BacktrackedFromTaskStatus
+from sr_olthad.enums import BacktrackedFromTaskStatus, TaskStatus
 from sr_olthad.task_node import TaskNode
 from utils import extract_letter_from_multiple_choice_question_agent_output_data
+
+
+class BacktrackerSubAgentInputData(BaseModel):
+    env_state: str
+    olthad: str  # (pre-stringified)
+    task_in_question: str  # (pre-stringified)
 
 
 class BacktrackerInputData(BaseModel):
@@ -44,7 +50,7 @@ class Backtracker(Agent):
             user_prompt_template=cfg.ExhaustiveEffortClfConfig.USER_PROMPT_TEMPLATE,
             n_implicit_calls_for_voting=cfg.ExhaustiveEffortClfConfig.N_CALLS_FOR_VOTING,
             max_implicit_async_calls_for_voting=cfg.ExhaustiveEffortClfConfig.MAX_ASYNC_CALL_FOR_VOTING,
-            input_data_model=BacktrackerInputData,  # FIXME
+            input_data_model=BacktrackerSubAgentInputData,
             max_tries_to_get_valid_response=cfg.ExhaustiveEffortClfConfig.MAX_TRIES_TO_GET_VALID_RESPONSE,
             logger=logger,
         )
@@ -58,7 +64,7 @@ class Backtracker(Agent):
             user_prompt_template=cfg.MostWorthwhilePursuitClfConfig.USER_PROMPT_TEMPLATE,
             n_implicit_calls_for_voting=cfg.MostWorthwhilePursuitClfConfig.N_CALLS_FOR_VOTING,
             max_implicit_async_calls_for_voting=cfg.MostWorthwhilePursuitClfConfig.MAX_ASYNC_CALL_FOR_VOTING,
-            input_data_model=BacktrackerInputData,  # FIXME
+            input_data_model=BacktrackerSubAgentInputData,
             max_tries_to_get_valid_response=cfg.MostWorthwhilePursuitClfConfig.MAX_TRIES_TO_GET_VALID_RESPONSE,
             logger=logger,
         )
@@ -72,7 +78,7 @@ class Backtracker(Agent):
             user_prompt_template=cfg.PartialSuccessClfConfig.USER_PROMPT_TEMPLATE,
             n_implicit_calls_for_voting=cfg.PartialSuccessClfConfig.N_CALLS_FOR_VOTING,
             max_implicit_async_calls_for_voting=cfg.PartialSuccessClfConfig.MAX_ASYNC_CALL_FOR_VOTING,
-            input_data_model=BacktrackerInputData,  # FIXME
+            input_data_model=BacktrackerSubAgentInputData,
             max_tries_to_get_valid_response=cfg.PartialSuccessClfConfig.MAX_TRIES_TO_GET_VALID_RESPONSE,
             logger=logger,
         )
@@ -86,7 +92,7 @@ class Backtracker(Agent):
             user_prompt_template=cfg.SuccessfulCompletionClfConfig.USER_PROMPT_TEMPLATE,
             n_implicit_calls_for_voting=cfg.SuccessfulCompletionClfConfig.N_CALLS_FOR_VOTING,
             max_implicit_async_calls_for_voting=cfg.SuccessfulCompletionClfConfig.MAX_ASYNC_CALL_FOR_VOTING,
-            input_data_model=BacktrackerInputData,  # FIXME
+            input_data_model=BacktrackerSubAgentInputData,
             max_tries_to_get_valid_response=cfg.SuccessfulCompletionClfConfig.MAX_TRIES_TO_GET_VALID_RESPONSE,
             logger=logger,
         )
@@ -98,13 +104,31 @@ class Backtracker(Agent):
         callback_after_each_lm_step: Callable[[], None] = None,
     ) -> BacktrackerReturn:
         logger.info("Backtracker called...")
-        # Remove this because it confuses LMs!
-        input_data.task_in_question.status = None
+
+        # Prepare input data
+        input_data.task_in_question.status = TaskStatus.BEING_DECIDED  # Make this clear
+
+        input_data = BacktrackerSubAgentInputData(
+            env_state=input_data.env_state,
+            olthad=input_data.olthad.stringify(
+                redact_planned_subtasks_below=input_data.task_in_question.task
+            ),
+            task_in_question=str(
+                TaskNode(
+                    task=input_data.task_in_question.task,
+                    description=input_data.task_in_question.description,
+                    status=input_data.task_in_question.status,
+                    retrospective=None,
+                    subtasks=None,
+                )
+            ),
+        )
 
         # Classify whether the task has been successfully completed
         return_obj = await self.successful_completion_clf(
             input_data=input_data, stream_handler=stream_handler
         )
+        print(return_obj.messages[1]["content"])
         callback_after_each_lm_step()
         if (
             extract_letter_from_multiple_choice_question_agent_output_data(
@@ -119,3 +143,19 @@ class Backtracker(Agent):
                     retrospective=return_obj.output_data.reasoning,
                 )
             )
+
+        # Classify whether the task has been given an exhaustive effort
+        return_obj = await self.exhaustive_effort_clf(
+            input_data=input_data, stream_handler=stream_handler
+        )
+        callback_after_each_lm_step()
+        if (
+            extract_letter_from_multiple_choice_question_agent_output_data(
+                return_obj.output_data,
+                self.exhaustive_effort_clf.multiple_choice_options,
+            )
+            == EFFORT_WAS_EXHAUSTIVE_OPTIONS[BinaryCaseStr.TRUE].letter
+        ):
+            pass
+        else:
+            pass

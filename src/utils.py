@@ -101,7 +101,10 @@ def extract_letter_from_multiple_choice_question_agent_output_data(
 
 
 def implicitly_call_multiple_times_and_take_majority_vote(
-    n_calls: int = 3, max_async_calls: int = 30, logger: Optional[logging.Logger] = None
+    multiple_choice_options: BinaryChoiceOptions | NonBinaryChoiceOptions,
+    n_calls: int = 3,
+    max_async_calls: int = 30,
+    logger: Optional[logging.Logger] = None,
 ):
     """
     Decorator to wrap `MultipleChoiceQuestionAgent.__call__` implicitly invokes and
@@ -124,7 +127,6 @@ def implicitly_call_multiple_times_and_take_majority_vote(
 
     def decorator(agent_callable: MultipleChoiceQuestionAgent):
         async def method_wrapper(
-            self: MultipleChoiceQuestionAgent,  # TODO: How self is (not) handled is kind of cursed...
             input_data: BaseModel,
             stream_handler: Optional[LmStreamHandler] = None,
             **kwargs,
@@ -167,7 +169,7 @@ def implicitly_call_multiple_times_and_take_majority_vote(
                     continue
                 valid_return_objs.append(return_obj)
                 chosen = extract_letter_from_multiple_choice_question_agent_output_data(
-                    return_obj.output_data, self.multiple_choice_options
+                    return_obj.output_data, multiple_choice_options
                 )
                 counter[chosen] += 1
 
@@ -241,7 +243,7 @@ def with_retry(
                     tries_remaining -= 1
             return await func(*args, **kwargs)  # Last attempt (don't catch exceptions)
 
-        # Check if the function is a coroutine function (async def)
+        # Check if the function is a coroutine function
         if inspect.iscoroutinefunction(func):
             return async_wrapper
         else:

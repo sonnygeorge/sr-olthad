@@ -91,7 +91,8 @@ class SingleTurnChatAgent(InstructLmAgent, Generic[InputDataT, OutputDataT]):
 
     def _prepare_messages(self, input_data: InputDataT) -> List[InstructLmMessage]:
         # TODO: Raise error if model and template fields don't match up
-        user_prompt = self.user_prompt_template.render(**input_data.model_dump())
+        input_data = {k: str(v) for k, v in input_data.__dict__.items()}
+        user_prompt = self.user_prompt_template.render(**input_data)
         messages = [
             InstructLmMessage(role=InstructLmChatRole.SYS, content=self.sys_prompt),
             InstructLmMessage(role=InstructLmChatRole.USER, content=user_prompt),
@@ -168,10 +169,11 @@ class SingleTurnChatMultipleChoiceAgent(
         **kwargs,  # kwargs for the InstructLm.generate method
     ) -> MultipleChoiceQuestionAgentReturn:
         call = implicitly_call_multiple_times_and_take_majority_vote(
+            multiple_choice_options=self.multiple_choice_options,
             n_calls=self.n_implicit_calls_for_voting,
             max_async_calls=self.max_implicit_async_calls_for_voting,
             logger=self.logger,
         )(super().__call__)
         return await call(
-            self, input_data=input_data, stream_handler=stream_handler, **kwargs
+            input_data=input_data, stream_handler=stream_handler, **kwargs
         )

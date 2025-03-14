@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 from loguru import logger
 from pydantic import BaseModel
@@ -35,7 +35,9 @@ class SrOlthad:
     (sr-OLTHAD).
     """
 
-    def __init__(self, task_description: str):
+    def __init__(
+        self, task_description: str, executable_action_classifier: Callable[[str], bool]
+    ):
         self.olthad_traversal = OlthadTraversal(task_description)
         self.has_been_called_at_least_once_before = False
         # Agents

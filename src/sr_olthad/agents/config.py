@@ -39,8 +39,8 @@ class AttemptSummarizerConfig:
 
 class BacktrackerConfig:
     class ExhaustiveEffortClfConfig:
-        N_CALLS_FOR_VOTING: int = 3
-        MAX_ASYNC_CALL_FOR_VOTING: int = 2
+        N_CALLS_FOR_VOTING: int = 1
+        MAX_ASYNC_CALL_FOR_VOTING: int = 5
         MAX_TRIES_TO_GET_VALID_RESPONSE: int = 3
         INSTRUCT_LM: InstructLm = OpenAIInstructLm(model="gpt-3.5-turbo")
         PROMPTS_VERSION = "1.0"
@@ -58,8 +58,8 @@ class BacktrackerConfig:
         )
 
     class MostWorthwhilePursuitClfConfig:
-        N_CALLS_FOR_VOTING: int = 3
-        MAX_ASYNC_CALL_FOR_VOTING: int = 2
+        N_CALLS_FOR_VOTING: int = 1
+        MAX_ASYNC_CALL_FOR_VOTING: int = 5
         MAX_TRIES_TO_GET_VALID_RESPONSE: int = 3
         INSTRUCT_LM: InstructLm = OpenAIInstructLm(model="gpt-3.5-turbo")
         PROMPTS_VERSION = "1.0"
@@ -76,8 +76,8 @@ class BacktrackerConfig:
         )
 
     class PartialSuccessClfConfig:
-        N_CALLS_FOR_VOTING: int = 3
-        MAX_ASYNC_CALL_FOR_VOTING: int = 2
+        N_CALLS_FOR_VOTING: int = 1
+        MAX_ASYNC_CALL_FOR_VOTING: int = 5
         MAX_TRIES_TO_GET_VALID_RESPONSE: int = 3
         INSTRUCT_LM: InstructLm = OpenAIInstructLm(model="gpt-3.5-turbo")
         PROMPTS_VERSION = "1.0"
@@ -95,10 +95,10 @@ class BacktrackerConfig:
         )
 
     class SuccessfulCompletionClfConfig:
-        N_CALLS_FOR_VOTING: int = 3
-        MAX_ASYNC_CALL_FOR_VOTING: int = 2
+        N_CALLS_FOR_VOTING: int = 1
+        MAX_ASYNC_CALL_FOR_VOTING: int = 5
         MAX_TRIES_TO_GET_VALID_RESPONSE: int = 3
-        INSTRUCT_LM: InstructLm = OpenAIInstructLm(model="gpt-3.5-turbo")
+        INSTRUCT_LM: InstructLm = OpenAIInstructLm(model="gpt-4o-mini-2024-07-18")
         PROMPTS_VERSION = "1.0"
         USER_PROMPT_TEMPLATE = SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY[
             PROMPTS_VERSION

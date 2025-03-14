@@ -20,3 +20,4 @@ class TaskStatus(StrEnum):
     PARTIAL_SUCCESS = AttemptedTaskStatus.PARTIAL_SUCCESS
     DROPPED = BacktrackedFromTaskStatus.DROPPED
     PLANNED = "Tentatively planned"
+    BEING_DECIDED = "?"

@@ -34,7 +34,7 @@ SYS_PROMPT_INSERTION_FIELDS_NEEDED = [
 ######################
 
 
-V1_0_QUESTION = "Given this up-to-date state of everything, can the task in question be considered done? I.e., which statement is more true?"
+V1_0_QUESTION = "Can the task in question be considered done? I.e., which statement is more true?"
 
 SYS_1_0 = f"""You are a helpful AI agent who plays a crucial role in a hierarchical reasoning and acting system. Your specific job is as follows.
 
@@ -67,7 +67,7 @@ Finally, you will be asked the following:
 {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.TRUE].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.TRUE].text}
 {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.FALSE].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.FALSE].text}
 
-You will answer by first carefully thinking things through step-by-step. Only after you've thoroughly reasoned through things, provide your final response in a JSON that strictly adheres to the following format:
+You will answer by first carefully thinking things through step-by-step. Only after you've thoroughly reasoned through things, provide a BRIEF final response in a JSON that strictly adheres to the following format:
 
 ```json
 {{{{ {SysPromptInsertionField.BINARY_OUTPUT_JSON_FORMAT_SPEC} }}}}

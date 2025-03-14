@@ -35,7 +35,7 @@ EXAMPLE_OLTHAD = TaskNode(
             task="1.2",
             description="Do another sub-thing.",
             status=TaskStatus.DROPPED,
-            retrospective="This sub-thing wasn't worth pusuing further in light of A, B, and C.",
+            retrospective="This sub-thing wasn't worth pursuing further in light of A, B, and C.",
             subtasks=None,
         ),
         TaskNode(
