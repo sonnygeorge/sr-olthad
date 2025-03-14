@@ -34,7 +34,9 @@ SYS_PROMPT_INSERTION_FIELDS_NEEDED = [
 ######################
 
 
-V1_0_QUESTION = "Can the task in question be considered done? I.e., which statement is more true?"
+V1_0_QUESTION = (
+    "Can the task in question be considered done? I.e., which statement is more true?"
+)
 
 SYS_1_0 = f"""You are a helpful AI agent who plays a crucial role in a hierarchical reasoning and acting system. Your specific job is as follows.
 
@@ -57,7 +59,7 @@ PROGRESS/PLANS:
 3. Followed by an indication of which in-progress task to which you will consider assigning the "{AttemptedTaskStatus.SUCCESS}" status. E.g.,:
 
 ```text
-TASK WHOSE STATUS IS IN QUESTION:
+TASK IN QUESTION:
 {{{{ {SysPromptInsertionField.TASK_IN_QUESTION_EXAMPLE} }}}}
 ```
 
@@ -74,13 +76,19 @@ You will answer by first carefully thinking things through step-by-step. Only af
 ```"""
 
 USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:
+```text
 {{{{env_state}}}}
+```
 
 PROGRESS/PLANS:
+```json
 {{{{olthad}}}}
+```
 
-TASK WHOSE STATUS IS IN QUESTION:
+TASK IN QUESTION:
+```json
 {{{{task_in_question}}}}
+```
 
 {V1_0_QUESTION}
 {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.TRUE].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.TRUE].text}

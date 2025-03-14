@@ -15,7 +15,7 @@ class TaskNode(BaseModel):  # I.e., an OLTHAD
     retrospective: Optional[str] = None
     subtasks: Optional[List["TaskNode"]] = None
 
-    def iter_in_progress_descendants(
+    def iter_in_progress_descendants(  # TODO: Docstring!
         self,
     ) -> Generator[Tuple["TaskNode", "TaskNode"], None, None]:
         if self.status != TaskStatus.IN_PROGRESS:
@@ -60,9 +60,13 @@ class TaskNode(BaseModel):  # I.e., an OLTHAD
         return self.stringify()
 
     def stringify(
-        self, redact_planned_subtasks_below: Optional[str] = None, indent: int = 3
+        self,
+        redact_planned_subtasks_below: Optional[str] = None,
+        obfuscate_status_of: Optional[str] = None,
+        indent: int = 3,
     ) -> str:
-        redacted_str = '(FUTURE PLANNED TASKS REDACTED)'
+        redacted_str = "(FUTURE PLANNED TASKS REDACTED)"
+        obfuscated_status_str = "?"
         indent = " " * indent
         output_str = ""
 
@@ -72,6 +76,12 @@ class TaskNode(BaseModel):  # I.e., an OLTHAD
             for key, value in node.__dict__.items():
                 if key == "subtasks":
                     continue
+                if (
+                    obfuscate_status_of is not None
+                    and key == "status"
+                    and node.task == obfuscate_status_of
+                ):
+                    value = obfuscated_status_str
                 partial_node_dict[key] = value
             partial_node_str = StructuredDataStringifier.stringify(
                 partial_node_dict,

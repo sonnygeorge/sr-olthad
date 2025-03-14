@@ -42,7 +42,7 @@ class BacktrackerConfig:
         N_CALLS_FOR_VOTING: int = 1
         MAX_ASYNC_CALL_FOR_VOTING: int = 5
         MAX_TRIES_TO_GET_VALID_RESPONSE: int = 3
-        INSTRUCT_LM: InstructLm = OpenAIInstructLm(model="gpt-3.5-turbo")
+        INSTRUCT_LM: InstructLm = OpenAIInstructLm(model="gpt-4o-mini-2024-07-18")
         PROMPTS_VERSION = "1.0"
         USER_PROMPT_TEMPLATE = EXHAUSTIVE_EFFORT_CLF_PROMPT_REGISTRY[
             PROMPTS_VERSION

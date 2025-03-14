@@ -56,7 +56,7 @@ PROGRESS/PLANS:
 3. Followed by an indication of which in-progress task about which you will be questioned, e.g.:
 
 ```text
-TASK WHOSE STATUS IS IN QUESTION:
+TASK IN QUESTION:
 {{{{ {SysPromptInsertionField.TASK_IN_QUESTION_EXAMPLE} }}}}
 ```
 

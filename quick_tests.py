@@ -195,94 +195,42 @@ def print_backtracker_agent_prompts():
     print(cfg.SuccessfulCompletionClfConfig.USER_PROMPT_TEMPLATE.render())
 
 
-def test_backtracker_successful_completion_clf():
+def test_backtracker():
     from sr_olthad.enums import TaskStatus
     from sr_olthad.agents import Backtracker, BacktrackerInputData
     from sr_olthad.task_node import TaskNode
 
-    env_state = (
-        'Mr. Stevens handed you a sack of apples. Your inventory now is: {"apples": 9}.'
-    )
+    # env_state = "You are sitting at a wood table. The lights are on. Two slices of pizza remain."
+    env_state = "It's 4:56pm. You feel full. The pizza is cold."
     task_in_question = TaskNode(
-        task="1.2",
-        description="Acquire an Apple.",
-        status=TaskStatus.IN_PROGRESS,
-        retrospective=None,
-        subtasks=None,
-    )
-    olthad = TaskNode(
-        task="1",
-        description="Acquire Fruit.",
-        status=TaskStatus.IN_PROGRESS,
-        retrospective=None,
-        subtasks=[
-            TaskNode(
-                task="1.1",
-                description="Acquire an Orange.",
-                status=TaskStatus.SUCCESS,
-                retrospective="You acquired an orange by picking it from a tree.",
-                subtasks=None,
-            ),
-            task_in_question,
-        ],
-    )
-
-    def wait_for_user_to_proceed():
-        input("Press Enter to continue...")
-        return
-
-    backtracker_input_data = BacktrackerInputData(
-        env_state=env_state,
-        olthad=olthad,
-        task_in_question=task_in_question,
-    )
-
-    backtracker = Backtracker()  # Initialize the backtracker agent w/ default configs
-    return_obj = asyncio.run(
-        backtracker(
-            input_data=backtracker_input_data,
-            stream_handler=PrintOneLmStreamHandler(),
-            callback_after_each_lm_step=wait_for_user_to_proceed,
-        )
-    )
-    rich.print(return_obj)
-
-
-def test_backtracker_exhaustive_effort_clf():
-    from sr_olthad.enums import TaskStatus
-    from sr_olthad.agents import Backtracker, BacktrackerInputData
-    from sr_olthad.task_node import TaskNode
-
-    env_state = "You are sitting at a wood table. The lights are on. Two slices of pizza remain."
-    task_in_question = TaskNode(
-        task="1",
+        task="1.1",
         description="Eat all four slices of the pizza.",
         status=TaskStatus.IN_PROGRESS,
         retrospective=None,
         subtasks=[
             TaskNode(
-                task="1.1",
+                task="1.1.1",
                 description="Eat the first slice.",
                 status=TaskStatus.SUCCESS,
                 retrospective="You ate the first slice of pizza.",
                 subtasks=None,
             ),
             TaskNode(
-                task="1.2",
+                task="1.1.2",
                 description="Eat the second slice.",
                 status=TaskStatus.SUCCESS,
                 retrospective="You ate the second slice of pizza.",
                 subtasks=None,
             ),
             TaskNode(
-                task="1.3",
+                task="1.1.3",
                 description="Eat the third slice.",
                 status=TaskStatus.PLANNED,
                 retrospective=None,
                 subtasks=None,
             ),
             TaskNode(
-                task="1.3",
+                task="1.1.4",
                 description="Eat the fourth slice.",
                 status=TaskStatus.PLANNED,
                 retrospective=None,
@@ -290,10 +238,16 @@ def test_backtracker_exhaustive_effort_clf():
             ),
         ],
     )
-    olthad = task_in_question
+    olthad = TaskNode(
+        task="1",
+        description="Satiate your hunger.",
+        status=TaskStatus.IN_PROGRESS,
+        retrospective=None,
+        subtasks=[task_in_question],
+    )
 
-    def wait_for_user_to_proceed():
-        input("Press Enter to continue...")
+    def wait_for_user_to_proceed(messages):
+        input("\n\nPress Enter to continue...")
         return
 
     backtracker_input_data = BacktrackerInputData(
@@ -310,7 +264,12 @@ def test_backtracker_exhaustive_effort_clf():
             callback_after_each_lm_step=wait_for_user_to_proceed,
         )
     )
-
+    print("\n\nCHOSEN STATUS:\n")
+    print(return_obj.output_data.chosen_status)
+    print("\nRETROSPECTIVE:\n")
+    print(return_obj.output_data.retrospective)
+    print("\nBACKTRACK TO:\n")
+    print(return_obj.output_data.backtrack_to)
 
 
 if __name__ == "__main__":
@@ -319,4 +278,4 @@ if __name__ == "__main__":
     # test_single_turn_chat_agent()
     # print_backtracker_agent_prompts()
     # test_backtracker_successful_completion_clf()
-    test_backtracker_exhaustive_effort_clf()
+    test_backtracker()

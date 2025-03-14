@@ -35,25 +35,25 @@ SYS_PROMPT_INSERTION_FIELDS_NEEDED = [
 
 V1_0_QUESTION = "Given the current state of everything, which statement is more true?"
 
-SYS_1_0 = f"""You are a helpful AI assistant who plays a crucial role in a decision-making system designed to help an actor achieve any-horizon goals through hierarchical temporal reasoning. Your specific job is as follows.
+SYS_1_0 = f"""You are a helpful AI agent who plays a crucial role in a hierarchical reasoning and acting system. Your specific job is as follows.
 
 You will be given:
 
-1. Information representing the current state of the actor and environment:
+1. Information representing/describing the current, up-to-date state of the environment:
 
 ```text
 CURRENT ACTOR/ENVIRONMENT STATE:
 ...
 ```
 
-2. Followed by a hierarchical representation of the actor's progress and future plans towards a highest-level goal, e.g.:
+2. A representation of the ongoing progress/plans, e.g.:
 
 ```text
 PROGRESS/PLANS:
 {{{{ {SysPromptInsertionField.OLTHAD_EXAMPLE} }}}}
 ```
 
-3. Followed by an indication of which in-progress task is the task you will be considering, e.g.,:
+3. Followed by an indication of which in-progress task about which you will be questioned, e.g.:
 
 ```text
 TASK IN QUESTION:
@@ -84,13 +84,19 @@ Think things through step-by-step, considering each of the above points as you g
 ```"""
 
 USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:
+```text
 {{{{env_state}}}}
+```
 
 PROGRESS/PLANS:
+```json
 {{{{olthad}}}}
+```
 
 TASK IN QUESTION:
+```json
 {{{{task_in_question}}}}
+```
 
 {V1_0_QUESTION}
 {IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.TRUE].letter}. {IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.TRUE].text}

@@ -1,9 +1,9 @@
 from loguru import logger
 from pydantic import BaseModel
-from typing import Optional, Callable
+from typing import Optional, Callable, List
 
 from enums import BinaryCaseStr
-from schema import Agent, AgentReturn, LmStreamHandler
+from schema import Agent, AgentReturn, LmStreamHandler, InstructLmMessage
 from single_turn_chat_agent import SingleTurnChatMultipleChoiceAgent
 from sr_olthad.agents.config import BacktrackerConfig as cfg
 from sr_olthad.agents.backtracker.prompts import (
@@ -31,7 +31,8 @@ class BacktrackerInputData(BaseModel):
 
 class BacktrackerOutputData(BaseModel):
     chosen_status: BacktrackedFromTaskStatus
-    retrospective: str
+    retrospective: Optional[str]
+    backtrack_to: Optional[TaskNode]
 
 
 class BacktrackerReturn(AgentReturn):
@@ -101,35 +102,34 @@ class Backtracker(Agent):
         self,
         input_data: BacktrackerInputData,
         stream_handler: Optional[LmStreamHandler] = None,
-        callback_after_each_lm_step: Callable[[], None] = None,
+        callback_after_each_lm_step: Optional[
+            Callable[[List[List[InstructLmMessage]]], None]
+        ] = None,
     ) -> BacktrackerReturn:
-        logger.info("Backtracker called...")
 
         # Prepare input data
-        input_data.task_in_question.status = TaskStatus.BEING_DECIDED  # Make this clear
-
-        input_data = BacktrackerSubAgentInputData(
+        sub_agent_input_data = BacktrackerSubAgentInputData(
             env_state=input_data.env_state,
             olthad=input_data.olthad.stringify(
-                redact_planned_subtasks_below=input_data.task_in_question.task
+                redact_planned_subtasks_below=input_data.task_in_question.task,
+                obfuscate_status_of=input_data.task_in_question.task,
             ),
-            task_in_question=str(
-                TaskNode(
-                    task=input_data.task_in_question.task,
-                    description=input_data.task_in_question.description,
-                    status=input_data.task_in_question.status,
-                    retrospective=None,
-                    subtasks=None,
-                )
+            task_in_question=input_data.task_in_question.stringify(
+                redact_planned_subtasks_below=input_data.task_in_question.task,
+                obfuscate_status_of=input_data.task_in_question.task,
             ),
         )
 
-        # Classify whether the task has been successfully completed
+        # #################################################################
+        # ### Classify whether the task has been successfully completed ###
+        # #################################################################
+
+        logger.info("Checking if the task has been successfully completed...")
+
         return_obj = await self.successful_completion_clf(
-            input_data=input_data, stream_handler=stream_handler
+            input_data=sub_agent_input_data, stream_handler=stream_handler
         )
-        print(return_obj.messages[1]["content"])
-        callback_after_each_lm_step()
+        callback_after_each_lm_step(return_obj.messages)
         if (
             extract_letter_from_multiple_choice_question_agent_output_data(
                 return_obj.output_data,
@@ -137,6 +137,7 @@ class Backtracker(Agent):
             )
             == WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.TRUE].letter
         ):
+            input_data.task_in_question.status = TaskStatus.SUCCESS
             return BacktrackerReturn(
                 output_data=BacktrackerOutputData(
                     chosen_status=BacktrackedFromTaskStatus.SUCCESS,
@@ -144,11 +145,16 @@ class Backtracker(Agent):
                 )
             )
 
-        # Classify whether the task has been given an exhaustive effort
+        #####################################################################
+        ### Classify whether the task has been given an exhaustive effort ###
+        #####################################################################
+
+        logger.info("Checking if an exhaustive effort was given...")
+
         return_obj = await self.exhaustive_effort_clf(
-            input_data=input_data, stream_handler=stream_handler
+            input_data=sub_agent_input_data, stream_handler=stream_handler
         )
-        callback_after_each_lm_step()
+        callback_after_each_lm_step(return_obj.messages)
         if (
             extract_letter_from_multiple_choice_question_agent_output_data(
                 return_obj.output_data,
@@ -156,6 +162,80 @@ class Backtracker(Agent):
             )
             == EFFORT_WAS_EXHAUSTIVE_OPTIONS[BinaryCaseStr.TRUE].letter
         ):
-            pass
+            #############################################################
+            ### Classify whether the completion was a partial success ###
+            #############################################################
+
+            logger.info("Checking if the task was a partial succes (or failure)...")
+
+            return_obj = await self.partial_success_clf(
+                input_data=sub_agent_input_data, stream_handler=stream_handler
+            )
+            callback_after_each_lm_step(return_obj.messages)
+            if (
+                extract_letter_from_multiple_choice_question_agent_output_data(
+                    return_obj.output_data,
+                    self.partial_success_clf.multiple_choice_options,
+                )
+                == WAS_PARTIAL_SUCCESS_OPTIONS[BinaryCaseStr.TRUE].letter
+            ):
+                return BacktrackerReturn(
+                    output_data=BacktrackerOutputData(
+                        chosen_status=BacktrackedFromTaskStatus.PARTIAL_SUCCESS,
+                        retrospective=return_obj.output_data.reasoning,
+                    )
+                )
+            else:
+                return BacktrackerReturn(
+                    output_data=BacktrackerOutputData(
+                        chosen_status=BacktrackedFromTaskStatus.FAILURE,
+                        retrospective=return_obj.output_data.reasoning,
+                    )
+                )
         else:
-            pass
+            ###########################################################################
+            ### Classify if ancestor tasks are (still) the most worthwhile pursuits ###
+            ###########################################################################
+
+            logger.info(
+                "Checking if all ancestors are still the most worthwhile pursuits..."
+            )
+
+            # Iterate through a gradual reconstruction of the olthad starting from root
+            for root_node, cur_node in input_data.olthad.iter_in_progress_descendants():
+                sub_agent_input_data = BacktrackerSubAgentInputData(
+                    env_state=input_data.env_state,
+                    olthad=root_node.stringify(
+                        redact_planned_subtasks_below=cur_node.task,
+                        obfuscate_status_of=cur_node.task,
+                    ),
+                    task_in_question=cur_node.stringify(
+                        redact_planned_subtasks_below=cur_node.task,
+                        obfuscate_status_of=cur_node.task,
+                    ),
+                )
+                return_obj = await self.most_worthwhile_pursuit_clf(
+                    input_data=sub_agent_input_data, stream_handler=stream_handler
+                )
+                callback_after_each_lm_step(return_obj.messages)
+                if (
+                    extract_letter_from_multiple_choice_question_agent_output_data(
+                        return_obj.output_data,
+                        self.most_worthwhile_pursuit_clf.multiple_choice_options,
+                    )
+                    == IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.FALSE].letter
+                ):
+                    return BacktrackerReturn(
+                        output_data=BacktrackerOutputData(
+                            chosen_status=BacktrackedFromTaskStatus.DROPPED,
+                            retrospective=return_obj.output_data.reasoning,
+                            backtrack_to=cur_node,
+                        )
+                    )
+            # Finally, if no ancestors are worth dropping, status stays in progress
+            return BacktrackerReturn(
+                output_data=BacktrackerOutputData(
+                    chosen_status=BacktrackedFromTaskStatus.IN_PROGRESS,
+                    retrospective=None,
+                )
+            )
