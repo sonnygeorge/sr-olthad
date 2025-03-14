@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 sys.path.append("src")
 
-from instruct_lms import OpenAIInstructLm
+from lms import OpenAIInstructLm
 from schema import (
     InstructLmAgent,
     InstructLmAgentReturn,
@@ -20,7 +20,7 @@ from schema import (
     MultipleChoiceQuestionAgentReturn,
     LmStreamHandler,
 )
-from single_turn_chat_agent import SingleTurnChatAgent
+from agents import SingleTurnChatAgent
 from utils import implicitly_call_multiple_times_and_take_majority_vote
 
 
@@ -198,7 +198,7 @@ def print_backtracker_agent_prompts():
 def test_backtracker():
     from sr_olthad.enums import TaskStatus
     from sr_olthad.agents import Backtracker, BacktrackerInputData
-    from sr_olthad.task_node import TaskNode
+    from sr_olthad.olthad.task_node import TaskNode
 
     # env_state = "You are sitting at a wood table. The lights are on. Two slices of pizza remain."
     env_state = "It's 4:56pm. You feel full. The pizza is cold."

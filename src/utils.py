@@ -83,28 +83,27 @@ def detect_extract_and_parse_json_from_text(
         raise ValueError(f"Error processing text: {str(e)}")
 
 
-def extract_letter_from_multiple_choice_question_agent_output_data(
-    output_data: MultipleChoiceQuestionAgentOutputData,
+def extract_letter_choice_from_text(
+    text: str,
     options: BinaryChoiceOptions | NonBinaryChoiceOptions,
 ) -> str:
-    chosen = output_data.chosen
     for option in options.values():
         option_letter_clean = "".join(c for c in option.letter if c.isalpha()).lower()
         option_text_clean = "".join(c for c in option.text if c.isalpha()).lower()
-        chosen_clean = "".join(c for c in chosen if c.isalpha()).lower()
-        if option_letter_clean == chosen_clean:  # Only the letter was output
+        chosen_clean = "".join(c for c in text if c.isalpha()).lower()
+        if option_letter_clean == chosen_clean:
             return option.letter
         if option_text_clean in chosen_clean:
             return option.letter
     # TODO: fuzzy matching -- (possibly, certainly not urgent)
-    raise ValueError("Chosen answer not found in the provided options")
+    raise ValueError("None of the answer choices were found in the text")
 
 
 def implicitly_call_multiple_times_and_take_majority_vote(
     multiple_choice_options: BinaryChoiceOptions | NonBinaryChoiceOptions,
     n_calls: int = 3,
     max_async_calls: int = 30,
-    logger: Optional[logging.Logger] = None,
+    logger: Optional[logging.Logger] = None,  # TODO: Use logger?
 ):
     """
     Decorator to wrap `MultipleChoiceQuestionAgent.__call__` implicitly invokes and
@@ -168,7 +167,7 @@ def implicitly_call_multiple_times_and_take_majority_vote(
                     exceptions.append(return_obj)
                     continue
                 valid_return_objs.append(return_obj)
-                chosen = extract_letter_from_multiple_choice_question_agent_output_data(
+                chosen = extract_letter_choice_from_text(
                     return_obj.output_data, multiple_choice_options
                 )
                 counter[chosen] += 1
@@ -211,6 +210,29 @@ def with_retry(
     max_tries: int = 3,
     logger: Optional[logging.Logger] = None,
 ):
+    """Decorator that wraps a function with implicitly retry logic.
+
+    This decorator automatically handles both synchronous and asynchronous functions.
+    When specified exceptions occur, it retries the function up to the maximum number
+    of attempts. The final attempt will not catch exceptions, allowing them to
+    propagate naturally.
+
+    Args:
+        permissible_exceptions: A single exception class or a tuple of exception
+            classes that should trigger a retry.
+        max_tries: Maximum number of attempts to execute the function. Defaults to 3.
+        logger: Optional logger to use for logging retries. If None, print statements
+            will be used instead. Defaults to None.
+
+    Returns:
+        A decorated function that will retry when the specified exceptions occur.
+
+    Example:
+        >>> @with_retry(ValueError, max_tries=3)
+        ... def parse_data(data):
+        ...     return int(data)
+        ...
+    """
     T = TypeVar("T")
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
@@ -243,7 +265,6 @@ def with_retry(
                     tries_remaining -= 1
             return await func(*args, **kwargs)  # Last attempt (don't catch exceptions)
 
-        # Check if the function is a coroutine function
         if inspect.iscoroutinefunction(func):
             return async_wrapper
         else:

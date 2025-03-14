@@ -1,7 +1,7 @@
 from enum import StrEnum
 
 from sr_olthad.enums import TaskStatus
-from sr_olthad.task_node import TaskNode
+from sr_olthad.olthad.task_node import TaskNode
 
 # NOTE: This must align with `schema.MultipleChoiceQuestionAgentOutputData`, in order
 # for LMs to know to output somethng that can be parsed with this Pydantic model.

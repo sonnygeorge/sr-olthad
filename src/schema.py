@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import (
-    Any,
-    Callable,
     Dict,
     List,
     Optional,
@@ -37,11 +35,17 @@ class InstructLmMessage(TypedDict):
     content: str
 
 
-# 1st arg is stream chunk string
-# 2nd is what number async call is streaming (`None` if not running multiple async calls)
 class LmStreamHandler(ABC):
     @abstractmethod
     def __call__(self, chunk_str: str, async_call_idx: Optional[int] = None):
+        """A `Callable` that handles streaming LM output.
+
+        Args:
+            chunk_str (str): The string chunk of LM output.
+            async_call_idx (Optional[int], optional): When the stream is one amongst many
+                asynchronous LM calls, this is the number/index of which call the stream
+                chunk is coming from. Defaults to None.
+        """
         pass
 
 
@@ -149,6 +153,6 @@ class SingleTurnPromptTemplates:
     sys_prompt_template: Optional[Template] = None
 
 
-# E.g. "1.0" where the 1st number changes for major strategy changes
+# E.g. "1.0" where the 1st number changes for _major_ strategy changes
 PromptVersionString: TypeAlias = str
 PromptRegistry = Dict[PromptVersionString, SingleTurnPromptTemplates]

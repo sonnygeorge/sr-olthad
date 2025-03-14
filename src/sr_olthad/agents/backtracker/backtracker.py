@@ -4,7 +4,7 @@ from typing import Optional, Callable, List
 
 from enums import BinaryCaseStr
 from schema import Agent, AgentReturn, LmStreamHandler, InstructLmMessage
-from single_turn_chat_agent import SingleTurnChatMultipleChoiceAgent
+from agents import SingleTurnChatMultipleChoiceAgent
 from sr_olthad.agents.config import BacktrackerConfig as cfg
 from sr_olthad.agents.backtracker.prompts import (
     WAS_SUCCESSFULLY_COMPLETED_OPTIONS,
@@ -13,8 +13,8 @@ from sr_olthad.agents.backtracker.prompts import (
     WAS_PARTIAL_SUCCESS_OPTIONS,
 )
 from sr_olthad.enums import BacktrackedFromTaskStatus, TaskStatus
-from sr_olthad.task_node import TaskNode
-from utils import extract_letter_from_multiple_choice_question_agent_output_data
+from sr_olthad.olthad.task_node import TaskNode
+from utils import extract_letter_choice_from_text
 
 
 class BacktrackerSubAgentInputData(BaseModel):
@@ -131,8 +131,8 @@ class Backtracker(Agent):
         )
         callback_after_each_lm_step(return_obj.messages)
         if (
-            extract_letter_from_multiple_choice_question_agent_output_data(
-                return_obj.output_data,
+            extract_letter_choice_from_text(
+                return_obj.output_data.chosen,
                 self.successful_completion_clf.multiple_choice_options,
             )
             == WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.TRUE].letter
@@ -156,8 +156,8 @@ class Backtracker(Agent):
         )
         callback_after_each_lm_step(return_obj.messages)
         if (
-            extract_letter_from_multiple_choice_question_agent_output_data(
-                return_obj.output_data,
+            extract_letter_choice_from_text(
+                return_obj.output_data.chosen,
                 self.exhaustive_effort_clf.multiple_choice_options,
             )
             == EFFORT_WAS_EXHAUSTIVE_OPTIONS[BinaryCaseStr.TRUE].letter
@@ -173,8 +173,8 @@ class Backtracker(Agent):
             )
             callback_after_each_lm_step(return_obj.messages)
             if (
-                extract_letter_from_multiple_choice_question_agent_output_data(
-                    return_obj.output_data,
+                extract_letter_choice_from_text(
+                    return_obj.output_data.chosen,
                     self.partial_success_clf.multiple_choice_options,
                 )
                 == WAS_PARTIAL_SUCCESS_OPTIONS[BinaryCaseStr.TRUE].letter
@@ -219,8 +219,8 @@ class Backtracker(Agent):
                 )
                 callback_after_each_lm_step(return_obj.messages)
                 if (
-                    extract_letter_from_multiple_choice_question_agent_output_data(
-                        return_obj.output_data,
+                    extract_letter_choice_from_text(
+                        return_obj.output_data.chosen,
                         self.most_worthwhile_pursuit_clf.multiple_choice_options,
                     )
                     == IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.FALSE].letter

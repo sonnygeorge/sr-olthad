@@ -1,4 +1,4 @@
-from instruct_lms import OpenAIInstructLm
+from lms import OpenAIInstructLm
 from schema import InstructLm
 
 from sr_olthad.agents.attempt_summarizer import ATTEMPT_SUMMARIZER_PROMPT_REGISTRY
@@ -16,7 +16,7 @@ from sr_olthad.agents.forgetter import FORGETTER_PROMPT_REGISTRY
 from sr_olthad.agents.planner import PLANNER_PROMPT_REGISTRY
 from sr_olthad.enums import TaskStatus
 from sr_olthad.prompts import SYS_PROMPT_INSERTIONS_REGISTRY
-from sr_olthad.task_node import TaskNode
+from sr_olthad.olthad.task_node import TaskNode
 
 
 ################

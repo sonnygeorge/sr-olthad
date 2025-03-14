@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 from sr_olthad.enums import AttemptedTaskStatus, BacktrackedFromTaskStatus, TaskStatus
-from sr_olthad.task_node import TaskNode
+from sr_olthad.olthad.task_node import TaskNode
 
 
 @dataclass
