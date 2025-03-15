@@ -1,8 +1,8 @@
-from typing import List
+from typing import Callable, List, Optional
 
 from pydantic import BaseModel
 
-from agent_framework.schema import Agent, InstructLmMessages
+from agent_framework.schema import Agent, InstructLmMessage, LmStreamHandler
 
 
 class ForgetterInputData(BaseModel):
@@ -15,10 +15,19 @@ class ForgetterOutputData(BaseModel):
 
 class ForgetterReturn:
     output_data: ForgetterOutputData
-    messages: InstructLmMessages | List[InstructLmMessages]
 
 
 class Forgetter(Agent):
+    def __init__(
+        self,
+        stream_handler: Optional[LmStreamHandler] = None,
+        callback_after_each_lm_step: Optional[
+            Callable[[List[InstructLmMessage]], None]
+        ] = None,
+    ):
+        self.stream_handler = stream_handler
+        self.callback_after_each_lm_step = callback_after_each_lm_step
+
     async def __call__(
         self, input_data: ForgetterInputData
     ) -> ForgetterReturn:

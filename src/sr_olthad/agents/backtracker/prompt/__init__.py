@@ -1,7 +1,7 @@
 from sr_olthad.agents.backtracker.prompt.common import (
-    BacktrackerSubAgentInputPromptData,
+    BacktrackerSubAgentLmResponseOutputData,
     BacktrackerSubAgentOutputFields,
-    BacktrackerSubAgentOutputPromptData,
+    BacktrackerSubAgentPromptInputData,
 )
 from sr_olthad.agents.backtracker.prompt.exhaustive_effort import (
     EFFORT_WAS_EXHAUSTIVE_OPTIONS,

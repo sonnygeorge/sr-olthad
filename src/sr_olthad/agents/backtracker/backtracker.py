@@ -5,7 +5,7 @@ from loguru import logger
 from pydantic import BaseModel
 
 from agent_framework.agents import SingleTurnChatAgent
-from agent_framework.schema import Agent, InstructLmMessages, LmStreamHandler
+from agent_framework.schema import Agent, InstructLmMessage, LmStreamHandler
 from agent_framework.utils import with_implicit_async_voting
 from sr_olthad.agents.backtracker.prompt import (
     EFFORT_WAS_EXHAUSTIVE_OPTIONS,
@@ -16,9 +16,9 @@ from sr_olthad.agents.backtracker.prompt import (
     SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY,
     WAS_PARTIAL_SUCCESS_OPTIONS,
     WAS_SUCCESSFULLY_COMPLETED_OPTIONS,
-    BacktrackerSubAgentInputPromptData,
+    BacktrackerSubAgentLmResponseOutputData,
     BacktrackerSubAgentOutputFields,
-    BacktrackerSubAgentOutputPromptData,
+    BacktrackerSubAgentPromptInputData,
 )
 from sr_olthad.config import BacktrackerCfg as cfg
 from sr_olthad.olthad import BacktrackedFromTaskStatus, TaskNode, TaskStatus
@@ -29,25 +29,37 @@ from sr_olthad.utils import (
 
 class BacktrackerInputData(BaseModel):
     """
-    Input data for the backtracker agent.
+    Input data for the Backtracker agent.
 
     Attributes:
-        env_state (str): STRINGIFIED current environment state.
-        olthad_root (TaskNode): The root node of the OLTHAD being traversed.
-        task_in_question (TaskNode): The node we're considering backtracking from.
+        env_state (str): PRE-STRINGIFIED current environment state.
+        root_task_node (TaskNode): The root task node of the OLTHAD.
+        current_task_node (TaskNode): The task node we're considering backtracking from.
     """
 
     env_state: str
-    olthad_root: TaskNode
-    task_in_question: TaskNode
+    root_task_node: TaskNode
+    current_task_node: TaskNode
 
 
 class BacktrackerOutputData(BaseModel):
-    status_to_assign: BacktrackedFromTaskStatus
-    retrospective: Optional[str | List[str]]
-    ancestor_to_backtrack_to_if_not_parent: Optional[
-        TaskNode | List[TaskNode]
-    ] = None
+    """
+    Output data for the Backtracker agent.
+
+    Attributes:
+        status_to_assign (Optional[BacktrackedFromTaskStatus]): If backtracking is deemed
+            warranted, this is the status to assign to the task in question. Else, `None`.
+        retrospective_to_assign (Optional[str | List[str]]): If backtracking is deemed
+            warranted, this is the retrospective to assign to the task in question. Else,
+            `None`.
+        id_of_ancestor_to_backtrack_to (Optional[TaskNode]]):
+            If backtracking is deeed warranted, this is the id of the ancestor node to
+            backtrack to Else, `None`.
+    """
+
+    backtracked_from_status_to_assign: Optional[BacktrackedFromTaskStatus]
+    retrospective_to_assign: Optional[str | List[str]]
+    id_of_ancestor_to_backtrack_to: Optional[TaskNode]
 
 
 @dataclass
@@ -56,7 +68,29 @@ class BacktrackerReturn:
 
 
 class Backtracker(Agent):
-    def __init__(self):
+    """
+    The backtracker agent in the sr-OLTHAD system.
+    """
+
+    def __init__(
+        self,
+        stream_handler: Optional[LmStreamHandler] = None,
+        callback_after_each_lm_step: Optional[
+            Callable[[List[InstructLmMessage]], None]
+        ] = None,
+    ):
+        """
+        Initializes the backtracker agent.
+
+        Args:
+            stream_handler (Optional[LmStreamHandler], optional): The handler to use for
+                streaming language model responses. Defaults to None.
+            callback_after_each_lm_step (Optional[Callable[[List[InstructLmMessage]], None]], optional):
+                A function to call after each language model step. Defaults to None.
+        """
+        self.stream_handler = stream_handler
+        self.callback_after_each_lm_step = callback_after_each_lm_step
+
         ###############################################
         ### Initialize exhaustive effort classifier ###
         ###############################################
@@ -65,10 +99,10 @@ class Backtracker(Agent):
             cfg.ExhaustiveEffortClf.PROMPTS_VERSION
         ]
         self.exhaustive_effort_clf: SingleTurnChatAgent[
-            BacktrackerSubAgentOutputPromptData
+            BacktrackerSubAgentLmResponseOutputData
         ] = SingleTurnChatAgent(
             instruct_lm=cfg.ExhaustiveEffortClf.INSTRUCT_LM,
-            response_json_data_model=BacktrackerSubAgentOutputPromptData,
+            response_json_data_model=BacktrackerSubAgentLmResponseOutputData,
             # TODO: Render sys prompt dynamically, e.g., w/ RAG of relevant good examples
             sys_prompt=exhaustive_effort_prompts.sys_prompt_template.render(),
             user_prompt_template=exhaustive_effort_prompts.user_prompt_template,
@@ -92,10 +126,10 @@ class Backtracker(Agent):
             ]
         )
         self.most_worthwhile_pursuit_clf: SingleTurnChatAgent[
-            BacktrackerSubAgentOutputPromptData
+            BacktrackerSubAgentLmResponseOutputData
         ] = SingleTurnChatAgent(
             instruct_lm=cfg.MostWorthwhilePursuitClfCfg.INSTRUCT_LM,
-            response_json_data_model=BacktrackerSubAgentOutputPromptData,
+            response_json_data_model=BacktrackerSubAgentLmResponseOutputData,
             # TODO: Render sys prompt dynamically, e.g., w/ RAG of relevant good examples
             sys_prompt=most_worthwhile_pursuit_prompts.sys_prompt_template.render(),
             user_prompt_template=most_worthwhile_pursuit_prompts.user_prompt_template,
@@ -109,18 +143,18 @@ class Backtracker(Agent):
             logger=logger,
         )(self.most_worthwhile_pursuit_clf)
 
-        ###########################################
+        #############################################
         ### Initialize partial success classifier ###
-        ###########################################
+        #############################################
 
         partial_success_prompts = PARTIAL_SUCCESS_CLF_PROMPT_REGISTRY[
             cfg.PartialSuccessClfCfg.PROMPTS_VERSION
         ]
         self.partial_success_clf: SingleTurnChatAgent[
-            BacktrackerSubAgentOutputPromptData
+            BacktrackerSubAgentLmResponseOutputData
         ] = SingleTurnChatAgent(
             instruct_lm=cfg.PartialSuccessClfCfg.INSTRUCT_LM,
-            response_json_data_model=BacktrackerSubAgentOutputPromptData,
+            response_json_data_model=BacktrackerSubAgentLmResponseOutputData,
             # TODO: Render sys prompt dynamically, e.g., w/ RAG of relevant good examples
             sys_prompt=partial_success_prompts.sys_prompt_template.render(),
             user_prompt_template=partial_success_prompts.user_prompt_template,
@@ -134,9 +168,9 @@ class Backtracker(Agent):
             logger=logger,
         )(self.partial_success_clf)
 
-        ########################################################
+        ###################################################
         ### Initialize successful completion classifier ###
-        ########################################################
+        ###################################################
 
         successful_completion_prompts = (
             SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY[
@@ -144,10 +178,10 @@ class Backtracker(Agent):
             ]
         )
         self.successful_completion_clf: SingleTurnChatAgent[
-            BacktrackerSubAgentOutputPromptData
+            BacktrackerSubAgentLmResponseOutputData
         ] = SingleTurnChatAgent(
             instruct_lm=cfg.SuccessfulCompletionClfCfg.INSTRUCT_LM,
-            response_json_data_model=BacktrackerSubAgentOutputPromptData,
+            response_json_data_model=BacktrackerSubAgentLmResponseOutputData,
             # TODO: Render sys prompt dynamically, e.g., w/ RAG of relevant good examples
             sys_prompt=successful_completion_prompts.sys_prompt_template.render(),
             user_prompt_template=successful_completion_prompts.user_prompt_template,
@@ -164,28 +198,27 @@ class Backtracker(Agent):
     async def __call__(
         self,
         input_data: BacktrackerInputData,
-        stream_handler: Optional[LmStreamHandler] = None,
-        callback_after_each_lm_step: Optional[
-            Callable[[List[InstructLmMessages]], None]
-        ] = None,
     ) -> BacktrackerReturn:
         """
-        Run the backtracker agent."
+        Run the backtracker agent.
 
         Args:
-            input_data (BacktrackerInputData): The input data for the agent.
-            ...
+            input_data (BacktrackerInputData): The input data.
+
+        Returns:
+            BacktrackerReturn: The output return object with an `output_data` attribute
+                of type `BacktrackerOutputData`.
         """
 
-        sub_agent_input_data = BacktrackerSubAgentInputPromptData(
+        sub_agent_input_data = BacktrackerSubAgentPromptInputData(
             env_state=input_data.env_state,
-            olthad=input_data.olthad_root.stringify(  # Pre-stringify w/ args
-                redact_planned_subtasks_below=input_data.task_in_question.task,
-                obfuscate_status_of=input_data.task_in_question.task,
+            olthad=input_data.root_task_node.stringify(  # Pre-stringify w/ args
+                redact_planned_subtasks_below=input_data.current_task_node.id,
+                obfuscate_status_of=input_data.current_task_node.id,
             ),
-            task_in_question=input_data.task_in_question.stringify(
-                redact_planned_subtasks_below=input_data.task_in_question.task,
-                obfuscate_status_of=input_data.task_in_question.task,
+            task_in_question=input_data.current_task_node.stringify(
+                redact_planned_subtasks_below=input_data.current_task_node.id,
+                obfuscate_status_of=input_data.current_task_node.id,
             ),
         )
 
@@ -197,21 +230,23 @@ class Backtracker(Agent):
 
         return_obj = await self.successful_completion_clf(
             prompt_template_data=sub_agent_input_data,
-            stream_handler=stream_handler,
+            stream_handler=self.stream_handler,
         )
 
-        callback_after_each_lm_step(return_obj.messages)
+        if self.callback_after_each_lm_step is not None:
+            self.callback_after_each_lm_step(return_obj.messages)
 
         choice = extract_letter_from_multiple_choice_question_response(
             return_obj.output_data.answer, WAS_SUCCESSFULLY_COMPLETED_OPTIONS
         )
 
         if choice == WAS_SUCCESSFULLY_COMPLETED_OPTIONS[True].letter:
-            input_data.task_in_question.status = TaskStatus.SUCCESS
+            input_data.current_task_node.status = TaskStatus.SUCCESS
             return BacktrackerReturn(
                 output_data=BacktrackerOutputData(
-                    status_to_assign=BacktrackedFromTaskStatus.SUCCESS,
-                    retrospective=return_obj.output_data.retrospective,
+                    backtracked_from_status_to_assign=BacktrackedFromTaskStatus.SUCCESS,
+                    retrospective_to_assign=return_obj.output_data.retrospective,
+                    id_of_ancestor_to_backtrack_to=input_data.current_task_node.parent_id,
                 )
             )
 
@@ -223,9 +258,11 @@ class Backtracker(Agent):
 
         return_obj = await self.exhaustive_effort_clf(
             prompt_template_data=sub_agent_input_data,
-            stream_handler=stream_handler,
+            stream_handler=self.stream_handler,
         )
-        callback_after_each_lm_step(return_obj.messages)
+
+        if self.callback_after_each_lm_step is not None:
+            self.callback_after_each_lm_step(return_obj.messages)
 
         choice = extract_letter_from_multiple_choice_question_response(
             return_obj.output_data.answer, EFFORT_WAS_EXHAUSTIVE_OPTIONS
@@ -241,10 +278,11 @@ class Backtracker(Agent):
 
             return_obj = await self.partial_success_clf(
                 prompt_template_data=sub_agent_input_data,
-                stream_handler=stream_handler,
+                stream_handler=self.stream_handler,
             )
 
-            callback_after_each_lm_step(return_obj.messages)
+            if self.callback_after_each_lm_step is not None:
+                self.callback_after_each_lm_step(return_obj.messages)
 
             choice = extract_letter_from_multiple_choice_question_response(
                 return_obj.output_data.answer, WAS_PARTIAL_SUCCESS_OPTIONS
@@ -253,15 +291,17 @@ class Backtracker(Agent):
             if choice == WAS_PARTIAL_SUCCESS_OPTIONS[True].letter:
                 return BacktrackerReturn(
                     output_data=BacktrackerOutputData(
-                        status_to_assign=BacktrackedFromTaskStatus.PARTIAL_SUCCESS,
-                        retrospective=return_obj.output_data.retrospective,
+                        backtracked_from_status_to_assign=BacktrackedFromTaskStatus.PARTIAL_SUCCESS,
+                        retrospective_to_assign=return_obj.output_data.retrospective,
+                        id_of_ancestor_to_backtrack_to=input_data.current_task_node.parent_id,
                     )
                 )
             else:
                 return BacktrackerReturn(
                     output_data=BacktrackerOutputData(
-                        status_to_assign=BacktrackedFromTaskStatus.FAILURE,
-                        retrospective=return_obj.output_data.retrospective,
+                        backtracked_from_status_to_assign=BacktrackedFromTaskStatus.FAILURE,
+                        retrospective_to_assign=return_obj.output_data.retrospective,
+                        id_of_ancestor_to_backtrack_to=input_data.current_task_node.parent_id,
                     )
                 )
 
@@ -276,26 +316,27 @@ class Backtracker(Agent):
             for (  # Iter through gradual reconstruction of olthad starting from cur=root
                 root_node,
                 cur_node,
-            ) in input_data.olthad_root.iter_in_progress_descendants():
+            ) in input_data.root_task_node.iter_in_progress_descendants():
 
-                sub_agent_input_data = BacktrackerSubAgentInputPromptData(
+                sub_agent_input_data = BacktrackerSubAgentPromptInputData(
                     env_state=input_data.env_state,
                     olthad=root_node.stringify(
-                        redact_planned_subtasks_below=cur_node.task,
-                        obfuscate_status_of=cur_node.task,
+                        redact_planned_subtasks_below=cur_node.id,
+                        obfuscate_status_of=cur_node.id,
                     ),
                     task_in_question=cur_node.stringify(
-                        redact_planned_subtasks_below=cur_node.task,
-                        obfuscate_status_of=cur_node.task,
+                        redact_planned_subtasks_below=cur_node.id,
+                        obfuscate_status_of=cur_node.id,
                     ),
                 )
 
                 return_obj = await self.most_worthwhile_pursuit_clf(
                     prompt_template_data=sub_agent_input_data,
-                    stream_handler=stream_handler,
+                    stream_handler=self.stream_handler,
                 )
 
-                callback_after_each_lm_step(return_obj.messages)
+                if self.callback_after_each_lm_step is not None:
+                    self.callback_after_each_lm_step(return_obj.messages)
 
                 choice = extract_letter_from_multiple_choice_question_response(
                     return_obj.output_data.answer, IS_MOST_WORTHWHILE_OPTIONS
@@ -304,16 +345,17 @@ class Backtracker(Agent):
                 if choice == IS_MOST_WORTHWHILE_OPTIONS[False].letter:
                     return BacktrackerReturn(
                         output_data=BacktrackerOutputData(
-                            status_to_assign=BacktrackedFromTaskStatus.DROPPED,
-                            retrospective=return_obj.output_data.retrospective,
-                            ancestor_to_backtrack_to_if_not_parent=cur_node,
+                            backtracked_from_status_to_assign=BacktrackedFromTaskStatus.DROPPED,
+                            retrospective_to_assign=return_obj.output_data.retrospective,
+                            id_of_ancestor_to_backtrack_to=cur_node.parent_id,
                         )
                     )
 
-            # Finally, if no ancestors are worth dropping, status stays in progress
+            # Finally, if ancestors are still deemed worthwhile, no backtracking warranted
             return BacktrackerReturn(
                 output_data=BacktrackerOutputData(
-                    status_to_assign=BacktrackedFromTaskStatus.IN_PROGRESS,
-                    retrospective=None,
+                    backtracked_from_status_to_assign=None,
+                    retrospective_to_assign=None,
+                    id_of_ancestor_to_backtrack_to=None,
                 )
             )

@@ -4,13 +4,14 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class BacktrackerSubAgentInputPromptData(BaseModel):
+class BacktrackerSubAgentPromptInputData(BaseModel):
     """Data to be rendered in the user prompt for the Backtracker sub-agents.
 
     Attributes:
         env_state (str): PRE-STRINGIFIED current environment state.
-        olthad (str): PRE-STRINGIFIED root node of the OLTHAD being traversed.
-        task_in_question (str): PRE-STRINGIFIED node we're considering backtracking from.
+        olthad (str): PRE-STRINGIFIED root task node of the OLTHAD being traversed.
+        task_in_question (str): PRE-STRINGIFIED task node we're considering backtracking
+            from.
     """
 
     env_state: str
@@ -24,9 +25,13 @@ class BacktrackerSubAgentInputFields(StrEnum):
     TASK_IN_QUESTION = "task_in_question"
 
 
-class BacktrackerSubAgentOutputPromptData(BaseModel):
+class BacktrackerSubAgentLmResponseOutputData(BaseModel):
     """
     Output-JSON data to be parsed from the LM's response used by Backtracker sub-agents.
+
+    Attributes:
+        answer (str): The answer choice made by the LM.
+        retrospective (str): Brief reasoning behind the answer choice.
     """
 
     answer: str

@@ -79,7 +79,10 @@ Think things through step-by-step, considering each of the above points as you g
 
 ```json
 {JSON_FORMAT_SYS_PROMPT_INSERT}
-```"""
+```
+
+IMPORTANT: The highest-level task with id "1" is the highly important user-requested task. If this task is in question, you should only answer {IS_MOST_WORTHWHILE_OPTIONS[False].letter} if the task is immoral or learned to be impossible.
+"""
 
 USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:
 ```text

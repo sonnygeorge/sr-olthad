@@ -1,6 +1,6 @@
 import asyncio
 import sys
-from typing import Optional
+from typing import List, Optional
 
 from dotenv import load_dotenv
 
@@ -92,83 +92,113 @@ class PrintOneLmStreamHandler(LmStreamHandler):
 
 
 def test_backtracker():
+    from agent_framework.schema import InstructLmMessage
     from sr_olthad.agents import Backtracker, BacktrackerInputData
     from sr_olthad.olthad import TaskNode, TaskStatus
 
     # env_state = "You are sitting at a wood table. Two slices of pizza remain."
     env_state = "It's 4:56pm. You feel full. The pizza is cold."
     task_in_question = TaskNode(
-        task="1.1",
-        description="Eat all four slices of the pizza.",
+        id="1.1",
+        parent_id="1",
+        task="Eat all four slices of the pizza.",
         status=TaskStatus.IN_PROGRESS,
         retrospective=None,
         subtasks=[
             TaskNode(
-                task="1.1.1",
-                description="Eat the first slice.",
+                id="1.1.1",
+                parent_id="1.1",
+                task="Eat the first slice.",
                 status=TaskStatus.SUCCESS,
                 retrospective="You ate the first slice of pizza.",
-                subtasks=None,
             ),
             TaskNode(
-                task="1.1.2",
-                description="Eat the second slice.",
+                id="1.1.2",
+                parent_id="1.1",
+                task="Eat the second slice.",
                 status=TaskStatus.SUCCESS,
                 retrospective="You ate the second slice of pizza.",
-                subtasks=None,
             ),
             TaskNode(
-                task="1.1.3",
-                description="Eat the third slice.",
+                id="1.1.3",
+                parent_id="1.1",
+                task="Eat the third slice.",
                 status=TaskStatus.PLANNED,
                 retrospective=None,
-                subtasks=None,
             ),
             TaskNode(
-                task="1.1.4",
-                description="Eat the fourth slice.",
+                id="1.1.4",
+                parent_id="1.1",
+                task="Eat the fourth slice.",
                 status=TaskStatus.PLANNED,
                 retrospective=None,
-                subtasks=None,
             ),
         ],
     )
     olthad = TaskNode(
-        task="1",
-        description="Satiate your hunger.",
+        id="1",
+        parent_id=None,
+        task="Satiate your hunger.",
         status=TaskStatus.IN_PROGRESS,
         retrospective=None,
         subtasks=[task_in_question],
     )
 
-    def wait_for_user_to_proceed(messages):
+    def wait_for_user_to_proceed(
+        messages: List[InstructLmMessage],
+    ):
         input("\n\nPress Enter to continue...")
-        return
 
     backtracker_input_data = BacktrackerInputData(
         env_state=env_state,
-        olthad_root=olthad,
-        task_in_question=task_in_question,
+        root_task_node=olthad,
+        current_task_node=task_in_question,
     )
 
-    backtracker = (
-        Backtracker()
-    )  # Initialize the backtracker agent w/ default configs
+    backtracker = Backtracker(
+        stream_handler=PrintOneLmStreamHandler(),
+        callback_after_each_lm_step=wait_for_user_to_proceed,
+    )
     return_obj = asyncio.run(
         backtracker(
             input_data=backtracker_input_data,
-            stream_handler=PrintOneLmStreamHandler(),
-            callback_after_each_lm_step=wait_for_user_to_proceed,
         )
     )
     print("\n\nCHOSEN STATUS:\n")
-    print(return_obj.output_data.status_to_assign)
+    print(return_obj.output_data.backtracked_from_status_to_assign)
     print("\nRETROSPECTIVE:\n")
-    print(return_obj.output_data.retrospective)
+    print(return_obj.output_data.retrospective_to_assign)
     print("\nBACKTRACK TO:\n")
-    print(return_obj.output_data.ancestor_to_backtrack_to_if_not_parent)
+    print(return_obj.output_data.id_of_ancestor_to_backtrack_to)
+
+
+def test_sr_olthad():
+    import random
+
+    from sr_olthad import SrOlthad
+
+    sr_olthad = SrOlthad(
+        highest_level_task="Mine diamond",
+        domain_exposition="Single player minecraft world in peaceful mode.",
+        classify_if_action_is_executable=lambda _: random.random() < 0.3,
+        stream_handler=PrintOneLmStreamHandler(),
+        callback_after_each_lm_step=None,
+    )
+
+    while True:
+        env_state = input("\n\nEnter the current environment state: ")
+        next_action = asyncio.run(
+            sr_olthad(
+                env_state=env_state,
+            )
+        )
+        print("\n\nNEXT ACTION:\n")
+        print(next_action)
+        if next_action is None:
+            break
 
 
 if __name__ == "__main__":
     # print_backtracker_agent_prompts()
-    test_backtracker()
+    # test_backtracker()
+    test_sr_olthad()

@@ -9,8 +9,8 @@ from agent_framework.schema import (
     InstructLm,
     InstructLmChatRole,
     InstructLmMessage,
-    InstructLmMessages,
     LmStreamHandler,
+    PotentiallyNestedInstructLmMessages,
 )
 from agent_framework.utils import (
     detect_extract_and_parse_json_from_text,
@@ -22,7 +22,12 @@ BaseModelT = TypeVar("OutputDataT", bound=BaseModel)
 
 class SingleTurnChatAgentReturn(BaseModel, Generic[BaseModelT]):
     output_data: BaseModelT
-    messages: InstructLmMessages | List[InstructLmMessages]
+    # NOTE: Whenever an agent is potentially wrapped w/ `with_implicit_async_voting`
+    # decorator, attributes of the return object as well as the `output_data` attribute
+    # should be thought of as potentially nested.
+    # This is weird, but I didn't want to rewrite voting logic over and over again so my
+    # idea was that decorator.
+    messages: PotentiallyNestedInstructLmMessages
 
 
 class SingleTurnChatAgent(Agent, Generic[BaseModelT]):
@@ -55,7 +60,9 @@ class SingleTurnChatAgent(Agent, Generic[BaseModelT]):
             logger=self.logger,
         )(self._get_valid_response)
 
-    def _prepare_messages(self, input_data: BaseModel) -> InstructLmMessages:
+    def _prepare_input_messages(
+        self, input_data: BaseModel
+    ) -> List[InstructLmMessage]:
         # TODO: Raise error if model and template fields don't match up
         input_data = {k: str(v) for k, v in input_data.__dict__.items()}
         user_prompt = self.user_prompt_template.render(**input_data)
@@ -73,12 +80,12 @@ class SingleTurnChatAgent(Agent, Generic[BaseModelT]):
 
     async def _get_valid_response(
         self,
-        messages: InstructLmMessages,
+        input_messages: List[InstructLmMessage],
         stream_handler: Optional[LmStreamHandler] = None,
         **kwargs,  # kwargs passed through to the InstructLm.generate method
     ) -> BaseModelT:
         response = await self.instruct_lm.generate(
-            messages=messages, stream_handler=stream_handler, **kwargs
+            messages=input_messages, stream_handler=stream_handler, **kwargs
         )
         return detect_extract_and_parse_json_from_text(
             text=response, model_to_extract=self.output_data_model
@@ -90,9 +97,11 @@ class SingleTurnChatAgent(Agent, Generic[BaseModelT]):
         stream_handler: Optional[LmStreamHandler] = None,
         **kwargs,  # kwargs passed through to the InstructLm.generate method
     ) -> SingleTurnChatAgentReturn[BaseModelT]:
-        messages = self._prepare_messages(input_data=prompt_template_data)
+        messages = self._prepare_input_messages(
+            input_data=prompt_template_data
+        )
         output_data = await self._get_valid_response(
-            messages=messages, stream_handler=stream_handler, **kwargs
+            input_messages=messages, stream_handler=stream_handler, **kwargs
         )
         return SingleTurnChatAgentReturn(
             output_data=output_data, messages=messages
