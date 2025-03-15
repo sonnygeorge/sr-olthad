@@ -1,24 +1,16 @@
 import asyncio
 import functools
+import inspect
 import json
 import logging
-import inspect
 import re
 import warnings
 from collections import Counter, defaultdict
-import warnings
-
-from typing import Callable, Type, List, Sequence, Optional, Any, TypeVar
+from typing import Any, Callable, List, Optional, Sequence, Type, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
-from agent_framework.schema import (
-    Agent,
-    HasOutputData,
-    LmStreamHandler,
-    LmStreamHandler,
-)
-
+from agent_framework.schema import Agent, HasOutputData, LmStreamHandler
 
 BaseModelT = TypeVar("T", bound=BaseModel)
 
@@ -100,7 +92,9 @@ def with_retry(
                 except permissible_exceptions as e:
                     log_or_print_exception(e, tries_remaining)
                     tries_remaining -= 1
-            return func(*args, **kwargs)  # Last attempt (don't catch exceptions)
+            return func(
+                *args, **kwargs
+            )  # Last attempt (don't catch exceptions)
 
         @functools.wraps(func)
         async def async_wrapper(*args: Any, **kwargs: Any) -> T:
@@ -111,7 +105,9 @@ def with_retry(
                 except permissible_exceptions as e:
                     log_or_print_exception(e, tries_remaining)
                     tries_remaining -= 1
-            return await func(*args, **kwargs)  # Last attempt (don't catch exceptions)
+            return await func(
+                *args, **kwargs
+            )  # Last attempt (don't catch exceptions)
 
         if inspect.iscoroutinefunction(func):
             return async_wrapper
@@ -215,8 +211,8 @@ def with_implicit_async_voting(
                 )
 
             # Await all async calls and gather the return objects
-            return_objs: List[HasOutputData | Exception] = await asyncio.gather(
-                *async_calls, return_exceptions=True
+            return_objs: List[HasOutputData | Exception] = (
+                await asyncio.gather(*async_calls, return_exceptions=True)
             )
 
             # Filter out returned exceptions and count the "votes"

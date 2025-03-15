@@ -1,23 +1,20 @@
 from jinja2 import Template
 
 from sr_olthad.agents.backtracker.prompt.common import (
-    BacktrackerSubAgentInputFields,
     JSON_FORMAT_SYS_PROMPT_INSERT,
+    BacktrackerSubAgentInputFields,
 )
 from sr_olthad.agents.prompt import (
     EXAMPLE_OLTHAD_FOR_SYS_PROMPT,
     EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT,
 )
+from sr_olthad.olthad import TaskStatus
 from sr_olthad.schema import (
-    SingleTurnPromptTemplates,
     MultipleChoiceQuestionOption,
     PromptRegistry,
+    SingleTurnPromptTemplates,
 )
-from sr_olthad.olthad import TaskStatus
-from sr_olthad.utils import (
-    BinaryChoiceOptions,
-)
-
+from sr_olthad.utils import BinaryChoiceOptions
 
 WAS_SUCCESSFULLY_COMPLETED_OPTIONS: BinaryChoiceOptions = {
     True: MultipleChoiceQuestionOption(
@@ -36,9 +33,7 @@ WAS_SUCCESSFULLY_COMPLETED_OPTIONS: BinaryChoiceOptions = {
 ######################
 
 
-V1_0_QUESTION = (
-    "Can the task in question be considered done? I.e., which statement is more true?"
-)
+V1_0_QUESTION = "Can the task in question be considered done? I.e., which statement is more true?"
 
 SYS_1_0 = f"""You are a helpful AI agent who plays a crucial role in a hierarchical reasoning and acting system. Your specific job is as follows.
 

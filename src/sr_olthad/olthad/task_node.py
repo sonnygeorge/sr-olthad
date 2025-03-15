@@ -52,8 +52,12 @@ class TaskNode(BaseModel):  # (I.e., an OLTHAD)
             if idx_of_in_progress_subtask is None:
                 break
             else:
-                cur_self_node = cur_self_node.subtasks[idx_of_in_progress_subtask]
-                cur_rebuild_node = cur_rebuild_node.subtasks[idx_of_in_progress_subtask]
+                cur_self_node = cur_self_node.subtasks[
+                    idx_of_in_progress_subtask
+                ]
+                cur_rebuild_node = cur_rebuild_node.subtasks[
+                    idx_of_in_progress_subtask
+                ]
 
     def __str__(self) -> str:
         return self.stringify()
@@ -103,7 +107,9 @@ class TaskNode(BaseModel):  # (I.e., an OLTHAD)
             output_str += to_append_to_output_str + ",\n"
 
         def process_node(
-            node: TaskNode, indent_lvl: int = 0, should_redact_planned: bool = False
+            node: TaskNode,
+            indent_lvl: int = 0,
+            should_redact_planned: bool = False,
         ) -> str:
             nonlocal output_str
             increment_partial_node_str(node, indent_lvl)
@@ -117,19 +123,28 @@ class TaskNode(BaseModel):  # (I.e., an OLTHAD)
                 output_str += indent * (indent_lvl + 1) + '"subtasks": ['
                 n_subtasks = len(node.subtasks)
                 for i, subtask in enumerate(node.subtasks):
-                    if should_redact_planned and subtask.status == TaskStatus.PLANNED:
+                    if (
+                        should_redact_planned
+                        and subtask.status == TaskStatus.PLANNED
+                    ):
                         output_str += "\n" + indent * (indent_lvl + 2)
                         output_str += redacted_str
                         break
-                    process_node(subtask, indent_lvl + 2, should_redact_planned)
+                    process_node(
+                        subtask, indent_lvl + 2, should_redact_planned
+                    )
                     if i < n_subtasks - 1:
                         output_str += ","
                 # Close the subtasks list/array
                 output_str += "\n" + indent * (indent_lvl + 1) + "]\n"
-                output_str += indent * indent_lvl + "}"  # Close the node dict/object
+                output_str += (
+                    indent * indent_lvl + "}"
+                )  # Close the node dict/object
             else:
                 output_str += indent * (indent_lvl + 1) + '"subtasks": null\n'
-                output_str += indent * indent_lvl + "}"  # Close the node dict/object
+                output_str += (
+                    indent * indent_lvl + "}"
+                )  # Close the node dict/object
 
         process_node(self)
         return output_str

@@ -2,5 +2,4 @@ Jinja2
 loguru
 openai
 pydantic
-pyyaml
 transformers

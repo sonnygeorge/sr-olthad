@@ -2,13 +2,11 @@ import asyncio
 import sys
 from typing import Optional
 
-import rich
 from dotenv import load_dotenv
 
 sys.path.append("src")
 
 from agent_framework.schema import LmStreamHandler
-
 
 load_dotenv()
 
@@ -21,20 +19,22 @@ class PrintOneLmStreamHandler(LmStreamHandler):
 
 
 def print_backtracker_agent_prompts():
-    from sr_olthad.config import BacktrackerCfg as cfg
     from sr_olthad.agents.backtracker.prompt import (
+        EXHAUSTIVE_EFFORT_CLF_PROMPT_REGISTRY,
+        MOST_WORTHWHILE_PURSUIT_CLF_PROMPT_REGISTRY,
         PARTIAL_SUCCESS_CLF_PROMPT_REGISTRY,
         SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY,
-        MOST_WORTHWHILE_PURSUIT_CLF_PROMPT_REGISTRY,
-        EXHAUSTIVE_EFFORT_CLF_PROMPT_REGISTRY,
     )
+    from sr_olthad.config import BacktrackerCfg as cfg
 
     exhaustive_effort_prompts = EXHAUSTIVE_EFFORT_CLF_PROMPT_REGISTRY[
         cfg.ExhaustiveEffortClf.PROMPTS_VERSION
     ]
-    most_worthwhile_pursuit_prompts = MOST_WORTHWHILE_PURSUIT_CLF_PROMPT_REGISTRY[
-        cfg.MostWorthwhilePursuitClfCfg.PROMPTS_VERSION
-    ]
+    most_worthwhile_pursuit_prompts = (
+        MOST_WORTHWHILE_PURSUIT_CLF_PROMPT_REGISTRY[
+            cfg.MostWorthwhilePursuitClfCfg.PROMPTS_VERSION
+        ]
+    )
     partial_success_prompts = PARTIAL_SUCCESS_CLF_PROMPT_REGISTRY[
         cfg.PartialSuccessClfCfg.PROMPTS_VERSION
     ]
@@ -95,7 +95,7 @@ def test_backtracker():
     from sr_olthad.agents import Backtracker, BacktrackerInputData
     from sr_olthad.olthad import TaskNode, TaskStatus
 
-    # env_state = "You are sitting at a wood table. The lights are on. Two slices of pizza remain."
+    # env_state = "You are sitting at a wood table. Two slices of pizza remain."
     env_state = "It's 4:56pm. You feel full. The pizza is cold."
     task_in_question = TaskNode(
         task="1.1",
@@ -151,7 +151,9 @@ def test_backtracker():
         task_in_question=task_in_question,
     )
 
-    backtracker = Backtracker()  # Initialize the backtracker agent w/ default configs
+    backtracker = (
+        Backtracker()
+    )  # Initialize the backtracker agent w/ default configs
     return_obj = asyncio.run(
         backtracker(
             input_data=backtracker_input_data,

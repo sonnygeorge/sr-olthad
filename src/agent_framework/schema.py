@@ -1,11 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import StrEnum
-from typing import (
-    List,
-    Optional,
-    TypedDict,
-    Protocol,
-)
+from typing import List, Optional, Protocol, TypedDict
 
 from pydantic import BaseModel
 

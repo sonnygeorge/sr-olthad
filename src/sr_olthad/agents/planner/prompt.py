@@ -1,6 +1,6 @@
 from jinja2 import Template
 
-from sr_olthad.schema import SingleTurnPromptTemplates, PromptRegistry
+from sr_olthad.schema import PromptRegistry, SingleTurnPromptTemplates
 
 ######################
 ######## v1.0 ########

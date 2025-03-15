@@ -1,37 +1,29 @@
 from dataclasses import dataclass
+from typing import Callable, List, Optional
 
 from loguru import logger
 from pydantic import BaseModel
-from typing import Optional, Callable, List
 
-from agent_framework.schema import (
-    Agent,
-    LmStreamHandler,
-    InstructLmMessage,
-)
-from agent_framework.agents import (
-    SingleTurnChatAgent,
-)
-from sr_olthad.config import BacktrackerCfg as cfg
+from agent_framework.agents import SingleTurnChatAgent
+from agent_framework.schema import Agent, InstructLmMessage, LmStreamHandler
+from agent_framework.utils import with_implicit_async_voting
 from sr_olthad.agents.backtracker.prompt import (
-    WAS_SUCCESSFULLY_COMPLETED_OPTIONS,
-    IS_MOST_WORTHWHILE_OPTIONS,
     EFFORT_WAS_EXHAUSTIVE_OPTIONS,
-    WAS_PARTIAL_SUCCESS_OPTIONS,
-    BacktrackerSubAgentInputPromptData,
-    BacktrackerSubAgentOutputPromptData,
-    BacktrackerSubAgentOutputFields,
+    EXHAUSTIVE_EFFORT_CLF_PROMPT_REGISTRY,
+    IS_MOST_WORTHWHILE_OPTIONS,
+    MOST_WORTHWHILE_PURSUIT_CLF_PROMPT_REGISTRY,
     PARTIAL_SUCCESS_CLF_PROMPT_REGISTRY,
     SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY,
-    MOST_WORTHWHILE_PURSUIT_CLF_PROMPT_REGISTRY,
-    EXHAUSTIVE_EFFORT_CLF_PROMPT_REGISTRY,
+    WAS_PARTIAL_SUCCESS_OPTIONS,
+    WAS_SUCCESSFULLY_COMPLETED_OPTIONS,
+    BacktrackerSubAgentInputPromptData,
+    BacktrackerSubAgentOutputFields,
+    BacktrackerSubAgentOutputPromptData,
 )
-from sr_olthad.olthad import BacktrackedFromTaskStatus, TaskStatus, TaskNode
+from sr_olthad.config import BacktrackerCfg as cfg
+from sr_olthad.olthad import BacktrackedFromTaskStatus, TaskNode, TaskStatus
 from sr_olthad.utils import (
     extract_chosen_letter_from_multiple_choice_question_response_text,
-)
-from agent_framework.utils import (
-    with_implicit_async_voting,
 )
 
 
@@ -91,9 +83,11 @@ class Backtracker(Agent):
         ### Initialize most worthwhile pursuit classifier ###
         #####################################################
 
-        most_worthwhile_pursuit_prompts = MOST_WORTHWHILE_PURSUIT_CLF_PROMPT_REGISTRY[
-            cfg.MostWorthwhilePursuitClfCfg.PROMPTS_VERSION
-        ]
+        most_worthwhile_pursuit_prompts = (
+            MOST_WORTHWHILE_PURSUIT_CLF_PROMPT_REGISTRY[
+                cfg.MostWorthwhilePursuitClfCfg.PROMPTS_VERSION
+            ]
+        )
         self.most_worthwhile_pursuit_clf: SingleTurnChatAgent[
             BacktrackerSubAgentOutputPromptData
         ] = SingleTurnChatAgent(
@@ -141,9 +135,11 @@ class Backtracker(Agent):
         ### Initialize successful completion classifier ###
         ########################################################
 
-        successful_completion_prompts = SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY[
-            cfg.SuccessfulCompletionClfCfg.PROMPTS_VERSION
-        ]
+        successful_completion_prompts = (
+            SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY[
+                cfg.SuccessfulCompletionClfCfg.PROMPTS_VERSION
+            ]
+        )
         self.successful_completion_clf: SingleTurnChatAgent[
             BacktrackerSubAgentOutputPromptData
         ] = SingleTurnChatAgent(
@@ -191,12 +187,14 @@ class Backtracker(Agent):
         logger.info("Checking if the task has been successfully completed...")
 
         return_obj = await self.successful_completion_clf(
-            prompt_template_data=sub_agent_input_data, stream_handler=stream_handler
+            prompt_template_data=sub_agent_input_data,
+            stream_handler=stream_handler,
         )
         callback_after_each_lm_step(return_obj.messages)
         if (
             extract_chosen_letter_from_multiple_choice_question_response_text(
-                return_obj.output_data.answer, WAS_SUCCESSFULLY_COMPLETED_OPTIONS
+                return_obj.output_data.answer,
+                WAS_SUCCESSFULLY_COMPLETED_OPTIONS,
             )
             == WAS_SUCCESSFULLY_COMPLETED_OPTIONS[True].letter
         ):
@@ -215,7 +213,8 @@ class Backtracker(Agent):
         logger.info("Checking if an exhaustive effort was given...")
 
         return_obj = await self.exhaustive_effort_clf(
-            prompt_template_data=sub_agent_input_data, stream_handler=stream_handler
+            prompt_template_data=sub_agent_input_data,
+            stream_handler=stream_handler,
         )
         callback_after_each_lm_step(return_obj.messages)
         if (
@@ -228,10 +227,13 @@ class Backtracker(Agent):
             ### Classify whether the completion was a partial success ###
             #############################################################
 
-            logger.info("Checking if the task was a partial succes (or failure)...")
+            logger.info(
+                "Checking if the task was a partial succes (or failure)..."
+            )
 
             return_obj = await self.partial_success_clf(
-                prompt_template_data=sub_agent_input_data, stream_handler=stream_handler
+                prompt_template_data=sub_agent_input_data,
+                stream_handler=stream_handler,
             )
             callback_after_each_lm_step(return_obj.messages)
             if (
@@ -259,10 +261,15 @@ class Backtracker(Agent):
             ### Classify if ancestor tasks are (still) the most worthwhile pursuits ###
             ###########################################################################
 
-            logger.info("Checking if ancestors are still worthwhile pursuits...")
+            logger.info(
+                "Checking if ancestors are still worthwhile pursuits..."
+            )
 
             # Iterate through a gradual reconstruction of the olthad starting from root
-            for root_node, cur_node in input_data.olthad.iter_in_progress_descendants():
+            for (
+                root_node,
+                cur_node,
+            ) in input_data.olthad.iter_in_progress_descendants():
                 sub_agent_input_data = BacktrackerSubAgentInputPromptData(
                     env_state=input_data.env_state,
                     olthad=root_node.stringify(
@@ -281,7 +288,8 @@ class Backtracker(Agent):
                 callback_after_each_lm_step(return_obj.messages)
                 if (
                     extract_chosen_letter_from_multiple_choice_question_response_text(
-                        return_obj.output_data.answer, IS_MOST_WORTHWHILE_OPTIONS
+                        return_obj.output_data.answer,
+                        IS_MOST_WORTHWHILE_OPTIONS,
                     )
                     == IS_MOST_WORTHWHILE_OPTIONS[False].letter
                 ):

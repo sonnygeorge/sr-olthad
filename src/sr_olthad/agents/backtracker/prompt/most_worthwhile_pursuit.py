@@ -1,22 +1,19 @@
 from jinja2 import Template
 
 from sr_olthad.agents.backtracker.prompt.common import (
-    BacktrackerSubAgentInputFields,
     JSON_FORMAT_SYS_PROMPT_INSERT,
+    BacktrackerSubAgentInputFields,
 )
 from sr_olthad.agents.prompt import (
     EXAMPLE_OLTHAD_FOR_SYS_PROMPT,
     EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT,
 )
 from sr_olthad.schema import (
-    SingleTurnPromptTemplates,
     MultipleChoiceQuestionOption,
     PromptRegistry,
+    SingleTurnPromptTemplates,
 )
-from sr_olthad.utils import (
-    BinaryChoiceOptions,
-)
-
+from sr_olthad.utils import BinaryChoiceOptions
 
 IS_MOST_WORTHWHILE_OPTIONS: BinaryChoiceOptions = {
     True: MultipleChoiceQuestionOption(
@@ -70,7 +67,7 @@ Finally, you will be asked the following:
 Now, there are many possible reasons why answer choice "B" might be better. Here are a few examples:
 1. The task was foolishly proposed/poorly conceived in the first place (e.g., was not the best idea or was ambiguously phrased).
 2. There is some—now more useful—thing that falls outside of the semantic scope of how the task is phrased—regardless of whether, by virtue of some now-evident reason:
-    1. **Only a _slight_ semantic tweak to the task is warranted** 
+    1. **Only a _slight_ semantic tweak to the task is warranted**
         - E.g., let's say the task in question was to 'pick strawberries' in order to 'get some fruit.' If it has become evident that the nearest available fruit bush is raspberry, adjusting 'pick strawberries' to 'pick raspberries' may now be more appropriate.
     2. Or, **a semantically different task should replace it (at least for now)**.
         - E.g., the task, although perhaps still useful as-is, should be shelved in favor of something else

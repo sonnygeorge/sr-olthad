@@ -1,22 +1,17 @@
 import json
 from typing import Callable, Dict, List, Optional
 
-from loguru import logger  # TODO: Use loggers
-
 import sr_olthad.config as cfg
-from sr_olthad.olthad import (
-    BacktrackedFromTaskStatus, OlthadTraversal
-)
 from sr_olthad.agents import (
     AttemptSummarizer,
     AttemptSummarizerInputData,
     Backtracker,
     BacktrackerInputData,
+    Forgetter,
     Planner,
     PlannerInputData,
-    Forgetter,
 )
-
+from sr_olthad.olthad import BacktrackedFromTaskStatus, OlthadTraversal
 
 # TODO: Handle "notepad" internally? (i.e., decouple internal functions from environment "skills")
 # TODO: Results string?
@@ -46,7 +41,9 @@ class SrOlthad:
         classify_if_action_is_executable: Callable[[str], bool],
     ):
         self.olthad_traversal = OlthadTraversal(task_description)
-        self.classify_if_action_is_executable = classify_if_action_is_executable
+        self.classify_if_action_is_executable = (
+            classify_if_action_is_executable
+        )
         self.has_been_called_at_least_once_before = False
         # Agents
         self.attempt_summarizer = AttemptSummarizer()
@@ -57,13 +54,17 @@ class SrOlthad:
     # TODO: Make these methods more idiomatic (w.r.t. their args/return types)
 
     async def _summarize_attempt(self, env_state: str) -> None:
-        attempt_summarizer_input = AttemptSummarizerInputData(env_state=env_state)
+        attempt_summarizer_input = AttemptSummarizerInputData(
+            env_state=env_state
+        )
         attempt_summarizer_return = await self.attempt_summarizer(
             attempt_summarizer_input
         )
         # Update the next-most planned subtask after the attempt summarization
         attempt_status = attempt_summarizer_return.output_data.chosen_status
-        attempt_retrospective = attempt_summarizer_return.output_data.retrospective
+        attempt_retrospective = (
+            attempt_summarizer_return.output_data.retrospective
+        )
         self.olthad_traversal.update_next_planned_subtask_after_attempt(
             status=attempt_status, retrospective=attempt_retrospective
         )
@@ -112,12 +113,18 @@ class SrOlthad:
         if self.classify_if_action_is_executable(
             self.olthad_traversal.next_planned_subtask_of_cur_node.description
         ):  # TODO: "description" is semantically weird here... "task" and "id"?
-            return self.olthad_traversal.next_planned_subtask_of_cur_node.description
+            return (
+                self.olthad_traversal.next_planned_subtask_of_cur_node.description
+            )
         else:
             self.olthad_traversal.recurse_inward()
-            return await self._recursively_process_cur_node(env_state=env_state)
+            return await self._recursively_process_cur_node(
+                env_state=env_state
+            )
 
-    async def __call__(self, env_state: str | JsonSerializable) -> Optional[str]:
+    async def __call__(
+        self, env_state: str | JsonSerializable
+    ) -> Optional[str]:
         """...TODO: Docstring
 
         Returns:

@@ -2,7 +2,6 @@ from typing import List
 
 from pydantic import BaseModel
 
-from sr_olthad.olthad import AttemptedTaskStatus
 from agent_framework.schema import Agent, InstructLmMessage
 
 
@@ -20,5 +19,7 @@ class ForgetterReturn:
 
 
 class Forgetter(Agent):
-    async def __call__(self, input_data: ForgetterInputData) -> ForgetterReturn:
+    async def __call__(
+        self, input_data: ForgetterInputData
+    ) -> ForgetterReturn:
         pass  # TODO

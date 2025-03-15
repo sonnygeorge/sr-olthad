@@ -1,9 +1,8 @@
 from dataclasses import dataclass
-from typing import Dict, TypeAlias, Optional
+from typing import Dict, Optional, TypeAlias
 
 from jinja2 import Template
 from pydantic import BaseModel
-
 
 LetterStr: TypeAlias = str
 

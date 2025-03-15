@@ -5,18 +5,16 @@ from jinja2 import Template
 from pydantic import BaseModel, ValidationError
 
 from agent_framework.schema import (
-    InstructLm,
     Agent,
-    InstructLmMessage,
+    InstructLm,
     InstructLmChatRole,
+    InstructLmMessage,
     LmStreamHandler,
-    HasOutputDataAndMessages,
 )
 from agent_framework.utils import (
     detect_extract_and_parse_json_from_text,
     with_retry,
 )
-
 
 BaseModelT = TypeVar("OutputDataT", bound=BaseModel)
 
@@ -56,13 +54,19 @@ class SingleTurnChatAgent(Agent, Generic[BaseModelT]):
             logger=self.logger,
         )(self._get_valid_response)
 
-    def _prepare_messages(self, input_data: BaseModel) -> List[InstructLmMessage]:
+    def _prepare_messages(
+        self, input_data: BaseModel
+    ) -> List[InstructLmMessage]:
         # TODO: Raise error if model and template fields don't match up
         input_data = {k: str(v) for k, v in input_data.__dict__.items()}
         user_prompt = self.user_prompt_template.render(**input_data)
         messages = [
-            InstructLmMessage(role=InstructLmChatRole.SYS, content=self.sys_prompt),
-            InstructLmMessage(role=InstructLmChatRole.USER, content=user_prompt),
+            InstructLmMessage(
+                role=InstructLmChatRole.SYS, content=self.sys_prompt
+            ),
+            InstructLmMessage(
+                role=InstructLmChatRole.USER, content=user_prompt
+            ),
         ]
         if self.sys_prompt is None:
             messages.pop(0)
@@ -91,4 +95,6 @@ class SingleTurnChatAgent(Agent, Generic[BaseModelT]):
         output_data = await self._get_valid_response(
             messages=messages, stream_handler=stream_handler, **kwargs
         )
-        return SingleTurnChatAgentReturn(output_data=output_data, messages=messages)
+        return SingleTurnChatAgentReturn(
+            output_data=output_data, messages=messages
+        )

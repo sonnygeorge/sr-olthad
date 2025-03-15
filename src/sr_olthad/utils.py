@@ -6,8 +6,12 @@ def extract_chosen_letter_from_multiple_choice_question_response_text(
     options: BinaryChoiceOptions | NonBinaryChoiceOptions,
 ) -> str:
     for option in options.values():
-        option_letter_clean = "".join(c for c in option.letter if c.isalpha()).lower()
-        option_text_clean = "".join(c for c in option.text if c.isalpha()).lower()
+        option_letter_clean = "".join(
+            c for c in option.letter if c.isalpha()
+        ).lower()
+        option_text_clean = "".join(
+            c for c in option.text if c.isalpha()
+        ).lower()
         chosen_clean = "".join(c for c in text if c.isalpha()).lower()
         if option_letter_clean == chosen_clean:
             return option.letter
