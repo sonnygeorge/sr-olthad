@@ -2,8 +2,8 @@ from typing import List
 
 from pydantic import BaseModel
 
-from sr_olthad.enums import AttemptedTaskStatus
-from schema import InstructLmAgentReturn, InstructLmMessage
+from sr_olthad.olthad import AttemptedTaskStatus
+from agent_framework.schema import Agent, InstructLmMessage
 
 
 class AttemptSummarizerInputData(BaseModel):
@@ -15,15 +15,13 @@ class AttemptSummarizerOutputData(BaseModel):
     retrospective: str
 
 
-class AttemptSummarizerSummarizerReturn(InstructLmAgentReturn):
+class AttemptSummarizerSummarizerReturn:
     output_data: AttemptSummarizerOutputData
     messages: List[InstructLmMessage] | List[List[InstructLmMessage]]
 
 
-class AttemptSummarizer(InstructLmAgentReturn):
+class AttemptSummarizer(Agent):
     async def __call__(
         self, input_data: AttemptSummarizerInputData
     ) -> AttemptSummarizerSummarizerReturn:
-        # TODO: Actual inference if it's needed later
-        output_data = AttemptSummarizerOutputData(summary=input_data.env_state)
-        return AttemptSummarizerSummarizerReturn(output_data=output_data, messages=[])
+        pass

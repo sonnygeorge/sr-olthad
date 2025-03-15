@@ -1,14 +1,13 @@
+import json
 from typing import Generator, List, Optional, Tuple
 
 from pydantic import BaseModel
 
-from enums import SerializationMethod
-import sr_olthad.config as cfg
-from sr_olthad.enums import TaskStatus
-from utils import StructuredDataStringifier
+from sr_olthad.config import OlthadCfg as cfg
+from sr_olthad.olthad.task_status import TaskStatus
 
 
-class TaskNode(BaseModel):  # I.e., an OLTHAD
+class TaskNode(BaseModel):  # (I.e., an OLTHAD)
     task: str
     description: str
     status: TaskStatus
@@ -61,12 +60,25 @@ class TaskNode(BaseModel):  # I.e., an OLTHAD
 
     def stringify(
         self,
+        indent: int = cfg.JSON_DUMPS_INDENT,
+        # style: OlthadStringifyStyle = OlthadStringifyStyle.JSON,  # TODO: Implement this
         redact_planned_subtasks_below: Optional[str] = None,
         obfuscate_status_of: Optional[str] = None,
-        indent: int = 3,
     ) -> str:
+        """
+        Gets an LM-friendly string representation of a task node/OLTHAD.
+
+        Args:
+            indent (int): The number of spaces to indent each level of the task node.
+            redact_planned_subtasks_below (Optional[str], optional): If provided, all
+                planned subtasks below this task will be redacted. Defaults to None.
+            obfuscate_status_of (Optional[str], optional): If provided, the status of the
+                task with this description will be obfuscated. Defaults to None.
+        """
+        # TODO: Put these constants somewhere else?
         redacted_str = "(FUTURE PLANNED TASKS REDACTED)"
         obfuscated_status_str = "?"
+
         indent = " " * indent
         output_str = ""
 
@@ -83,11 +95,7 @@ class TaskNode(BaseModel):  # I.e., an OLTHAD
                 ):
                     value = obfuscated_status_str
                 partial_node_dict[key] = value
-            partial_node_str = StructuredDataStringifier.stringify(
-                partial_node_dict,
-                serialization_method=SerializationMethod.JSON,
-                indent=indent,
-            )
+            partial_node_str = json.dumps(partial_node_dict, indent=indent)
             lines = partial_node_str[:-2].split("\n")
             to_append_to_output_str = ""
             for i, line in enumerate(lines):
@@ -105,7 +113,7 @@ class TaskNode(BaseModel):  # I.e., an OLTHAD
             ):
                 should_redact_planned = True
             if node.subtasks:
-                # Open the subtasks list
+                # Open the subtasks list/array
                 output_str += indent * (indent_lvl + 1) + '"subtasks": ['
                 n_subtasks = len(node.subtasks)
                 for i, subtask in enumerate(node.subtasks):
@@ -116,12 +124,12 @@ class TaskNode(BaseModel):  # I.e., an OLTHAD
                     process_node(subtask, indent_lvl + 2, should_redact_planned)
                     if i < n_subtasks - 1:
                         output_str += ","
-                # Close the subtasks list
+                # Close the subtasks list/array
                 output_str += "\n" + indent * (indent_lvl + 1) + "]\n"
-                output_str += indent * indent_lvl + "}"  # Close the node
+                output_str += indent * indent_lvl + "}"  # Close the node dict/object
             else:
                 output_str += indent * (indent_lvl + 1) + '"subtasks": null\n'
-                output_str += indent * indent_lvl + "}"  # Close the node
+                output_str += indent * indent_lvl + "}"  # Close the node dict/object
 
         process_node(self)
         return output_str

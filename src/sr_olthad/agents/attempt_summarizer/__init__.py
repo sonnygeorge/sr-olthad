@@ -4,6 +4,6 @@ from sr_olthad.agents.attempt_summarizer.attempt_summarizer import (
     AttemptSummarizerOutputData,
     AttemptSummarizerSummarizerReturn,
 )
-from sr_olthad.agents.attempt_summarizer.prompts import (
+from sr_olthad.agents.attempt_summarizer.prompt import (
     PROMPT_REGISTRY as ATTEMPT_SUMMARIZER_PROMPT_REGISTRY,
 )

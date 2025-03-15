@@ -1,11 +1,11 @@
 import os
-from typing import Any, Callable, List, Optional
+from typing import List, Optional
 
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
 
 
-from schema import InstructLm, InstructLmMessage, LmStreamHandler
+from agent_framework.schema import InstructLm, InstructLmMessage, LmStreamHandler
 
 
 class OpenAIInstructLm(InstructLm):

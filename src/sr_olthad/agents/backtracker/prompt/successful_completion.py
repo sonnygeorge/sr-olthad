@@ -1,32 +1,34 @@
 from jinja2 import Template
 
-from enums import BinaryCaseStr
-from schema import (
-    BinaryChoiceOptions,
-    SingleTurnPromptTemplates,
-    PromptRegistry,
-    MultipleChoiceQuestionAgentOption,
+from sr_olthad.agents.backtracker.prompt.common import (
+    BacktrackerSubAgentInputFields,
+    JSON_FORMAT_SYS_PROMPT_INSERT,
 )
-from sr_olthad.enums import AttemptedTaskStatus
-from sr_olthad.prompts import SysPromptInsertionField
+from sr_olthad.agents.prompt import (
+    EXAMPLE_OLTHAD_FOR_SYS_PROMPT,
+    EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT,
+)
+from sr_olthad.schema import (
+    SingleTurnPromptTemplates,
+    MultipleChoiceQuestionOption,
+    PromptRegistry,
+)
+from sr_olthad.olthad import TaskStatus
+from sr_olthad.utils import (
+    BinaryChoiceOptions,
+)
 
 
 WAS_SUCCESSFULLY_COMPLETED_OPTIONS: BinaryChoiceOptions = {
-    BinaryCaseStr.TRUE: MultipleChoiceQuestionAgentOption(
+    True: MultipleChoiceQuestionOption(
         letter="A",
         text="It can be said with confidence that the task has now been successfully completed.",
     ),
-    BinaryCaseStr.FALSE: MultipleChoiceQuestionAgentOption(
+    False: MultipleChoiceQuestionOption(
         letter="B",
         text="What the task is aiming to achieve has not yet been fully realized.",
     ),
 }
-
-SYS_PROMPT_INSERTION_FIELDS_NEEDED = [
-    SysPromptInsertionField.OLTHAD_EXAMPLE,
-    SysPromptInsertionField.TASK_IN_QUESTION_EXAMPLE,
-    SysPromptInsertionField.BINARY_OUTPUT_JSON_FORMAT_SPEC,
-]
 
 
 ######################
@@ -53,46 +55,46 @@ CURRENT ACTOR/ENVIRONMENT STATE:
 
 ```text
 PROGRESS/PLANS:
-{{{{ {SysPromptInsertionField.OLTHAD_EXAMPLE} }}}}
+{EXAMPLE_OLTHAD_FOR_SYS_PROMPT}
 ```
 
-3. Followed by an indication of which in-progress task to which you will consider assigning the "{AttemptedTaskStatus.SUCCESS}" status. E.g.,:
+3. Followed by an indication of which in-progress task to which you will consider assigning the "{TaskStatus.SUCCESS}" status. E.g.,:
 
 ```text
 TASK IN QUESTION:
-{{{{ {SysPromptInsertionField.TASK_IN_QUESTION_EXAMPLE} }}}}
+{EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT}
 ```
 
 Finally, you will be asked the following:
 
 {V1_0_QUESTION}
-{WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.TRUE].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.TRUE].text}
-{WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.FALSE].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.FALSE].text}
+{WAS_SUCCESSFULLY_COMPLETED_OPTIONS[True].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[True].text}
+{WAS_SUCCESSFULLY_COMPLETED_OPTIONS[False].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[False].text}
 
 You will answer by first carefully thinking things through step-by-step. Only after you've thoroughly reasoned through things, provide a BRIEF final response in a JSON that strictly adheres to the following format:
 
 ```json
-{{{{ {SysPromptInsertionField.BINARY_OUTPUT_JSON_FORMAT_SPEC} }}}}
+{JSON_FORMAT_SYS_PROMPT_INSERT}
 ```"""
 
 USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:
 ```text
-{{{{env_state}}}}
+{{{{ {BacktrackerSubAgentInputFields.ENV_STATE} }}}}
 ```
 
 PROGRESS/PLANS:
 ```json
-{{{{olthad}}}}
+{{{{ {BacktrackerSubAgentInputFields.OLTHAD} }}}}
 ```
 
 TASK IN QUESTION:
 ```json
-{{{{task_in_question}}}}
+{{{{ {BacktrackerSubAgentInputFields.TASK_IN_QUESTION} }}}}
 ```
 
 {V1_0_QUESTION}
-{WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.TRUE].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.TRUE].text}
-{WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.FALSE].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[BinaryCaseStr.FALSE].text}
+{WAS_SUCCESSFULLY_COMPLETED_OPTIONS[True].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[True].text}
+{WAS_SUCCESSFULLY_COMPLETED_OPTIONS[False].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[False].text}
 """
 
 V1_0_PROMPTS = SingleTurnPromptTemplates(

@@ -1,7 +1,11 @@
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
-from sr_olthad.enums import AttemptedTaskStatus, BacktrackedFromTaskStatus, TaskStatus
+from sr_olthad.olthad.task_status import (
+    AttemptedTaskStatus,
+    BacktrackedFromTaskStatus,
+    TaskStatus,
+)
 from sr_olthad.olthad.task_node import TaskNode
 
 
@@ -12,11 +16,10 @@ class OlthadTraversal:
     Any Depth).
     """
 
+    # TODO: Call this `OlthadTraverser`?
     # TODO: Docstrings, unit tests, & update(s) used after the forgetter is called
-    # TODO: Could this be made marginally cleaner by having `TaskNode`s have their own
-    # next_planned_subtask_idx attr, but never printing it?
-    # (I think this makes other code non-trivially messier unless I KNOW I want to write
-    # custom stringification logic for `TaskNode`s)
+    # TODO: Make this cleaner having `TaskNode`s have their own
+    # `next_planned_subtask_idx` attr
 
     def __init__(self, task_description: str):
         self.root_node: TaskNode = TaskNode(

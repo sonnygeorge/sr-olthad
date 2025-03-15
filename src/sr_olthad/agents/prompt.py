@@ -1,16 +1,7 @@
-from enum import StrEnum
+from sr_olthad.olthad import TaskStatus, TaskNode
 
-from sr_olthad.enums import TaskStatus
-from sr_olthad.olthad.task_node import TaskNode
 
-# NOTE: This must align with `schema.MultipleChoiceQuestionAgentOutputData`, in order
-# for LMs to know to output somethng that can be parsed with this Pydantic model.
-BINARY_OUTPUT_JSON_FORMAT_SPEC = """{
-    "chosen": "(str) Your answer choice",
-    "reasoning": "(str) A BRIEF summary of your earlier reasoning",
-}"""
-
-EXAMPLE_TASK_IN_QUESTION = TaskNode(
+_example_task_in_question = TaskNode(
     task="1.3.1",
     description="Do a sub-sub-thing.",
     status=TaskStatus.IN_PROGRESS,
@@ -18,7 +9,7 @@ EXAMPLE_TASK_IN_QUESTION = TaskNode(
     subtasks=None,
 )
 
-EXAMPLE_OLTHAD = TaskNode(
+_example_olthad = TaskNode(
     task="1",
     description="Do a thing.",
     status=TaskStatus.IN_PROGRESS,
@@ -44,7 +35,7 @@ EXAMPLE_OLTHAD = TaskNode(
             status=TaskStatus.IN_PROGRESS,
             retrospective=None,
             subtasks=[
-                EXAMPLE_TASK_IN_QUESTION,
+                _example_task_in_question,
                 TaskNode(
                     task="1.3.2",
                     description="Do another sub-sub-thing.",
@@ -64,15 +55,5 @@ EXAMPLE_OLTHAD = TaskNode(
     ],
 )
 
-
-class SysPromptInsertionField(StrEnum):
-    OLTHAD_EXAMPLE = "olthad_example"
-    TASK_IN_QUESTION_EXAMPLE = "task_in_question_example"
-    BINARY_OUTPUT_JSON_FORMAT_SPEC = "output_json_format"
-
-
-SYS_PROMPT_INSERTIONS_REGISTRY = {
-    SysPromptInsertionField.OLTHAD_EXAMPLE: str(EXAMPLE_OLTHAD),
-    SysPromptInsertionField.TASK_IN_QUESTION_EXAMPLE: str(EXAMPLE_TASK_IN_QUESTION),
-    SysPromptInsertionField.BINARY_OUTPUT_JSON_FORMAT_SPEC: BINARY_OUTPUT_JSON_FORMAT_SPEC,
-}
+EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT = _example_task_in_question.stringify()
+EXAMPLE_OLTHAD_FOR_SYS_PROMPT = _example_olthad.stringify()

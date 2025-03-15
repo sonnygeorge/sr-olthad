@@ -1,32 +1,37 @@
-from typing import Callable, List, Optional
+import json
+from typing import Callable, Dict, List, Optional
 
-from loguru import logger
-from pydantic import BaseModel
+from loguru import logger  # TODO: Use loggers
 
-import sr_olthad.config as config
-from sr_olthad.enums import AttemptedTaskStatus, BacktrackedFromTaskStatus, TaskStatus
+import sr_olthad.config as cfg
+from sr_olthad.olthad import (
+    BacktrackedFromTaskStatus, OlthadTraversal
+)
 from sr_olthad.agents import (
     AttemptSummarizer,
     AttemptSummarizerInputData,
     Backtracker,
     BacktrackerInputData,
-    BacktrackerOutputData,
-    BacktrackerReturn,
     Planner,
     PlannerInputData,
     Forgetter,
-    ForgetterInputData,
 )
-from sr_olthad.olthad.task_node import TaskNode
-from sr_olthad.olthad.olthad_traversal import OlthadTraversal
-from schema import JsonSerializable
-from utils import StructuredDataStringifier
 
 
-# TODO: Handle notepad internally? (i.e., decouple internal functions from environment "skills")
+# TODO: Handle "notepad" internally? (i.e., decouple internal functions from environment "skills")
 # TODO: Results string?
 # TODO: Forgetter
 # TODO: How to pass callbacks to agents that wait for and process annotator tool inputs
+
+JsonSerializable = (
+    None
+    | bool
+    | int
+    | float
+    | str
+    | List["JsonSerializable"]
+    | Dict[str, "JsonSerializable"]
+)
 
 
 class SrOlthad:
@@ -35,16 +40,21 @@ class SrOlthad:
     (sr-OLTHAD).
     """
 
-    def __init__(
-        self, task_description: str, executable_action_classifier: Callable[[str], bool]
+    def __init__(  # TODO: Docstring
+        self,
+        task_description: str,
+        classify_if_action_is_executable: Callable[[str], bool],
     ):
         self.olthad_traversal = OlthadTraversal(task_description)
+        self.classify_if_action_is_executable = classify_if_action_is_executable
         self.has_been_called_at_least_once_before = False
         # Agents
         self.attempt_summarizer = AttemptSummarizer()
         self.backtracker = Backtracker()
         self.planner = Planner()  # TODO: Pass annotator tool callbacks here
         self.forgetter = Forgetter()
+
+    # TODO: Make these methods more idiomatic (w.r.t. their args/return types)
 
     async def _summarize_attempt(self, env_state: str) -> None:
         attempt_summarizer_input = AttemptSummarizerInputData(env_state=env_state)
@@ -65,7 +75,7 @@ class SrOlthad:
         )
         backtracker_return = await self.backtracker(backtracker_input_data)
         # Backtrack if needed
-        chosen_status = backtracker_return.output_data.chosen_status
+        chosen_status = backtracker_return.output_data.status_to_assign
         retrospective = backtracker_return.output_data.retrospective
         if isinstance(chosen_status, BacktrackedFromTaskStatus):
             self.olthad_traversal.backtrack(
@@ -99,8 +109,7 @@ class SrOlthad:
         # Planner
         await self._update_plan(env_state)
 
-        is_skill = lambda x: "(" in x and ")" in x
-        if is_skill(
+        if self.classify_if_action_is_executable(
             self.olthad_traversal.next_planned_subtask_of_cur_node.description
         ):  # TODO: "description" is semantically weird here... "task" and "id"?
             return self.olthad_traversal.next_planned_subtask_of_cur_node.description
@@ -109,18 +118,16 @@ class SrOlthad:
             return await self._recursively_process_cur_node(env_state=env_state)
 
     async def __call__(self, env_state: str | JsonSerializable) -> Optional[str]:
-        """...
+        """...TODO: Docstring
 
         Returns:
-            Optional[str]: The next action, or None if the task is believed to been have
-                given an exhaustive effort or be otherwise worth dropping.
+            Optional[str]: The next action, or None if the highest-level task is believed
+                to be completed, to been have given an exhaustive (unsuccessful) effort,
+                or to be otherwise worth dropping.
         """
         # Stringify env_state if it's not already a string
         if not isinstance(env_state, str):
-            env_state = StructuredDataStringifier.stringify(
-                env_state,
-                serialization_method=config.STRINGIFY_ENV_STATE_SERIALIZATION_METHOD,
-            )
+            env_state = json.dumps(env_state, cfg.JSON_DUMPS_INDENT)
 
         # Summarize previous attempt unless it's the initial call
         # (in which case, there's no previous attempt to summarize)

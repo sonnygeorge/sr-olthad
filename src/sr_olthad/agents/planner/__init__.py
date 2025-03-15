@@ -4,4 +4,4 @@ from sr_olthad.agents.planner.planner import (
     PlannerOutputData,
     PlannerReturn,
 )
-from sr_olthad.agents.planner.prompts import PROMPT_REGISTRY as PLANNER_PROMPT_REGISTRY
+from sr_olthad.agents.planner.prompt import PROMPT_REGISTRY as PLANNER_PROMPT_REGISTRY

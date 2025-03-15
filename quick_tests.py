@@ -4,27 +4,11 @@ from typing import Optional
 
 import rich
 from dotenv import load_dotenv
-from jinja2 import Template
-from loguru import logger
-from pydantic import BaseModel
 
 sys.path.append("src")
 
-from lms import OpenAIInstructLm
-from schema import (
-    InstructLmAgent,
-    InstructLmAgentReturn,
-    InstructLmMessage,
-    MultipleChoiceQuestionAgent,
-    MultipleChoiceQuestionAgentOutputData,
-    MultipleChoiceQuestionAgentReturn,
-    LmStreamHandler,
-)
-from agents import SingleTurnChatAgent
-from utils import implicitly_call_multiple_times_and_take_majority_vote
+from agent_framework.schema import LmStreamHandler
 
-
-# TODO: use enums?
 
 load_dotenv()
 
@@ -36,115 +20,27 @@ class PrintOneLmStreamHandler(LmStreamHandler):
             print(chunk_str, end="", flush=True)
 
 
-def test_instruct_lm_agent_types_and_async_voting():
-    class ExampleAgentInputData(BaseModel):
-        pass
-
-    class ExampleAgentOutputData(BaseModel):
-        pass
-
-    class ExampleMultipleChoiceQuestionAgent(MultipleChoiceQuestionAgent):
-        multiple_choice_options = {"A", "B", "C", "D"}
-
-        async def _call(self, input_data, stream_handler=None):
-            print("Invoking ExampleMultipleChoiceQuestionAgent")
-            await asyncio.sleep(0.35)
-            return MultipleChoiceQuestionAgentReturn(
-                output_data=MultipleChoiceQuestionAgentOutputData(
-                    chosen="A", reasoning="A is best"
-                ),
-                messages=[{"role": "assistant", "content": "A"}],
-            )
-
-        # @implicitly_call_multiple_times_and_take_majority_vote(
-        #     n_calls=9, max_async_calls=3
-        # )
-        async def __call__(self, input_data, **kwargs):
-            call = implicitly_call_multiple_times_and_take_majority_vote(
-                n_calls=9, max_async_calls=3
-            )(self._call)
-            return await call(self, input_data, **kwargs)
-
-    class ExampleInstructLmAgent(InstructLmAgent):
-        async def __call__(
-            self, input_data: ExampleAgentInputData, **kwargs
-        ) -> InstructLmAgentReturn:
-            return InstructLmAgentReturn(
-                output_data=ExampleAgentOutputData(),
-                messages=[],
-            )
-
-    agent = ExampleInstructLmAgent()
-    return_obj = asyncio.run(agent(ExampleAgentInputData()))
-    rich.print(return_obj)
-
-    agent = ExampleMultipleChoiceQuestionAgent()
-    return_obj = asyncio.run(agent(ExampleAgentInputData()))
-    rich.print(return_obj.output_data.reasoning)
-
-
-def test_openai_instruct_lm():
-    lm = OpenAIInstructLm(model="gpt-3.5-turbo")
-    messages = [
-        InstructLmMessage(role="system", content="You are a helpful assistant."),
-        InstructLmMessage(role="user", content="What is the meaning of life?"),
-    ]
-
-    # Test with stream handler
-    response = asyncio.run(
-        lm.generate(
-            messages,
-            stream_handler=PrintOneLmStreamHandler(),
-            max_tokens=15,
-        )
-    )
-
-    print("\n\n")
-
-    # Test without stream handler
-    response = asyncio.run(lm.generate(messages, max_tokens=15))
-    print(response)
-
-
-def test_single_turn_chat_agent():
-    class AdditionAgentInputData(BaseModel):
-        first_number: int
-        second_number: int
-
-    class AdditionAgentOutputData(BaseModel):
-        sum_of_numbers: int
-
-    sys_prompt = """You are a helpful assistant that adds numbers.
-    Give your answer in this JSON format: {"sum_of_numbers": (int)}."""
-
-    # Adding this type hint allows type-checkers to know the input/output data types
-    addition_agent: SingleTurnChatAgent[
-        AdditionAgentInputData, AdditionAgentOutputData
-    ] = SingleTurnChatAgent(
-        instruct_lm=OpenAIInstructLm(model="gpt-3.5-turbo"),
-        sys_prompt=sys_prompt,
-        user_prompt_template=Template("Add {first_number} and {second_number}."),
-        input_data_model=AdditionAgentInputData,
-        output_data_model=AdditionAgentOutputData,
-        max_tries_to_get_valid_response=3,
-        logger=logger,
-    )
-
-    def stream_handler(chunk_str: str, async_call_num: Optional[int] = None):
-        print(chunk_str, end="", flush=True)
-
-    sum_of_numbers = asyncio.run(
-        addition_agent(
-            input_data=AdditionAgentInputData(first_number=2, second_number=3),
-            stream_handler=stream_handler,
-            max_tokens=100,
-        )
-    ).output_data.sum_of_numbers
-    print("\n\n", sum_of_numbers)
-
-
 def print_backtracker_agent_prompts():
-    from sr_olthad.agents.config import BacktrackerConfig as cfg
+    from sr_olthad.config import BacktrackerCfg as cfg
+    from sr_olthad.agents.backtracker.prompt import (
+        PARTIAL_SUCCESS_CLF_PROMPT_REGISTRY,
+        SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY,
+        MOST_WORTHWHILE_PURSUIT_CLF_PROMPT_REGISTRY,
+        EXHAUSTIVE_EFFORT_CLF_PROMPT_REGISTRY,
+    )
+
+    exhaustive_effort_prompts = EXHAUSTIVE_EFFORT_CLF_PROMPT_REGISTRY[
+        cfg.ExhaustiveEffortClf.PROMPTS_VERSION
+    ]
+    most_worthwhile_pursuit_prompts = MOST_WORTHWHILE_PURSUIT_CLF_PROMPT_REGISTRY[
+        cfg.MostWorthwhilePursuitClfCfg.PROMPTS_VERSION
+    ]
+    partial_success_prompts = PARTIAL_SUCCESS_CLF_PROMPT_REGISTRY[
+        cfg.PartialSuccessClfCfg.PROMPTS_VERSION
+    ]
+    successful_completion_prompts = SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY[
+        cfg.SuccessfulCompletionClfCfg.PROMPTS_VERSION
+    ]
 
     print("\n###############################################" * 2)
     print("######### Exhaustive Effort Classifier ########")
@@ -152,11 +48,11 @@ def print_backtracker_agent_prompts():
     print("***********")
     print("*** SYS ***")
     print("***********\n")
-    print(cfg.ExhaustiveEffortClfConfig.SYS_PROMPT)
+    print(exhaustive_effort_prompts.sys_prompt_template.render())
     print("\n************")
     print("*** USER ***")
     print("************\n")
-    print(cfg.ExhaustiveEffortClfConfig.USER_PROMPT_TEMPLATE.render())
+    print(exhaustive_effort_prompts.user_prompt_template.render())
 
     print("\n################################################" * 2)
     print("###### Most Worthwhile Pursuit Classifier ######")
@@ -164,11 +60,11 @@ def print_backtracker_agent_prompts():
     print("***********")
     print("*** SYS ***")
     print("***********\n")
-    print(cfg.MostWorthwhilePursuitClfConfig.SYS_PROMPT)
+    print(most_worthwhile_pursuit_prompts.sys_prompt_template.render())
     print("\n************")
     print("*** USER ***")
     print("************\n")
-    print(cfg.MostWorthwhilePursuitClfConfig.USER_PROMPT_TEMPLATE.render())
+    print(most_worthwhile_pursuit_prompts.user_prompt_template.render())
 
     print("\n###############################################" * 2)
     print("########## Partial Success Classifier #########")
@@ -176,11 +72,11 @@ def print_backtracker_agent_prompts():
     print("***********")
     print("*** SYS ***")
     print("***********\n")
-    print(cfg.PartialSuccessClfConfig.SYS_PROMPT)
+    print(partial_success_prompts.sys_prompt_template.render())
     print("\n************")
     print("*** USER ***")
     print("************\n")
-    print(cfg.PartialSuccessClfConfig.USER_PROMPT_TEMPLATE.render())
+    print(partial_success_prompts.user_prompt_template.render())
 
     print("\n##############################################" * 2)
     print("###### Successful Completion Classifier ######")
@@ -188,17 +84,16 @@ def print_backtracker_agent_prompts():
     print("***********")
     print("*** SYS ***")
     print("***********\n")
-    print(cfg.SuccessfulCompletionClfConfig.SYS_PROMPT)
+    print(successful_completion_prompts.sys_prompt_template.render())
     print("\n************")
     print("*** USER ***")
     print("************\n")
-    print(cfg.SuccessfulCompletionClfConfig.USER_PROMPT_TEMPLATE.render())
+    print(successful_completion_prompts.user_prompt_template.render())
 
 
 def test_backtracker():
-    from sr_olthad.enums import TaskStatus
     from sr_olthad.agents import Backtracker, BacktrackerInputData
-    from sr_olthad.olthad.task_node import TaskNode
+    from sr_olthad.olthad import TaskNode, TaskStatus
 
     # env_state = "You are sitting at a wood table. The lights are on. Two slices of pizza remain."
     env_state = "It's 4:56pm. You feel full. The pizza is cold."
@@ -265,17 +160,13 @@ def test_backtracker():
         )
     )
     print("\n\nCHOSEN STATUS:\n")
-    print(return_obj.output_data.chosen_status)
+    print(return_obj.output_data.status_to_assign)
     print("\nRETROSPECTIVE:\n")
     print(return_obj.output_data.retrospective)
     print("\nBACKTRACK TO:\n")
-    print(return_obj.output_data.backtrack_to)
+    print(return_obj.output_data.ancestor_to_backtrack_to_if_not_parent)
 
 
 if __name__ == "__main__":
-    # test_instruct_lm_agent_types_and_async_voting()
-    # test_openai_instruct_lm()
-    # test_single_turn_chat_agent()
     # print_backtracker_agent_prompts()
-    # test_backtracker_successful_completion_clf()
     test_backtracker()

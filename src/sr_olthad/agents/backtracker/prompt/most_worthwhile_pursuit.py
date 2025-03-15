@@ -1,39 +1,40 @@
 from jinja2 import Template
 
-from enums import BinaryCaseStr
-from schema import (
-    BinaryChoiceOptions,
-    SingleTurnPromptTemplates,
-    PromptRegistry,
-    MultipleChoiceQuestionAgentOption,
+from sr_olthad.agents.backtracker.prompt.common import (
+    BacktrackerSubAgentInputFields,
+    JSON_FORMAT_SYS_PROMPT_INSERT,
 )
-from sr_olthad.prompts import SysPromptInsertionField
+from sr_olthad.agents.prompt import (
+    EXAMPLE_OLTHAD_FOR_SYS_PROMPT,
+    EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT,
+)
+from sr_olthad.schema import (
+    SingleTurnPromptTemplates,
+    MultipleChoiceQuestionOption,
+    PromptRegistry,
+)
+from sr_olthad.utils import (
+    BinaryChoiceOptions,
+)
 
 
 IS_MOST_WORTHWHILE_OPTIONS: BinaryChoiceOptions = {
-    BinaryCaseStr.TRUE: MultipleChoiceQuestionAgentOption(
+    True: MultipleChoiceQuestionOption(
         letter="A",
         text="The task in question is, at this time, the most worthwhile objective for the actor to be pursuing.",
     ),
-    BinaryCaseStr.FALSE: MultipleChoiceQuestionAgentOption(
+    False: MultipleChoiceQuestionOption(
         letter="B",
         text="The task in question should be dropped, at least temporarily, in favor of something else.",
     ),
 }
-
-SYS_PROMPT_INSERTION_FIELDS_NEEDED = [
-    SysPromptInsertionField.OLTHAD_EXAMPLE,
-    SysPromptInsertionField.TASK_IN_QUESTION_EXAMPLE,
-    SysPromptInsertionField.BINARY_OUTPUT_JSON_FORMAT_SPEC,
-]
-
 
 ######################
 ######## v1.0 ########
 ######################
 
 
-V1_0_QUESTION = "Given the current state of everything, which statement is more true?"
+V1_0_QUESTION = "Which statement is more true?"
 
 SYS_1_0 = f"""You are a helpful AI agent who plays a crucial role in a hierarchical reasoning and acting system. Your specific job is as follows.
 
@@ -50,21 +51,21 @@ CURRENT ACTOR/ENVIRONMENT STATE:
 
 ```text
 PROGRESS/PLANS:
-{{{{ {SysPromptInsertionField.OLTHAD_EXAMPLE} }}}}
+{EXAMPLE_OLTHAD_FOR_SYS_PROMPT}
 ```
 
 3. Followed by an indication of which in-progress task about which you will be questioned, e.g.:
 
 ```text
 TASK IN QUESTION:
-{{{{ {SysPromptInsertionField.TASK_IN_QUESTION_EXAMPLE} }}}}
+{EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT}
 ```
 
 Finally, you will be asked the following:
 
 {V1_0_QUESTION}
-{IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.TRUE].letter}. {IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.TRUE].text}
-{IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.FALSE].letter}. {IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.FALSE].text}
+{IS_MOST_WORTHWHILE_OPTIONS[True].letter}. {IS_MOST_WORTHWHILE_OPTIONS[True].text}
+{IS_MOST_WORTHWHILE_OPTIONS[False].letter}. {IS_MOST_WORTHWHILE_OPTIONS[False].text}
 
 Now, there are many possible reasons why answer choice "B" might be better. Here are a few examples:
 1. The task was foolishly proposed/poorly conceived in the first place (e.g., was not the best idea or was ambiguously phrased).
@@ -80,27 +81,27 @@ Now, there are many possible reasons why answer choice "B" might be better. Here
 Think things through step-by-step, considering each of the above points as you go. Finally, provide your final response in a JSON that strictly adheres to the following format:
 
 ```json
-{{{{ {SysPromptInsertionField.BINARY_OUTPUT_JSON_FORMAT_SPEC} }}}}
+{JSON_FORMAT_SYS_PROMPT_INSERT}
 ```"""
 
 USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:
 ```text
-{{{{env_state}}}}
+{{{{ {BacktrackerSubAgentInputFields.ENV_STATE} }}}}
 ```
 
 PROGRESS/PLANS:
 ```json
-{{{{olthad}}}}
+{{{{ {BacktrackerSubAgentInputFields.OLTHAD} }}}}
 ```
 
 TASK IN QUESTION:
 ```json
-{{{{task_in_question}}}}
+{{{{ {BacktrackerSubAgentInputFields.TASK_IN_QUESTION} }}}}
 ```
 
 {V1_0_QUESTION}
-{IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.TRUE].letter}. {IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.TRUE].text}
-{IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.FALSE].letter}. {IS_MOST_WORTHWHILE_OPTIONS[BinaryCaseStr.FALSE].text}
+{IS_MOST_WORTHWHILE_OPTIONS[True].letter}. {IS_MOST_WORTHWHILE_OPTIONS[True].text}
+{IS_MOST_WORTHWHILE_OPTIONS[False].letter}. {IS_MOST_WORTHWHILE_OPTIONS[False].text}
 """
 
 V1_0_PROMPTS = SingleTurnPromptTemplates(

@@ -4,6 +4,6 @@ from sr_olthad.agents.forgetter.forgetter import (
     ForgetterOutputData,
     ForgetterReturn,
 )
-from sr_olthad.agents.forgetter.prompts import (
+from sr_olthad.agents.forgetter.prompt import (
     PROMPT_REGISTRY as FORGETTER_PROMPT_REGISTRY,
 )
