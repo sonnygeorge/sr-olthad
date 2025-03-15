@@ -2,7 +2,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from agent_framework.schema import Agent, InstructLmMessage
+from agent_framework.schema import Agent, InstructLmMessages
 from sr_olthad.olthad import TaskNode
 
 
@@ -17,7 +17,7 @@ class PlannerOutputData(BaseModel):
 
 class PlannerReturn:
     output_data: PlannerOutputData
-    messages: List[InstructLmMessage] | List[List[InstructLmMessage]]
+    messages: InstructLmMessages | List[InstructLmMessages]
 
 
 class Planner(Agent):

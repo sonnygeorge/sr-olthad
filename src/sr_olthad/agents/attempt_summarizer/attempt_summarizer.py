@@ -2,7 +2,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from agent_framework.schema import Agent, InstructLmMessage
+from agent_framework.schema import Agent, InstructLmMessages
 from sr_olthad.olthad import AttemptedTaskStatus
 
 
@@ -17,7 +17,7 @@ class AttemptSummarizerOutputData(BaseModel):
 
 class AttemptSummarizerSummarizerReturn:
     output_data: AttemptSummarizerOutputData
-    messages: List[InstructLmMessage] | List[List[InstructLmMessage]]
+    messages: InstructLmMessages | List[InstructLmMessages]
 
 
 class AttemptSummarizer(Agent):

@@ -1,12 +1,12 @@
 import os
-from typing import List, Optional
+from typing import Optional
 
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
 
 from agent_framework.schema import (
     InstructLm,
-    InstructLmMessage,
+    InstructLmMessages,
     LmStreamHandler,
 )
 
@@ -21,7 +21,7 @@ class OpenAIInstructLm(InstructLm):
 
     async def generate(
         self,
-        messages: List[InstructLmMessage],
+        messages: InstructLmMessages,
         stream_handler: Optional[LmStreamHandler] = None,
         **kwargs
         # E.g., temperature, max_tokens, top_p, presence_penalty, frequency_penalty...

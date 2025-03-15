@@ -4,7 +4,7 @@ TODO: Add m-coding style logging
 TODO: Build a GUI app to step through sr-OLTHAD LM-calls w/ a "next" button (w/ a more human-readable plan string?) (and simulate environment)
 TODO: Ranking of multiple async "Planner" outputs?
 TODO: Annotation GUI?
-TODO: Rag of SemanticSteve tutorials?
+TODO: RAG of SemanticSteve tutorials?
 -->
 
 ```python
@@ -13,7 +13,7 @@ TODO: Rag of SemanticSteve tutorials?
  ┃ ┣ 📂agent_framework # Package for generic agent framework
  ┃ ┃ ┣ 📂agents # Package for generic plug-and-play agents
  ┃ ┃ ┃ ┗ 📜single_turn_chat.py
- ┃ ┃ ┣ 📜lms.py # (Soon-to-be) package for a variety of LMs
+ ┃ ┃ ┣ 📜lms.py # Module (soon-to-be package) for a variety of LMs
  ┃ ┃ ┣ 📜schema.py
  ┃ ┃ ┗ 📜utils.py
  ┃ ┗ 📂sr_olthad # Package sr-OLTHAD

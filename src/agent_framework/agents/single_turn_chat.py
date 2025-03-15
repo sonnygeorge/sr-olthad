@@ -9,6 +9,7 @@ from agent_framework.schema import (
     InstructLm,
     InstructLmChatRole,
     InstructLmMessage,
+    InstructLmMessages,
     LmStreamHandler,
 )
 from agent_framework.utils import (
@@ -21,7 +22,7 @@ BaseModelT = TypeVar("OutputDataT", bound=BaseModel)
 
 class SingleTurnChatAgentReturn(BaseModel, Generic[BaseModelT]):
     output_data: BaseModelT
-    messages: List[InstructLmMessage] | List[List[InstructLmMessage]]
+    messages: InstructLmMessages | List[InstructLmMessages]
 
 
 class SingleTurnChatAgent(Agent, Generic[BaseModelT]):
@@ -54,9 +55,7 @@ class SingleTurnChatAgent(Agent, Generic[BaseModelT]):
             logger=self.logger,
         )(self._get_valid_response)
 
-    def _prepare_messages(
-        self, input_data: BaseModel
-    ) -> List[InstructLmMessage]:
+    def _prepare_messages(self, input_data: BaseModel) -> InstructLmMessages:
         # TODO: Raise error if model and template fields don't match up
         input_data = {k: str(v) for k, v in input_data.__dict__.items()}
         user_prompt = self.user_prompt_template.render(**input_data)
@@ -74,7 +73,7 @@ class SingleTurnChatAgent(Agent, Generic[BaseModelT]):
 
     async def _get_valid_response(
         self,
-        messages: List[InstructLmMessage],
+        messages: InstructLmMessages,
         stream_handler: Optional[LmStreamHandler] = None,
         **kwargs,  # kwargs passed through to the InstructLm.generate method
     ) -> BaseModelT:

@@ -11,13 +11,6 @@ from agent_framework.schema import LmStreamHandler
 load_dotenv()
 
 
-class PrintOneLmStreamHandler(LmStreamHandler):
-    def __call__(self, chunk_str: str, async_call_idx: Optional[int] = None):
-        # I.e. don't print more than the first of a series of async calls
-        if async_call_idx is None or async_call_idx == 0:
-            print(chunk_str, end="", flush=True)
-
-
 def print_backtracker_agent_prompts():
     from sr_olthad.agents.backtracker.prompt import (
         EXHAUSTIVE_EFFORT_CLF_PROMPT_REGISTRY,
@@ -91,6 +84,13 @@ def print_backtracker_agent_prompts():
     print(successful_completion_prompts.user_prompt_template.render())
 
 
+class PrintOneLmStreamHandler(LmStreamHandler):
+    def __call__(self, chunk_str: str, async_call_idx: Optional[int] = None):
+        # I.e. don't print more than the first of a series of async calls
+        if async_call_idx is None or async_call_idx == 0:
+            print(chunk_str, end="", flush=True)
+
+
 def test_backtracker():
     from sr_olthad.agents import Backtracker, BacktrackerInputData
     from sr_olthad.olthad import TaskNode, TaskStatus
@@ -147,7 +147,7 @@ def test_backtracker():
 
     backtracker_input_data = BacktrackerInputData(
         env_state=env_state,
-        olthad=olthad,
+        olthad_root=olthad,
         task_in_question=task_in_question,
     )
 

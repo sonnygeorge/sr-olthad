@@ -2,7 +2,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from agent_framework.schema import Agent, InstructLmMessage
+from agent_framework.schema import Agent, InstructLmMessages
 
 
 class ForgetterInputData(BaseModel):
@@ -15,7 +15,7 @@ class ForgetterOutputData(BaseModel):
 
 class ForgetterReturn:
     output_data: ForgetterOutputData
-    messages: List[InstructLmMessage] | List[List[InstructLmMessage]]
+    messages: InstructLmMessages | List[InstructLmMessages]
 
 
 class Forgetter(Agent):

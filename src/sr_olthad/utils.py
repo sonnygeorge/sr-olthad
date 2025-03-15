@@ -1,7 +1,7 @@
 from sr_olthad.schema import BinaryChoiceOptions, NonBinaryChoiceOptions
 
 
-def extract_chosen_letter_from_multiple_choice_question_response_text(
+def extract_letter_from_multiple_choice_question_response(
     text: str,
     options: BinaryChoiceOptions | NonBinaryChoiceOptions,
 ) -> str:

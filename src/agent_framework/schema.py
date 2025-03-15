@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import StrEnum
-from typing import List, Optional, Protocol, TypedDict
+from typing import List, Optional, Protocol, TypeAlias, TypedDict
 
 from pydantic import BaseModel
 
@@ -14,6 +14,9 @@ class InstructLmChatRole(StrEnum):
 class InstructLmMessage(TypedDict):
     role: InstructLmChatRole
     content: str
+
+
+InstructLmMessages: TypeAlias = List[InstructLmMessage]
 
 
 class LmStreamHandler(ABC):
