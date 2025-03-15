@@ -107,6 +107,7 @@ class Backtracker(Agent):
             sys_prompt=exhaustive_effort_prompts.sys_prompt_template.render(),
             user_prompt_template=exhaustive_effort_prompts.user_prompt_template,
             max_tries_to_get_valid_response=cfg.ExhaustiveEffortClf.MAX_TRIES_TO_GET_VALID_LM_RESPONSE,
+            logger=logger,
         )
         self.exhaustive_effort_clf = with_implicit_async_voting(
             n_calls=cfg.ExhaustiveEffortClf.N_CALLS_FOR_VOTING,
@@ -134,6 +135,7 @@ class Backtracker(Agent):
             sys_prompt=most_worthwhile_pursuit_prompts.sys_prompt_template.render(),
             user_prompt_template=most_worthwhile_pursuit_prompts.user_prompt_template,
             max_tries_to_get_valid_response=cfg.MostWorthwhilePursuitClfCfg.MAX_TRIES_TO_GET_VALID_LM_RESPONSE,
+            logger=logger,
         )
         self.most_worthwhile_pursuit_clf = with_implicit_async_voting(
             n_calls=cfg.MostWorthwhilePursuitClfCfg.N_CALLS_FOR_VOTING,
@@ -159,6 +161,7 @@ class Backtracker(Agent):
             sys_prompt=partial_success_prompts.sys_prompt_template.render(),
             user_prompt_template=partial_success_prompts.user_prompt_template,
             max_tries_to_get_valid_response=cfg.PartialSuccessClfCfg.MAX_TRIES_TO_GET_VALID_LM_RESPONSE,
+            logger=logger,
         )
         self.partial_success_clf = with_implicit_async_voting(
             n_calls=cfg.PartialSuccessClfCfg.N_CALLS_FOR_VOTING,
@@ -186,6 +189,7 @@ class Backtracker(Agent):
             sys_prompt=successful_completion_prompts.sys_prompt_template.render(),
             user_prompt_template=successful_completion_prompts.user_prompt_template,
             max_tries_to_get_valid_response=cfg.SuccessfulCompletionClfCfg.MAX_TRIES_TO_GET_VALID_LM_RESPONSE,
+            logger=logger,
         )
         self.successful_completion_clf = with_implicit_async_voting(
             n_calls=cfg.SuccessfulCompletionClfCfg.N_CALLS_FOR_VOTING,

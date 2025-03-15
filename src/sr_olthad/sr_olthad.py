@@ -160,7 +160,7 @@ class SrOlthad:
             self.cur_node.update_status(backtracked_from_status_to_assign)
             self.cur_node.update_retrospective(retrospective_to_assign)
 
-            # Return highest-level-task exit signal if we're to backtrack from the root
+            # Return highest-level-task exit signal if we are to backtrack from the root
             if self.cur_node.parent_id is None:
                 return None
 

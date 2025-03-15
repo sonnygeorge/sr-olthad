@@ -75,7 +75,7 @@ Now, there are many possible reasons why answer choice "B" might be better. Here
 3. Something has emerged that makes the task significantly harder than perhaps was previously assumed, making it less worthwhile in light of potentially easier alternatives.
 4. ...
 
-Think things through step-by-step, considering each of the above points as you go. Finally, provide your final response in a JSON that strictly adheres to the following format:
+Think things through step-by-step, considering each of the above points as you go. Finally, only once you've concluded your deliberation, provide your final response in a JSON that strictly adheres to the following format:
 
 ```json
 {JSON_FORMAT_SYS_PROMPT_INSERT}
