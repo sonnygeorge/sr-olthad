@@ -1,5 +1,5 @@
 <!--
-TODO: Finish basic implementation of sr-OLTHAD
+TODO: Callback after every OLTHAD update?
 TODO: Add m-coding style logging
 TODO: Build a GUI app to step through sr-OLTHAD LM-calls w/ a "next" button (w/ a more human-readable plan string?) (and simulate environment)
 TODO: Ranking of multiple async "Planner" outputs?
@@ -27,11 +27,10 @@ TODO: RAG of SemanticSteve tutorials?
  ┃   ┃ ┣ 📂planner
  ┃   ┃ ┃ ┗ ...
  ┃   ┃ ┗ ...
- ┃   ┣ 📂olthad # Package for OLTHAD stuff: TaskNode, traversal, etc.
- ┃   ┃ ┃ ┗ ...
  ┃   ┣ 📜config.py
  ┃   ┣ 📜schema.py
  ┃   ┣ 📜sr_olthad.py # Main sr-OLTHAD class imported externally
+ ┃   ┣ 📜task_node.py
  ┃   ┗ 📜utils.py
  ┣ 📜quick_tests.py  # Ad-hoc testing scripts
  ┗ 📜requirements.txt

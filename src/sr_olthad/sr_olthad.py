@@ -10,8 +10,9 @@ from sr_olthad.agents import (
     BacktrackerInputData,
     Forgetter,
     Planner,
+    PlannerInputData,
 )
-from sr_olthad.olthad import BacktrackedFromTaskStatus, TaskNode, TaskStatus
+from sr_olthad.task_node import BacktrackedFromTaskStatus, TaskNode, TaskStatus
 
 # TODO: Handle "notepad" internally? (i.e., decouple internal functions from environment "skills")
 # TODO: Results string?
@@ -79,113 +80,107 @@ class SrOlthad:
             callback_after_each_lm_step=callback_after_each_lm_step,
         )
 
-    # TODO: Make these methods more idiomatic (w.r.t. their args/return types)
-
-    # async def _backtrack_if_deemed_fit(self, env_state: str) -> bool:
-    #     backtracker_input_data = BacktrackerInputData(
-    #         env_state=env_state,
-    #         root_task_node=self.olthad_traversal.root_node,
-    #         current_task_node=self.olthad_traversal.cur_node,
-    #     )
-    #     backtracker_return = await self.backtracker(backtracker_input_data)
-    #     # Backtrack if needed
-    #     chosen_status = backtracker_return.output_data.status_to_assign
-    #     retrospective = backtracker_return.output_data.retrospective_to_assign
-    #     if isinstance(chosen_status, BacktrackedFromTaskStatus):
-    #         self.olthad_traversal.backtrack(
-    #             chosen_status=chosen_status,
-    #             retrospective_to_assign=retrospective,
-    #         )
-    #         return True
-    #     return False
-
-    # # TODO: Optional return for no plan change?
-    # async def _update_plan(self, env_state: str) -> None:
-    #     planner_input_data = PlannerInputData(
-    #         env_state=env_state,
-    #         olthad=self.olthad_traversal,
-    #     )
-    #     # Apply planner with implicit retries
-    #     planner_return = await self.planner(planner_input_data)
-    #     # TODO: Handle `None` `new_plan`?
-    #     self.olthad_traversal.update_planned_subtasks_with_new_planned_subtasks(
-    #         new_planned_subtasks=planner_return.output_data.new_plan
-    #     )
-
     async def _process_cur_node_until_next_executable_action_is_determined(
         self, env_state: str
     ) -> None:
 
-        #############################################################
-        ## Deliberate backtracking and backtrack if deemed prudent ##
-        #############################################################
+        if self.has_been_called_at_least_once_before:
+            #############################################################
+            ## Deliberate backtracking and backtrack if deemed prudent ##
+            #############################################################
 
-        # Invoke the backtracker and get outputs
-        return_obj = await self.backtracker(
-            BacktrackerInputData(
-                env_state=env_state,
-                root_task_node=self.root_node,
-                current_task_node=self.cur_node,
+            # Invoke the backtracker and get outputs
+            return_obj = await self.backtracker(
+                BacktrackerInputData(
+                    env_state=env_state,
+                    root_task_node=self.root_node,
+                    current_task_node=self.cur_node,
+                )
             )
-        )
-        backtracked_from_status_to_assign = (
-            return_obj.output_data.backtracked_from_status_to_assign
-        )
-        retrospective_to_assign = (
-            return_obj.output_data.retrospective_to_assign
-        )
-        id_of_ancestor_to_backtrack_to = (
-            return_obj.output_data.id_of_ancestor_to_backtrack_to
-        )
-
-        # Backtrack if needed
-        if backtracked_from_status_to_assign is not None:
-
-            # TODO: Remove these asserts
-            assert retrospective_to_assign is not None
-            assert isinstance(
-                backtracked_from_status_to_assign, BacktrackedFromTaskStatus
+            backtracked_from_status_to_assign = (
+                return_obj.output_data.backtracked_from_status_to_assign
+            )
+            retrospective_to_assign = (
+                return_obj.output_data.retrospective_to_assign
+            )
+            id_of_ancestor_to_backtrack_to = (
+                return_obj.output_data.id_of_ancestor_to_backtrack_to
             )
 
-            # Backtrack our way up to child of this ancestor (pruning subtasks as we go)
-            while self.cur_node.parent_id != id_of_ancestor_to_backtrack_to:
-                # Prune
-                for subtask_node in self.cur_node.subtasks:
-                    del self.nodes[subtask_node.id]
-                self.cur_node.wipe_subtasks_list()
-                # Backtrack
+            # Backtrack if needed
+            if backtracked_from_status_to_assign is not None:
+
+                # TODO: Remove these asserts
+                assert retrospective_to_assign is not None
+                assert isinstance(
+                    backtracked_from_status_to_assign,
+                    BacktrackedFromTaskStatus,
+                )
+
+                # Backtrack our way up to child of this ancestor (pruning subtasks as we go)
+                while (
+                    self.cur_node.parent_id != id_of_ancestor_to_backtrack_to
+                ):
+                    # Prune
+                    for subtask_node in self.cur_node.subtasks:
+                        del self.nodes[subtask_node.id]
+                    self.cur_node.wipe_subtasks_list()
+                    # Backtrack
+                    self.cur_node = self.nodes[self.cur_node.parent_id]
+
+                # Update the status and retrospective of the last child to backtrack from
+                self.cur_node.update_status(backtracked_from_status_to_assign)
+                self.cur_node.update_retrospective(retrospective_to_assign)
+
+                # Return highest-level-task exit signal if we are to backtrack from the root
+                if self.cur_node.parent_id is None:
+                    return None
+
+                # Backtrack one more time to arrive at the target ancestor
                 self.cur_node = self.nodes[self.cur_node.parent_id]
 
-            # Update the status and retrospective of the last child to backtrack from
-            self.cur_node.update_status(backtracked_from_status_to_assign)
-            self.cur_node.update_retrospective(retrospective_to_assign)
+                # Begin processing anew with the new current node
+                return await self._process_cur_node_until_next_executable_action_is_determined(
+                    env_state
+                )
 
-            # Return highest-level-task exit signal if we are to backtrack from the root
-            if self.cur_node.parent_id is None:
-                return None
+        #########################################
+        ## Update tentatively planned subtasks ##
+        #########################################
 
-            # Backtrack one more time to arrive at the target ancestor
-            self.cur_node = self.nodes[self.cur_node.parent_id]
+        planner_input_data = PlannerInputData(
+            env_state=env_state,
+            root_task_node=self.root_node,
+            current_task_node=self.cur_node,
+        )
+        return_obj = await self.planner(planner_input_data)
+        new_planned_subtasks = return_obj.output_data.new_planned_subtasks
+        if len(new_planned_subtasks) == 0:
+            raise NotImplementedError(
+                "The planner returning no new planned subtasks is not yet handled."
+            )
+        new_planned_subtask_nodes = []
+        for i, new_planned_subtask in enumerate(new_planned_subtasks):
+            new_subtask_node = TaskNode(
+                id=f"{self.cur_node.id}.{i+1}",
+                parent_id=self.cur_node.id,
+                task=new_planned_subtask,
+                status=TaskStatus.PLANNED,
+                retrospective=None,
+            )
+            new_planned_subtask_nodes.append(new_subtask_node)
+        self.cur_node.replace_any_planned_subtasks_with(
+            new_planned_subtasks=new_planned_subtask_nodes
+        )
 
-            # Begin processing anew with the new current node
-            return self._process_cur_node_until_next_executable_action_is_determined(
+        if self.is_action_executable(self.cur_node.next_planned_subtask.task):
+            return self.cur_node.next_planned_subtask.task
+        else:
+            # Recurse inward to break down the next planned subtask
+            self.cur_node = self.cur_node.next_planned_subtask
+            return await self._process_cur_node_until_next_executable_action_is_determined(
                 env_state
             )
-
-        # # Planner
-        # await self._update_plan(env_state)
-
-        # if self.is_action_executable(
-        #     self.olthad_traversal.next_planned_subtask_of_cur_node.description
-        # ):  # TODO: "description" is semantically weird here... "task" and "id"?
-        #     return (
-        #         self.olthad_traversal.next_planned_subtask_of_cur_node.description
-        #     )
-        # else:
-        #     self.olthad_traversal.recurse_inward()
-        #     return await self._recursively_deliberate_until_next_executable_action_is_determined(
-        #         env_state=env_state
-        #     )
 
     async def __call__(
         self, env_state: str | JsonSerializable
@@ -211,10 +206,7 @@ class SrOlthad:
         ## Summarize previous execution (action attempt) ##
         ###################################################
 
-        if not self.has_been_called_at_least_once_before:
-            # Initial call, no previous execution/attempt to summarize
-            self.has_been_called_at_least_once_before = True
-        else:
+        if self.has_been_called_at_least_once_before:
             # We've completed the attempt of what previously was the next planned subtask
             attempted_subtask_node = self.cur_node.next_planned_subtask
             return_obj = await self.attempt_summarizer(
@@ -236,6 +228,13 @@ class SrOlthad:
         ## (or `None` to signal exit of highest-mode task node) ##
         ##########################################################
 
-        return await self._process_cur_node_until_next_executable_action_is_determined(
+        output = await self._process_cur_node_until_next_executable_action_is_determined(
             env_state
         )
+        self.has_been_called_at_least_once_before = True
+        print("#" * 80)
+        print("#" * 80, "\n\n")
+        print(self.root_node.stringify())
+        print("\n\n", "#" * 80)
+        print("#" * 80)
+        return output

@@ -17,7 +17,7 @@ class PlannerPromptInputData(BaseModel):
 
     Attributes:
         env_state (str): PRE-STRINGIFIED current environment state.
-        olthad (str): PRE-STRINGIFIED root task node of the OLTHAD being traversed.
+        olthad (str): PRE-STRINGIFIED root task node of the OLTHAD.
         task_in_question (str): PRE-STRINGIFIED task node we're considering backtracking
             from.
     """
@@ -51,7 +51,7 @@ class PlannerOutputFields(StrEnum):
 
 # Append or replace? We want to poka-yoke this...
 JSON_FORMAT_SYS_PROMPT_INSERT = f"""{{
-    "{PlannerOutputFields.NEW_PLANNED_SUBTASKS}": "(list) The subtasks you think should be appended to the task node in question.",
+    "{PlannerOutputFields.NEW_PLANNED_SUBTASKS}": "(List[str]) Your decided sequence of tentatively planned tasks.",
 }}"""
 
 
@@ -119,6 +119,6 @@ V1_0_PROMPTS = SingleTurnPromptTemplates(
 ###### Registry ######
 ######################
 
-PLANNER_PROMPT_REGISTRY: PromptRegistry = {
+PROMPT_REGISTRY: PromptRegistry = {
     "1.0": V1_0_PROMPTS,
 }

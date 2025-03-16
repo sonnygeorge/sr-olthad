@@ -21,7 +21,7 @@ from sr_olthad.agents.backtracker.prompt import (
     BacktrackerSubAgentPromptInputData,
 )
 from sr_olthad.config import BacktrackerCfg as cfg
-from sr_olthad.olthad import BacktrackedFromTaskStatus, TaskNode, TaskStatus
+from sr_olthad.task_node import BacktrackedFromTaskStatus, TaskNode, TaskStatus
 from sr_olthad.utils import (
     extract_letter_from_multiple_choice_question_response,
 )

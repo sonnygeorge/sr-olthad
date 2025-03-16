@@ -81,7 +81,7 @@ Think things through step-by-step, considering each of the above points as you g
 {JSON_FORMAT_SYS_PROMPT_INSERT}
 ```
 
-IMPORTANT: The highest-level task with id "1" is the highly important user-requested task. If this task is in question, you should only answer {IS_MOST_WORTHWHILE_OPTIONS[False].letter} if the task is immoral or learned to be impossible.
+IMPORTANT: The highest-level task with id "1" is the highly important user-requested task. If this task is in question, you should only answer {IS_MOST_WORTHWHILE_OPTIONS[False].letter} IF THE TASK IS IMMORAL OR LEARNED TO BE IMPOSSIBLE. DO NOT ABANDON THE HIGHEST-LEVEL IN FAVOR OF SOMETHING ELSE!
 """
 
 USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:

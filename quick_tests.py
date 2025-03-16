@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 sys.path.append("src")
 
-from agent_framework.schema import LmStreamHandler
+from agent_framework.schema import InstructLmMessage, LmStreamHandler
 
 load_dotenv()
 
@@ -91,10 +91,15 @@ class PrintOneLmStreamHandler(LmStreamHandler):
             print(chunk_str, end="", flush=True)
 
 
+def wait_for_user_to_proceed(
+    messages: List[InstructLmMessage],
+):
+    input("\n\nPress Enter to continue...")
+
+
 def test_backtracker():
-    from agent_framework.schema import InstructLmMessage
     from sr_olthad.agents import Backtracker, BacktrackerInputData
-    from sr_olthad.olthad import TaskNode, TaskStatus
+    from sr_olthad.task_node import TaskNode, TaskStatus
 
     # env_state = "You are sitting at a wood table. Two slices of pizza remain."
     env_state = "It's 4:56pm. You feel full. The pizza is cold."
@@ -144,11 +149,6 @@ def test_backtracker():
         subtasks=[task_in_question],
     )
 
-    def wait_for_user_to_proceed(
-        messages: List[InstructLmMessage],
-    ):
-        input("\n\nPress Enter to continue...")
-
     backtracker_input_data = BacktrackerInputData(
         env_state=env_state,
         root_task_node=olthad,
@@ -180,13 +180,13 @@ def test_sr_olthad():
     sr_olthad = SrOlthad(
         highest_level_task="Mine diamond",
         domain_exposition="Single player minecraft world in peaceful mode.",
-        classify_if_action_is_executable=lambda _: random.random() < 0.3,
+        classify_if_action_is_executable=lambda _: random.random() < 0.67,
         stream_handler=PrintOneLmStreamHandler(),
-        callback_after_each_lm_step=None,
+        callback_after_each_lm_step=wait_for_user_to_proceed,
     )
 
+    env_state = "You've just spawned in a fresh Minecraft world. You're in a plains biome. You have nothing in your inventory. An appealing village with a blacksmith is visible to the north."
     while True:
-        env_state = input("\n\nEnter the current environment state: ")
         next_action = asyncio.run(
             sr_olthad(
                 env_state=env_state,
@@ -196,6 +196,9 @@ def test_sr_olthad():
         print(next_action)
         if next_action is None:
             break
+
+        env_state = input("\n\nEnter the resulting environment state: ")
+        # You're outside in a plains village. Inventory: {"apple": 3, "bread": 12, "iron_axe":, 1, “leather_boots”: 1, “bed”: 5, “crafting_table”: 1, “chest”: 1, "wheat": 18, "oak_sapling": 2}
 
 
 if __name__ == "__main__":

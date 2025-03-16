@@ -220,11 +220,11 @@ class TaskNode:
 
         childless_copy_of_self = TaskNode(
             id=self.id,
+            parent_id=self.parent_id,
             task=self.task,
             status=self.status,
             retrospective=self.retrospective,
             subtasks=[],
-            parent_id=self.parent_id,
             idx_of_next_planned_subtask=self.idx_of_next_planned_subtask,
         )
 
@@ -244,14 +244,18 @@ class TaskNode:
             # 1. Create childless copies of the subtasks
             # 2. Find the idx of the in-progress subtasks
             idx_of_in_progress_subtask = None
+            subtask_has_subtasks = []
             for i, subtask in enumerate(cur_in_progress_node.subtasks):
+                subtask_has_subtasks.append(len(subtask.subtasks) > 0)
 
                 subtask_childless_copy = TaskNode(
                     id=subtask.id,
+                    parent_id=subtask.parent_id,
                     task=subtask.task,
                     status=subtask.status,
                     retrospective=subtask.retrospective,
                     subtasks=[],  # We never need subtasks beyond cur rebuild level
+                    idx_of_next_planned_subtask=subtask.idx_of_next_planned_subtask,
                 )
 
                 cur_in_progress_node_childless_copy.subtasks.append(
@@ -261,12 +265,16 @@ class TaskNode:
                 if subtask_childless_copy.status == TaskStatus.IN_PROGRESS:
                     idx_of_in_progress_subtask = i
 
-            if idx_of_in_progress_subtask is None:
+            if (
+                any(subtask_has_subtasks)
+                and idx_of_in_progress_subtask is None
+            ):
                 raise ValueError(
-                    f"OLTHAD corrupted: No in-progress status found amongst {i+1} "
-                    "`subtasks` during call to `iter_in_progress_descendants`"
+                    "OLTHAD corrupted: During call to `iter_in_progress_descendants`, "
+                    f"no in-progress status found amongst {i+1} `subtasks`, despite at "
+                    "least one subtask having subtasks"
                 )
-            else:
+            elif idx_of_in_progress_subtask is not None:
                 # Update `cur_in_progress_node` and `cur_in_progress_node_childless_copy`
                 cur_in_progress_node = cur_in_progress_node.subtasks[
                     idx_of_in_progress_subtask
@@ -276,6 +284,8 @@ class TaskNode:
                         idx_of_in_progress_subtask
                     ]
                 )
+            else:
+                break
 
     def replace_any_planned_subtasks_with(
         self, new_planned_subtasks: List["TaskNode"]

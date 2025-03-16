@@ -6,11 +6,12 @@ from pydantic import BaseModel
 from agent_framework.agents import SingleTurnChatAgent
 from agent_framework.schema import Agent, InstructLmMessage, LmStreamHandler
 from sr_olthad.agents.planner.prompt import (
-    PLANNER_PROMPT_REGISTRY,
+    PROMPT_REGISTRY,
     PlannerLmResponseOutputData,
+    PlannerPromptInputData,
 )
 from sr_olthad.config import PlannerCfg as cfg
-from sr_olthad.olthad import TaskNode
+from sr_olthad.task_node import TaskNode
 
 
 class PlannerInputData(BaseModel):
@@ -32,7 +33,7 @@ class PlannerOutputData(BaseModel):
     new_planned_subtasks: List[str]
 
 
-class PlannerReturn:
+class PlannerReturn(BaseModel):
     output_data: PlannerOutputData
 
 
@@ -41,27 +42,13 @@ class Planner(Agent):
         self,
         stream_handler: Optional[LmStreamHandler] = None,
         callback_after_each_lm_step: Optional[
-            Callable[[List[InstructLmMessage]], None]
+            Callable[[List[InstructLmMessage], TaskNode], None]
         ] = None,
     ):
         self.stream_handler = stream_handler
         self.callback_after_each_lm_step = callback_after_each_lm_step
 
-        # exhaustive_effort_prompts = EXHAUSTIVE_EFFORT_CLF_PROMPT_REGISTRY[
-        #     cfg.ExhaustiveEffortClf.PROMPTS_VERSION
-        # ]
-        # self.exhaustive_effort_clf: SingleTurnChatAgent[
-        #     BacktrackerSubAgentLmResponseOutputData
-        # ] = SingleTurnChatAgent(
-        #     instruct_lm=cfg.ExhaustiveEffortClf.INSTRUCT_LM,
-        #     response_json_data_model=BacktrackerSubAgentLmResponseOutputData,
-        #     # TODO: Render sys prompt dynamically, e.g., w/ RAG of relevant good examples
-        #     sys_prompt=exhaustive_effort_prompts.sys_prompt_template.render(),
-        #     user_prompt_template=exhaustive_effort_prompts.user_prompt_template,
-        #     max_tries_to_get_valid_response=cfg.ExhaustiveEffortClf.MAX_TRIES_TO_GET_VALID_LM_RESPONSE,
-        # )
-
-        planner_prompts = PLANNER_PROMPT_REGISTRY[cfg.PROMPTS_VERSION]
+        planner_prompts = PROMPT_REGISTRY[cfg.PROMPTS_VERSION]
         self._planner: SingleTurnChatAgent[PlannerLmResponseOutputData] = (
             SingleTurnChatAgent(
                 instruct_lm=cfg.INSTRUCT_LM,
@@ -75,5 +62,20 @@ class Planner(Agent):
         )
 
     async def __call__(self, input_data: PlannerInputData) -> PlannerReturn:
-        # TODO: Raise error if `new_plan` is empty
-        pass  # TODO
+        planner_input_data = PlannerPromptInputData(
+            env_state=input_data.env_state,
+            olthad=input_data.root_task_node.stringify(),
+            task_in_question=input_data.current_task_node.stringify(),
+        )
+        return_obj = await self._planner(
+            prompt_template_data=planner_input_data,
+            stream_handler=self.stream_handler,
+        )
+        if self.callback_after_each_lm_step is not None:
+            self.callback_after_each_lm_step(return_obj.messages)
+        new_planned_subtasks = return_obj.output_data.new_planned_subtasks
+        return PlannerReturn(
+            output_data=PlannerOutputData(
+                new_planned_subtasks=new_planned_subtasks
+            )
+        )

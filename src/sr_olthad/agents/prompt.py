@@ -1,4 +1,4 @@
-from sr_olthad.olthad import TaskNode, TaskStatus
+from sr_olthad.task_node import TaskNode, TaskStatus
 
 _example_task_in_question = TaskNode(
     id="1.3.1",
