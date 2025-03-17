@@ -16,7 +16,7 @@ TODO: RAG of SemanticSteve tutorials?
  ┃ ┃ ┣ 📜lms.py # Module (soon-to-be package) for a variety of LMs
  ┃ ┃ ┣ 📜schema.py
  ┃ ┃ ┗ 📜utils.py
- ┃ ┗ 📂sr_olthad # Package sr-OLTHAD
+ ┃ ┗ 📂sr_olthad # Package for sr-OLTHAD
  ┃   ┣ 📂agents # Package for the 4(?) main agents of sr-OLTHAD
  ┃   ┃ ┣ 📂attempt_summarizer
  ┃   ┃ ┃ ┗ ...
@@ -29,7 +29,7 @@ TODO: RAG of SemanticSteve tutorials?
  ┃   ┃ ┗ ...
  ┃   ┣ 📜config.py
  ┃   ┣ 📜schema.py
- ┃   ┣ 📜sr_olthad.py # Main sr-OLTHAD class imported externally
+ ┃   ┣ 📜sr_olthad.py # Main sr-OLTHAD class that outer contexts import
  ┃   ┣ 📜task_node.py
  ┃   ┗ 📜utils.py
  ┣ 📜quick_tests.py  # Ad-hoc testing scripts
