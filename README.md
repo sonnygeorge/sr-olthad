@@ -32,6 +32,6 @@ TODO: RAG of SemanticSteve tutorials?
  ┃   ┣ 📜sr_olthad.py # Main sr-OLTHAD class that outer contexts import
  ┃   ┣ 📜task_node.py
  ┃   ┗ 📜utils.py
- ┣ 📜quick_tests.py  # Ad-hoc testing scripts
+ ┣ 📜quick_tests.py # Ad-hoc testing scripts
  ┗ 📜requirements.txt
- ```
+```
