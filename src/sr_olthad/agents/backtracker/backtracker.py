@@ -75,7 +75,7 @@ class Backtracker(Agent):
     def __init__(
         self,
         stream_handler: Optional[LmStreamHandler] = None,
-        callback_after_each_lm_step: Optional[
+        callback_after_lm_generation_steps: Optional[
             Callable[[List[InstructLmMessage]], None]
         ] = None,
     ):
@@ -89,7 +89,7 @@ class Backtracker(Agent):
                 A function to call after each language model step. Defaults to None.
         """
         self.stream_handler = stream_handler
-        self.callback_after_each_lm_step = callback_after_each_lm_step
+        self.callback_after_each_lm_step = callback_after_lm_generation_steps
 
         ###############################################
         ### Initialize exhaustive effort classifier ###

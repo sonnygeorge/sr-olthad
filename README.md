@@ -16,6 +16,7 @@ TODO: RAG of SemanticSteve tutorials?
  ┃ ┃ ┣ 📜lms.py # Module (soon-to-be package) for a variety of LMs
  ┃ ┃ ┣ 📜schema.py
  ┃ ┃ ┗ 📜utils.py
+ ┃ ┣ 📂gui
  ┃ ┗ 📂sr_olthad # Package for sr-OLTHAD
  ┃   ┣ 📂agents # Package for the 4(?) main agents of sr-OLTHAD
  ┃   ┃ ┣ 📂attempt_summarizer
@@ -33,5 +34,6 @@ TODO: RAG of SemanticSteve tutorials?
  ┃   ┣ 📜task_node.py
  ┃   ┗ 📜utils.py
  ┣ 📜quick_tests.py # Ad-hoc testing scripts
+ ┣ 📜run_gui.py
  ┗ 📜requirements.txt
 ```

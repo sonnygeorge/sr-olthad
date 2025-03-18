@@ -4,3 +4,4 @@ extend-ignore = E203, W503, E266, E501
 per-file-ignores =
     __init__.py:F401
     quick_tests.py:E402
+    run_gui.py:E402

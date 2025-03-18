@@ -17,7 +17,7 @@ from sr_olthad.task_node import BacktrackedFromTaskStatus, TaskNode, TaskStatus
 # TODO: Handle "notepad" internally? (i.e., decouple internal functions from environment "skills")
 # TODO: Results string?
 # TODO: Forgetter
-# TODO: How to pass callbacks to agents that wait for and process annotator tool inputs
+
 
 JsonSerializable = (
     None
@@ -38,13 +38,13 @@ class SrOlthad:
 
     def __init__(  # TODO: Docstring
         self,
+        domain_documentation: str,
         highest_level_task: str,
-        domain_exposition: str,
-        classify_if_action_is_executable: Callable[[str], bool],
-        stream_handler: Optional[LmStreamHandler] = None,
-        callback_after_each_lm_step: Optional[
+        classify_if_task_is_executable_action: Callable[[str], bool],
+        callback_after_lm_generation_steps: Optional[
             Callable[[List[InstructLmMessage]], None]
         ] = None,
+        stream_handler: Optional[LmStreamHandler] = None,
     ):
         # OLTHAD traversal
         self.root_node: TaskNode = TaskNode(
@@ -58,26 +58,26 @@ class SrOlthad:
         self.nodes: Dict[str, TaskNode] = {self.root_node.id: self.root_node}
 
         # Misc.
-        self.domain_exposition = domain_exposition
-        self.is_action_executable = classify_if_action_is_executable
+        self.domain_documentation = domain_documentation
+        self.is_task_executable_action = classify_if_task_is_executable_action
         self.has_been_called_at_least_once_before = False
 
         # Agents
         self.attempt_summarizer = AttemptSummarizer(
             stream_handler=stream_handler,
-            callback_after_each_lm_step=callback_after_each_lm_step,
+            callback_after_lm_generation_steps=callback_after_lm_generation_steps,
         )
         self.backtracker = Backtracker(
             stream_handler=stream_handler,
-            callback_after_each_lm_step=callback_after_each_lm_step,
+            callback_after_lm_generation_steps=callback_after_lm_generation_steps,
         )
         self.planner = Planner(
             stream_handler=stream_handler,
-            callback_after_each_lm_step=callback_after_each_lm_step,
+            callback_after_lm_generation_steps=callback_after_lm_generation_steps,
         )
         self.forgetter = Forgetter(
             stream_handler=stream_handler,
-            callback_after_each_lm_step=callback_after_each_lm_step,
+            callback_after_lm_generation_steps=callback_after_lm_generation_steps,
         )
 
     async def _process_cur_node_until_next_executable_action_is_determined(
@@ -173,7 +173,9 @@ class SrOlthad:
             new_planned_subtasks=new_planned_subtask_nodes
         )
 
-        if self.is_action_executable(self.cur_node.next_planned_subtask.task):
+        if self.is_task_executable_action(
+            self.cur_node.next_planned_subtask.task
+        ):
             return self.cur_node.next_planned_subtask.task
         else:
             # Recurse inward to break down the next planned subtask

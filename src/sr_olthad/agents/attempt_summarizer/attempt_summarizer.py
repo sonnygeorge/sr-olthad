@@ -43,12 +43,12 @@ class AttemptSummarizer(Agent):
     def __init__(
         self,
         stream_handler: Optional[LmStreamHandler] = None,
-        callback_after_each_lm_step: Optional[
+        callback_after_lm_generation_steps: Optional[
             Callable[[List[InstructLmMessage]], None]
         ] = None,
     ):
         self.stream_handler = stream_handler
-        self.callback_after_each_lm_step = callback_after_each_lm_step
+        self.callback_after_each_lm_step = callback_after_lm_generation_steps
 
         attempt_summarizer_prompts = PROMPT_REGISTRY[cfg.PROMPTS_VERSION]
         self._attempt_summarizer: SingleTurnChatAgent[

@@ -41,12 +41,14 @@ class Planner(Agent):
     def __init__(
         self,
         stream_handler: Optional[LmStreamHandler] = None,
-        callback_after_each_lm_step: Optional[
+        callback_after_lm_generation_steps: Optional[
             Callable[[List[InstructLmMessage], TaskNode], None]
         ] = None,
     ):
         self.stream_handler = stream_handler
-        self.callback_after_each_lm_step = callback_after_each_lm_step
+        self.callback_after_lm_generation_steps = (
+            callback_after_lm_generation_steps
+        )
 
         planner_prompts = PROMPT_REGISTRY[cfg.PROMPTS_VERSION]
         self._planner: SingleTurnChatAgent[PlannerLmResponseOutputData] = (
@@ -71,8 +73,8 @@ class Planner(Agent):
             prompt_template_data=planner_input_data,
             stream_handler=self.stream_handler,
         )
-        if self.callback_after_each_lm_step is not None:
-            self.callback_after_each_lm_step(return_obj.messages)
+        if self.callback_after_lm_generation_steps is not None:
+            self.callback_after_lm_generation_steps(return_obj.messages)
         new_planned_subtasks = return_obj.output_data.new_planned_subtasks
         return PlannerReturn(
             output_data=PlannerOutputData(

@@ -157,7 +157,7 @@ def test_backtracker():
 
     backtracker = Backtracker(
         stream_handler=PrintOneLmStreamHandler(),
-        callback_after_each_lm_step=wait_for_user_to_proceed,
+        callback_after_lm_generation_steps=wait_for_user_to_proceed,
     )
     return_obj = asyncio.run(
         backtracker(
@@ -179,10 +179,10 @@ def test_sr_olthad():
 
     sr_olthad = SrOlthad(
         highest_level_task="Mine diamond",
-        domain_exposition="Single player minecraft world in peaceful mode.",
-        classify_if_action_is_executable=lambda _: random.random() < 0.67,
+        domain_documentation="Single player minecraft world in peaceful mode.",
+        classify_if_task_is_executable_action=lambda _: random.random() < 0.67,
         stream_handler=PrintOneLmStreamHandler(),
-        callback_after_each_lm_step=wait_for_user_to_proceed,
+        callback_after_lm_generation_steps=wait_for_user_to_proceed,
     )
 
     env_state = "You've just spawned in a fresh Minecraft world. You're in a plains biome. You have nothing in your inventory. An appealing village with a blacksmith is visible to the north."
