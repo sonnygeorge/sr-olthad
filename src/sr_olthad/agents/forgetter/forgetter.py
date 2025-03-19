@@ -26,12 +26,8 @@ class Forgetter(Agent):
     def __init__(
         self,
         olthad_traversal: OlthadTraversal,
-        pre_lm_generation_step_handler: Optional[
-            PreLmGenerationStepHandler
-        ] = None,
-        post_lm_generation_step_handler: Optional[
-            PostLmGenerationStepHandler
-        ] = None,
+        pre_lm_generation_step_handler: Optional[PreLmGenerationStepHandler] = None,
+        post_lm_generation_step_handler: Optional[PostLmGenerationStepHandler] = None,
         streams_handler: Optional[LmStreamsHandler] = None,
     ):
         self.traversal = olthad_traversal
@@ -39,7 +35,5 @@ class Forgetter(Agent):
         self.pre_lm_generation_step_handler = pre_lm_generation_step_handler
         self.post_lm_generation_step_handler = post_lm_generation_step_handler
 
-    async def __call__(
-        self, input_data: ForgetterInputData
-    ) -> ForgetterReturn:
+    async def __call__(self, input_data: ForgetterInputData) -> ForgetterReturn:
         pass  # TODO

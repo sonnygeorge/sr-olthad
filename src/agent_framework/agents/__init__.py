@@ -1,1 +1,1 @@
-from agent_framework.agents.single_turn_chat import SingleTurnChatAgent
+from agent_framework.agents.instruct_lm_chat import InstructLmChatAgent

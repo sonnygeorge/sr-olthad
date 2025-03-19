@@ -22,20 +22,35 @@ from agent_framework.schema import (
 BaseModelT = TypeVar("T", bound=BaseModel)
 
 
-def prepare_input_messages(  # TODO: Docstring
-    input_data: BaseModel,
+def render_single_turn_prompt_templates_and_get_messages(  # TODO: Docstring
     user_prompt_template: Template,
-    sys_prompt: Optional[str] = None,
+    user_message_input_data: Optional[BaseModel] = None,
+    sys_prompt_template: Optional[Template] = None,
+    sys_message_input_data: Optional[BaseModel] = None,
 ) -> List[InstructLmMessage]:
     # TODO: Raise error if model and template fields don't match up
-    input_data = {k: str(v) for k, v in input_data.__dict__.items()}
-    user_prompt = user_prompt_template.render(**input_data)
-    messages = [
-        InstructLmMessage(role=InstructLmChatRole.SYS, content=sys_prompt),
-        InstructLmMessage(role=InstructLmChatRole.USER, content=user_prompt),
-    ]
-    if sys_prompt is None:
-        messages.pop(0)
+    if sys_message_input_data is not None:
+        sys_message_input_data = {
+            k: str(v) for k, v in sys_message_input_data.__dict__.items()
+        }
+    else:
+        sys_message_input_data = {}
+
+    if user_message_input_data is not None:
+        user_message_input_data = {
+            k: str(v) for k, v in user_message_input_data.__dict__.items()
+        }
+    else:
+        user_message_input_data = {}
+
+    messages = []
+    if sys_prompt_template is not None:
+        sys_prompt = sys_prompt_template.render(**sys_message_input_data)
+        messages.append(InstructLmMessage(role=InstructLmChatRole.SYS, content=sys_prompt))
+
+    user_prompt = user_prompt_template.render(**user_message_input_data)
+    messages.append(InstructLmMessage(role=InstructLmChatRole.USER, content=user_prompt))
+
     return messages
 
 
@@ -100,9 +115,7 @@ def with_retry(
     T = TypeVar("T")
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
-        def log_or_print_permissible_exception(
-            e: Exception, tries_remaining: int
-        ) -> None:
+        def log_or_print_permissible_exception(e: Exception, tries_remaining: int) -> None:
             msg = f"Retrying {func.__name__}: {str(e)}, {tries_remaining-1} tries remaining"
             if logger:
                 logger.warning(msg)
@@ -118,9 +131,7 @@ def with_retry(
                 except permissible_exceptions as e:
                     log_or_print_permissible_exception(e, tries_remaining)
                     tries_remaining -= 1
-            return func(
-                *args, **kwargs
-            )  # Last attempt (don't catch exceptions)
+            return func(*args, **kwargs)  # Last attempt (don't catch exceptions)
 
         @functools.wraps(func)
         async def async_wrapper(*args: Any, **kwargs: Any) -> T:
@@ -131,9 +142,7 @@ def with_retry(
                 except permissible_exceptions as e:
                     log_or_print_permissible_exception(e, tries_remaining)
                     tries_remaining -= 1
-            return await func(
-                *args, **kwargs
-            )  # Last attempt (don't catch exceptions)
+            return await func(*args, **kwargs)  # Last attempt (don't catch exceptions)
 
         if inspect.iscoroutinefunction(func):
             return async_wrapper
@@ -224,21 +233,15 @@ def with_implicit_async_voting(
                 # Bind `async_call_idx` to LM stream handlers so they can differentiate
                 # between simultanous LM streams
                 for idx in stream_handler_arg_idxs:
-                    args[idx] = functools.partial(
-                        args[idx], stream_idx=async_call_idx
-                    )
+                    args[idx] = functools.partial(args[idx], stream_idx=async_call_idx)
                 for key in stream_handler_kwarg_keys:
-                    kwargs[key] = functools.partial(
-                        kwargs[key], stream_idx=async_call_idx
-                    )
+                    kwargs[key] = functools.partial(kwargs[key], stream_idx=async_call_idx)
 
-                async_calls.append(
-                    semaphore_bounded_call(semaphore, agent, *args, **kwargs)
-                )
+                async_calls.append(semaphore_bounded_call(semaphore, agent, *args, **kwargs))
 
             # Await all async calls and gather the return objects
-            return_objs: List[HasOutputData | Exception] = (
-                await asyncio.gather(*async_calls, return_exceptions=True)
+            return_objs: List[HasOutputData | Exception] = await asyncio.gather(
+                *async_calls, return_exceptions=True
             )
 
             # Filter out returned exceptions and count the "votes"
@@ -277,9 +280,7 @@ def with_implicit_async_voting(
                         "Wrapped agent did not return an output data object with "
                         f"vote reason string attribute '{reason_attr}' "
                     )
-                    winning_vote_reasons.append(
-                        getattr(return_obj.output_data, reason_attr)
-                    )
+                    winning_vote_reasons.append(getattr(return_obj.output_data, reason_attr))
 
                 # Aggregate other output data attributes into lists
                 for attr_k, attr_v in return_obj.output_data.__dict__.items():
@@ -298,9 +299,7 @@ def with_implicit_async_voting(
 
             # Finalize and return the aggregated return object
             return valid_returns[0].__class__(
-                output_data=valid_returns[0].output_data.__class__(
-                    **aggregated_output_data
-                ),
+                output_data=valid_returns[0].output_data.__class__(**aggregated_output_data),
                 **aggregated_return_object,
             )
 

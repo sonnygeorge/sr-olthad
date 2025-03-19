@@ -33,7 +33,9 @@ WAS_SUCCESSFULLY_COMPLETED_OPTIONS: BinaryChoiceOptions = {
 ######################
 
 
-V1_0_QUESTION = "Can the task in question be considered done? I.e., which statement is more true?"
+V1_0_QUESTION = (
+    "Can the task in question be considered done? I.e., which statement is more true?"
+)
 
 SYS_1_0 = f"""You are a helpful AI agent who plays a crucial role in a hierarchical reasoning and acting system. Your specific job is as follows.
 

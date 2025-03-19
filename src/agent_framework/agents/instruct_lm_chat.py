@@ -1,7 +1,6 @@
 import logging
 from typing import Generic, List, Optional, Tuple, Type, TypeVar
 
-from jinja2 import Template
 from pydantic import BaseModel, ValidationError
 
 from agent_framework.schema import (
@@ -30,37 +29,31 @@ class SingleTurnChatAgentReturn(BaseModel, Generic[BaseModelT]):
     messages: PotentiallyNestedInstructLmMessages
 
 
-class SingleTurnChatAgent(Agent, Generic[BaseModelT]):
+class InstructLmChatAgent(Agent, Generic[BaseModelT]):
     """
-    An agent that: (1) renders a prompt with the data fields of a Pydantic model,
-    (2) queries an instruct LM with the resulting user prompt and an (optional) system
-    prompt, and (3) automatically parses the LM response with the specified
-    `response_json_data_model` Pydantic model.
+    An agent that queries an instruct LM with input messages and automatically parses the
+    LM response using the specified `response_json_data_model` Pydantic model.
     """
 
     def __init__(  # TODO: Docstring
         self,
         instruct_lm: InstructLm,
         response_json_data_model: Type[BaseModelT],
-        user_prompt_template: Template,
-        sys_prompt: Optional[str] = None,
         max_tries_to_get_valid_response: int = 1,
         logger: Optional[logging.Logger] = None,
     ):
         self.instruct_lm = instruct_lm
         self.output_data_model = response_json_data_model
-        self.sys_prompt = sys_prompt
-        self.user_prompt_template = user_prompt_template
         self.logger = logger
         # Wrap `self._get_valid_response` with retry decorator
-        self._get_valid_response = with_retry(
+        self._get_response_and_parse = with_retry(
             # TODO: Update exceptions to be more precise
             permissible_exceptions=(ValidationError, ValueError, Exception),
             max_tries=max_tries_to_get_valid_response,
             logger=self.logger,
-        )(self._get_valid_response)
+        )(self._get_response_and_parse)
 
-    async def _get_valid_response(
+    async def _get_response_and_parse(
         self,
         input_messages: List[InstructLmMessage],
         stream_handler: Optional[LmStreamHandler] = None,
@@ -69,12 +62,10 @@ class SingleTurnChatAgent(Agent, Generic[BaseModelT]):
         response = await self.instruct_lm.generate(
             messages=input_messages, stream_handler=stream_handler, **kwargs
         )
-        return (
-            detect_extract_and_parse_json_from_text(
-                text=response, model_to_extract=self.output_data_model
-            ),
-            response,
+        output_data = detect_extract_and_parse_json_from_text(
+            text=response, model_to_extract=self.output_data_model
         )
+        return output_data, response
 
     async def __call__(  # TODO: Docstring
         self,
@@ -82,7 +73,7 @@ class SingleTurnChatAgent(Agent, Generic[BaseModelT]):
         stream_handler: Optional[LmStreamHandler] = None,
         **kwargs,  # kwargs passed through to the InstructLm.generate method
     ) -> SingleTurnChatAgentReturn[BaseModelT]:
-        output_data, response = await self._get_valid_response(
+        output_data, response = await self._get_response_and_parse(
             input_messages=input_messages,
             stream_handler=stream_handler,
             **kwargs,

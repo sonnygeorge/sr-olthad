@@ -11,12 +11,13 @@ from sr_olthad.schema import AgentName, DiffLines
 
 class PreLmGenerationStepEmission(BaseModel):
     agent_name: AgentName
+    cur_node_id: str
     prompt_messages: List[InstructLmMessage]
     n_streams_to_handle: int = 1
 
 
 class PostLmGenerationStepEmission(BaseModel):
-    diff_lines: DiffLines
+    diff: DiffLines
     full_messages: PotentiallyNestedInstructLmMessages
 
 

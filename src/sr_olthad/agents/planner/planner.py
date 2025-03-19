@@ -3,7 +3,7 @@ from typing import List, Optional
 from loguru import logger
 from pydantic import BaseModel
 
-from agent_framework.agents import SingleTurnChatAgent
+from agent_framework.agents import InstructLmChatAgent
 from agent_framework.schema import Agent, LmStreamsHandler
 from sr_olthad.agents.planner.prompt import (
     PROMPT_REGISTRY,
@@ -45,12 +45,8 @@ class Planner(Agent):
     def __init__(
         self,
         olthad_traversal: OlthadTraversal,
-        pre_lm_generation_step_handler: Optional[
-            PreLmGenerationStepHandler
-        ] = None,
-        post_lm_generation_step_handler: Optional[
-            PostLmGenerationStepHandler
-        ] = None,
+        pre_lm_generation_step_handler: Optional[PreLmGenerationStepHandler] = None,
+        post_lm_generation_step_handler: Optional[PostLmGenerationStepHandler] = None,
         streams_handler: Optional[LmStreamsHandler] = None,
     ):
 
@@ -60,13 +56,10 @@ class Planner(Agent):
         self.post_lm_generation_step_handler = post_lm_generation_step_handler
 
         planner_prompts = PROMPT_REGISTRY[cfg.PROMPTS_VERSION]
-        self._planner: SingleTurnChatAgent[PlannerLmResponseOutputData] = (
-            SingleTurnChatAgent(
+        self._planner: InstructLmChatAgent[PlannerLmResponseOutputData] = (
+            InstructLmChatAgent(
                 instruct_lm=cfg.INSTRUCT_LM,
                 response_json_data_model=PlannerLmResponseOutputData,
-                # TODO: Render sys prompt dynamically, e.g., w/ RAG of relevant good examples
-                sys_prompt=planner_prompts.sys_prompt_template.render(),
-                user_prompt_template=planner_prompts.user_prompt_template,
                 max_tries_to_get_valid_response=cfg.MAX_TRIES_TO_GET_VALID_LM_RESPONSE,
                 logger=logger,
             )
@@ -86,7 +79,5 @@ class Planner(Agent):
             self.callback_after_lm_generation_steps(return_obj.messages)
         new_planned_subtasks = return_obj.output_data.new_planned_subtasks
         return PlannerReturn(
-            output_data=PlannerOutputData(
-                new_planned_subtasks=new_planned_subtasks
-            )
+            output_data=PlannerOutputData(new_planned_subtasks=new_planned_subtasks)
         )

@@ -1,18 +1,14 @@
-import inspect
-from typing import Generator, Optional
+from typing import Callable, Optional
 
 from loguru import logger
 
-from agent_framework.agents import SingleTurnChatAgent
+from agent_framework.agents import InstructLmChatAgent
 from agent_framework.schema import Agent, LmStreamsHandler
 from agent_framework.utils import (
-    prepare_input_messages,
+    render_single_turn_prompt_templates_and_get_messages,
     with_implicit_async_voting,
 )
 from sr_olthad.agents.backtracker.prompt import (
-    EXHAUSTIVE_EFFORT_CLF_PROMPT_REGISTRY,
-    MOST_WORTHWHILE_PURSUIT_CLF_PROMPT_REGISTRY,
-    PARTIAL_SUCCESS_CLF_PROMPT_REGISTRY,
     SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY,
     WAS_SUCCESSFULLY_COMPLETED_OPTIONS,
     BacktrackerSubAgentLmResponseOutputData,
@@ -29,6 +25,7 @@ from sr_olthad.emissions import (
 from sr_olthad.olthad import BacktrackedFromTaskStatus, OlthadTraversal
 from sr_olthad.schema import AgentName
 from sr_olthad.utils import (
+    call_or_await,
     extract_letter_from_multiple_choice_question_response,
 )
 
@@ -41,43 +38,24 @@ class Backtracker(Agent):
     def __init__(
         self,
         olthad_traversal: OlthadTraversal,
-        pre_lm_generation_step_handler: Optional[
-            PreLmGenerationStepHandler
-        ] = None,
-        post_lm_generation_step_handler: Optional[
-            PostLmGenerationStepHandler
-        ] = None,
+        pre_lm_generation_step_handler: Optional[PreLmGenerationStepHandler] = None,
+        post_lm_generation_step_handler: Optional[PostLmGenerationStepHandler] = None,
         streams_handler: Optional[LmStreamsHandler] = None,
     ):
-        """
-        Initializes the backtracker agent.
-
-        Args:
-            streams_handler (Optional[LmStreamsHandler], optional): The handler to use for
-                handling potentially multiple LM response streams. Defaults to None.
-            callback_after_each_lm_step (Optional[Callable[[List[InstructLmMessage]], None]], optional):
-                A function to call after each language model step. Defaults to None.
-        """
         self.traversal = olthad_traversal
         self.streams_handler = streams_handler
-        self.pre_lm_generation_step_handler = pre_lm_generation_step_handler
-        self.post_lm_step_handler = post_lm_generation_step_handler
+        self.pre_lm_step_handler = pre_lm_generation_step_handler
+        self.post_lm_step_approver = post_lm_generation_step_handler
 
         ###############################################
         ### Initialize exhaustive effort classifier ###
         ###############################################
 
-        exhaustive_effort_prompts = EXHAUSTIVE_EFFORT_CLF_PROMPT_REGISTRY[
-            cfg.ExhaustiveEffortClf.PROMPTS_VERSION
-        ]
-        self.exhaustive_effort_clf: SingleTurnChatAgent[
+        self.exhaustive_effort_clf: InstructLmChatAgent[
             BacktrackerSubAgentLmResponseOutputData
-        ] = SingleTurnChatAgent(
+        ] = InstructLmChatAgent(
             instruct_lm=cfg.ExhaustiveEffortClf.INSTRUCT_LM,
             response_json_data_model=BacktrackerSubAgentLmResponseOutputData,
-            # TODO: Render sys prompt dynamically, e.g., w/ RAG of relevant good examples
-            sys_prompt=exhaustive_effort_prompts.sys_prompt_template.render(),
-            user_prompt_template=exhaustive_effort_prompts.user_prompt_template,
             max_tries_to_get_valid_response=cfg.ExhaustiveEffortClf.MAX_TRIES_TO_GET_VALID_LM_RESPONSE,
             logger=logger,
         )
@@ -93,19 +71,11 @@ class Backtracker(Agent):
         ### Initialize most worthwhile pursuit classifier ###
         #####################################################
 
-        most_worthwhile_pursuit_prompts = (
-            MOST_WORTHWHILE_PURSUIT_CLF_PROMPT_REGISTRY[
-                cfg.MostWorthwhilePursuitClfCfg.PROMPTS_VERSION
-            ]
-        )
-        self.most_worthwhile_pursuit_clf: SingleTurnChatAgent[
+        self.most_worthwhile_pursuit_clf: InstructLmChatAgent[
             BacktrackerSubAgentLmResponseOutputData
-        ] = SingleTurnChatAgent(
+        ] = InstructLmChatAgent(
             instruct_lm=cfg.MostWorthwhilePursuitClfCfg.INSTRUCT_LM,
             response_json_data_model=BacktrackerSubAgentLmResponseOutputData,
-            # TODO: Render sys prompt dynamically, e.g., w/ RAG of relevant good examples
-            sys_prompt=most_worthwhile_pursuit_prompts.sys_prompt_template.render(),
-            user_prompt_template=most_worthwhile_pursuit_prompts.user_prompt_template,
             max_tries_to_get_valid_response=cfg.MostWorthwhilePursuitClfCfg.MAX_TRIES_TO_GET_VALID_LM_RESPONSE,
             logger=logger,
         )
@@ -121,17 +91,11 @@ class Backtracker(Agent):
         ### Initialize partial success classifier ###
         #############################################
 
-        partial_success_prompts = PARTIAL_SUCCESS_CLF_PROMPT_REGISTRY[
-            cfg.PartialSuccessClfCfg.PROMPTS_VERSION
-        ]
-        self.partial_success_clf: SingleTurnChatAgent[
+        self.partial_success_clf: InstructLmChatAgent[
             BacktrackerSubAgentLmResponseOutputData
-        ] = SingleTurnChatAgent(
+        ] = InstructLmChatAgent(
             instruct_lm=cfg.PartialSuccessClfCfg.INSTRUCT_LM,
             response_json_data_model=BacktrackerSubAgentLmResponseOutputData,
-            # TODO: Render sys prompt dynamically, e.g., w/ RAG of relevant good examples
-            sys_prompt=partial_success_prompts.sys_prompt_template.render(),
-            user_prompt_template=partial_success_prompts.user_prompt_template,
             max_tries_to_get_valid_response=cfg.PartialSuccessClfCfg.MAX_TRIES_TO_GET_VALID_LM_RESPONSE,
             logger=logger,
         )
@@ -147,19 +111,11 @@ class Backtracker(Agent):
         ### Initialize successful completion classifier ###
         ###################################################
 
-        successful_completion_prompts = (
-            SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY[
-                cfg.SuccessfulCompletionClfCfg.PROMPTS_VERSION
-            ]
-        )
-        self.successful_completion_clf: SingleTurnChatAgent[
+        self.successful_completion_clf: InstructLmChatAgent[
             BacktrackerSubAgentLmResponseOutputData
-        ] = SingleTurnChatAgent(
+        ] = InstructLmChatAgent(
             instruct_lm=cfg.SuccessfulCompletionClfCfg.INSTRUCT_LM,
             response_json_data_model=BacktrackerSubAgentLmResponseOutputData,
-            # TODO: Render sys prompt dynamically, e.g., w/ RAG of relevant good examples
-            sys_prompt=successful_completion_prompts.sys_prompt_template.render(),
-            user_prompt_template=successful_completion_prompts.user_prompt_template,
             max_tries_to_get_valid_response=cfg.SuccessfulCompletionClfCfg.MAX_TRIES_TO_GET_VALID_LM_RESPONSE,
             logger=logger,
         )
@@ -171,123 +127,117 @@ class Backtracker(Agent):
             logger=logger,
         )(self.successful_completion_clf)
 
-    async def __call__(self, env_state: str) -> None:
-        """..."""
+    async def __call__(self, env_state: str) -> bool | None:
+        """
+        Invokes
 
-        sub_agent_input_data = BacktrackerSubAgentPromptInputData(
+        Returns:
+            bool: Whether backtracking occured.
+        """
+
+        should_call_pre_lm_step_handler = self.pre_lm_step_handler is not None
+        should_call_post_lm_step_approver = self.post_lm_step_approver is not None
+
+        # Prepare prompt inputs (used by all sub-agents except most worthwhile pursuit clf)
+        prompt_input_data = BacktrackerSubAgentPromptInputData(
             env_state=env_state,
-            olthad=self.traversal.root_node.stringify(  # Pre-stringify w/ args
+            olthad=self.traversal._root_node.stringify(
                 redact_planned_subtasks_below=self.traversal.cur_node.id,
                 obfuscate_status_of=self.traversal.cur_node.id,
             ),
-            task_in_question=self.traversal.cur_node.stringify(
+            task_in_question=self.traversal._cur_node.stringify(
                 redact_planned_subtasks_below=self.traversal.cur_node.id,
                 obfuscate_status_of=self.traversal.cur_node.id,
             ),
         )
 
-        #################################################################
-        ### Classify whether the task has been successfully completed ###
-        #################################################################
+        ##########################################################################
+        ### LM STEP: Classify whether the task has been successfully completed ###
+        ##########################################################################
 
         logger.info("Checking if the task has been successfully completed...")
 
-        input_messages = prepare_input_messages(
-            input_data=sub_agent_input_data,
+        # Input messages for the LM
+        input_messages = render_single_turn_prompt_templates_and_get_messages(
+            user_message_input_data=prompt_input_data,
             user_prompt_template=SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY[
                 cfg.SuccessfulCompletionClfCfg.PROMPTS_VERSION
             ].user_prompt_template,
-            sys_prompt=SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY[
+            sys_message_input_data=None,  # TODO: Render dynamically, e.g., w/ RAG
+            sys_prompt_template=SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY[
                 cfg.SuccessfulCompletionClfCfg.PROMPTS_VERSION
-            ].sys_prompt_template.render(),  # TODO: Render dynamically
+            ].sys_prompt_template,
         )
 
-        # Pre-LM-generation step handler
-        if self.pre_lm_generation_step_handler is not None:
-            emission = PreLmGenerationStepEmission(
-                agent_name=AgentName.SUCCESSFUL_COMPLETION_CLF,
-                prompt_messages=input_messages,
-                n_streams_to_handle=cfg.SuccessfulCompletionClfCfg.N_CALLS_FOR_VOTING,
-            )
-            if inspect.iscoroutinefunction(
-                self.pre_lm_generation_step_handler
-            ):
-                await self.pre_lm_generation_step_handler(emission)
-            else:
-                self.pre_lm_generation_step_handler(emission)
+        task_was_deemed_successfully_completed = False
+        commit_olthad_update_fn: Callable | None = None
+        while True:
+            # Call pre-LM-step handler if needed
+            if should_call_pre_lm_step_handler:
+                emission = PreLmGenerationStepEmission(
+                    agent_name=AgentName.SUCCESSFUL_COMPLETION_CLF,
+                    cur_node_id=self.traversal._cur_node.id,
+                    prompt_messages=input_messages,
+                    n_streams_to_handle=cfg.SuccessfulCompletionClfCfg.N_CALLS_FOR_VOTING,
+                )
+                await call_or_await(self.pre_lm_step_handler, emission)
 
-        step_is_approved = False
-        while not step_is_approved:
-            # Invoke `self.successful_completion_clf`
+            # Invoke `self.successful_completion_clf` LM agent & parse answer choice
             return_obj = await self.successful_completion_clf(
                 input_messages=input_messages,
                 stream_handler=self.streams_handler,
             )
-
-            choice = extract_letter_from_multiple_choice_question_response(
+            lm_choice = extract_letter_from_multiple_choice_question_response(
                 return_obj.output_data.answer,
                 WAS_SUCCESSFULLY_COMPLETED_OPTIONS,
             )
 
-            if self.post_lm_step_handler is None:
+            # Check if task was deemed successfully completed
+            if lm_choice == WAS_SUCCESSFULLY_COMPLETED_OPTIONS[True].letter:
+                task_was_deemed_successfully_completed = True
+                # Acquire the appropriate pending update object from the traversal class
+                pending_update = self.traversal.update_status_and_retrospective_of(
+                    node=self.traversal.cur_node,
+                    new_status=BacktrackedFromTaskStatus.SUCCESS,
+                    new_retrospective=return_obj.output_data.retrospective,
+                )
+                commit_olthad_update_fn = pending_update.commit
+                # Get the diff if we'll need it later to get approval
+                if should_call_post_lm_step_approver:
+                    diff = pending_update.get_diff()
+            else:  # ...else, it was deemed not successfully completed
+                if should_call_post_lm_step_approver:
+                    # Get a diff w/ no changes to send for approval
+                    diff = self.traversal.root_node.stringify(get_diff_lines=True)
+
+            if should_call_post_lm_step_approver:
+                # Call post-LM-step approver
+                emission = PostLmGenerationStepEmission(
+                    diff=diff, full_messages=return_obj.messages
+                )
+                lm_step_was_approved = await call_or_await(
+                    self.post_lm_step_approver, emission=emission
+                )
+                if lm_step_was_approved:
+                    break  # Break the while loop to go straight to the update
+                else:
+                    continue  # Loop (run the step) again
+            else:  # There's no approver to call
                 break
-            # Otherwise, call the post-LM-generation step handler to get approval...
 
-            # Prepare emission data
-            full_messages = return_obj.messages
-            cur_parent_id = self.traversal.cur_node.parent_id
-            make_update_after_approval = None
-            if cur_parent_id is None:  # Root node
-                if choice == WAS_SUCCESSFULLY_COMPLETED_OPTIONS[True].letter:
-                    status = BacktrackedFromTaskStatus.SUCCESS
-                    retrospective = return_obj.output_data.retrospective
-                    make_update_after_approval = self.traversal.update_status_and_retrospective_of_rood_node(
-                        new_status=status,
-                        new_retrospective=retrospective,
-                        should_yield_diff_and_receive_approval_before_update=True,
-                    )
-                    difflines = next(make_update_after_approval)
-                else:
-                    difflines = self.traversal.cur_node.stringify(
-                        get_diff_lines=True,
-                    )
-            else:
-                if choice == WAS_SUCCESSFULLY_COMPLETED_OPTIONS[True].letter:
-                    cur_parent = self.traversal.nodes[cur_parent_id]
-                    status = BacktrackedFromTaskStatus.SUCCESS
-                    retrospective = return_obj.output_data.retrospective
-                    make_update_after_approval = cur_parent.update_status_and_retrospective_of_in_progress_subtask(
-                        status_to_assign=status,
-                        retrospective_to_assign=retrospective,
-                        should_yield_diff_and_receive_approval_before_update=True,
-                        diff_root_node=self.traversal.root_node,
-                    )
-                    difflines = next(make_update_after_approval)
-                else:
-                    difflines = self.traversal.cur_node.stringify(
-                        get_diff_lines=True,
-                    )
-
-            # Send emission to post-LM-generation step handler
-            emission = PostLmGenerationStepEmission(
-                diff_lines=difflines,
-                full_messages=full_messages,
-            )
-            if inspect.iscoroutinefunction(self.post_lm_step_handler):
-                step_is_approved = await self.post_lm_step_handler(emission)
-            else:
-                step_is_approved = self.post_lm_step_handler(emission)
-
-            # Send approval back to generator so it knows to make update
-            if make_update_after_approval is not None:
-                make_update_after_approval: Generator  # Make mypy happy
-                make_update_after_approval.send(step_is_approved)
-
-        raise NotImplementedError
+        if task_was_deemed_successfully_completed:
+            # Commit the olthad update
+            commit_olthad_update_fn()
+            # Backtrack to the parent of the current node
+            self.traversal.backtrack_to(self.traversal.cur_node.parent_id)
+            # Return True to indicate that backtracking occured
+            return True
 
         # #####################################################################
         # ### Classify whether the task has been given an exhaustive effort ###
         # #####################################################################
+
+        raise NotImplementedError
 
         # logger.info("Checking if an exhaustive effort was given...")
 
@@ -303,7 +253,7 @@ class Backtracker(Agent):
         #     return_obj.output_data.answer, EFFORT_WAS_EXHAUSTIVE_OPTIONS
         # )
 
-        # if choice == EFFORT_WAS_EXHAUSTIVE_OPTIONS[True].letter:
+        # if lm_choice == EFFORT_WAS_EXHAUSTIVE_OPTIONS[True].letter:
 
         #     #############################################################
         #     ### Classify whether the completion was a partial success ###

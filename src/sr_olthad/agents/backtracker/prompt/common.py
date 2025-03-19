@@ -1,5 +1,4 @@
 from enum import StrEnum
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -35,7 +34,7 @@ class BacktrackerSubAgentLmResponseOutputData(BaseModel):
     """
 
     answer: str
-    retrospective: Optional[str]
+    retrospective: str | None
 
 
 class BacktrackerSubAgentOutputFields(StrEnum):

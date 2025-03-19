@@ -3,9 +3,11 @@ from typing import Optional
 
 from loguru import logger
 
-from agent_framework.agents import SingleTurnChatAgent
+from agent_framework.agents import InstructLmChatAgent
 from agent_framework.schema import LmStreamsHandler
-from agent_framework.utils import prepare_input_messages
+from agent_framework.utils import (
+    render_single_turn_prompt_templates_and_get_messages,
+)
 from sr_olthad.agents.attempt_summarizer.prompt import (
     PROMPT_REGISTRY,
     AttemptSummarizerLmResponseOutputData,
@@ -26,12 +28,8 @@ class AttemptSummarizer:
     def __init__(
         self,
         olthad_traversal: OlthadTraversal,
-        pre_lm_generation_step_handler: Optional[
-            PreLmGenerationStepHandler
-        ] = None,
-        post_lm_generation_step_handler: Optional[
-            PostLmGenerationStepHandler
-        ] = None,
+        pre_lm_generation_step_handler: Optional[PreLmGenerationStepHandler] = None,
+        post_lm_generation_step_handler: Optional[PostLmGenerationStepHandler] = None,
         streams_handler: Optional[LmStreamsHandler] = None,
     ):
         self.traversal = olthad_traversal
@@ -40,24 +38,21 @@ class AttemptSummarizer:
         self.post_lm_step_handler = post_lm_generation_step_handler
 
         attempt_summarizer_prompts = PROMPT_REGISTRY[cfg.PROMPTS_VERSION]
-        self._attempt_summarizer: SingleTurnChatAgent[
+        self._attempt_summarizer: InstructLmChatAgent[
             AttemptSummarizerLmResponseOutputData
-        ] = SingleTurnChatAgent(
+        ] = InstructLmChatAgent(
             instruct_lm=cfg.INSTRUCT_LM,
             response_json_data_model=AttemptSummarizerLmResponseOutputData,
-            # TODO: Render sys prompt dynamically, e.g., w/ RAG of relevant good examples
-            sys_prompt=attempt_summarizer_prompts.sys_prompt_template.render(),
-            user_prompt_template=attempt_summarizer_prompts.user_prompt_template,
             max_tries_to_get_valid_response=cfg.MAX_TRIES_TO_GET_VALID_LM_RESPONSE,
             logger=logger,
         )
 
     async def __call__(self, env_state: str) -> None:
         # Prepare input data
-        attempted_subtask = self.traversal.cur_node.in_progress_subtask
+        attempted_subtask = self.traversal._cur_node.in_progress_subtask
         input_data = AttemptSummarizerPromptInputData(
             env_state=env_state,
-            olthad=self.traversal.root_node.stringify(
+            olthad=self.traversal._root_node.stringify(
                 obfuscate_status_of=attempted_subtask.id
             ),
             attempted_subtask_node=attempted_subtask.stringify(
@@ -67,19 +62,17 @@ class AttemptSummarizer:
 
         # Pre-LM-generation step handler
         if self.pre_lm_generation_step_handler is not None:
-            in_messages = prepare_input_messages(
+            in_messages = render_single_turn_prompt_templates_and_get_messages(
                 input_data,
                 user_prompt_template=...,
-                sys_prompt=...,
+                sys_prompt_template=...,
             )
             emission = PreLmGenerationStepEmission(
                 agent_name=AgentName.ATTEMPT_SUMMARIZER,
                 prompt_messages=in_messages,
                 n_streams_to_handle=1,
             )
-            if inspect.iscoroutinefunction(
-                self.pre_lm_generation_step_handler
-            ):
+            if inspect.iscoroutinefunction(self.pre_lm_generation_step_handler):
                 await self.pre_lm_generation_step_handler(emission)
             else:
                 self.pre_lm_generation_step_handler(emission)
@@ -95,16 +88,18 @@ class AttemptSummarizer:
             if self.post_lm_step_handler is None:
                 break
             # Otherwise, call the post-LM-generation step handler to get approval
-            make_update_after_approval = self.traversal.cur_node.update_status_and_retrospective_of_in_progress_subtask(
-                return_obj.output_data.status_to_assign,
-                return_obj.output_data.retrospective_to_assign,
-                should_yield_diff_and_receive_approval_before_update=True,
-                diff_root_node=self.traversal.root_node,
+            make_update_after_approval = (
+                self.traversal._cur_node.get_status_and_retrospective_updater(
+                    return_obj.output_data.status_to_assign,
+                    return_obj.output_data.retrospective_to_assign,
+                    should_yield_diff_and_receive_approval_before_update=True,
+                    root_ancestor=self.traversal._root_node,
+                )
             )
             difflines = next(make_update_after_approval)
             full_messages = return_obj.messages
             emission = PostLmGenerationStepEmission(
-                diff_lines=difflines,
+                diff=difflines,
                 full_messages=full_messages,
             )
             if inspect.iscoroutinefunction(self.post_lm_step_handler):

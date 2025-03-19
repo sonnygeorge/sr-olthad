@@ -35,7 +35,7 @@ class TextBox(ui.element):
         super().__init__("div")
         with self:
             self.pre = ui.element("pre").classes("p-2")
-        self.pre.style("font-family: monospace; line-height: 0.78em;")
+        self.pre.style("font-family: monospace; line-height: 0.70em;")
 
         if lines is not None:
             self.reset(lines)
@@ -78,9 +78,7 @@ class IsExecutableActionDialog(ui.dialog):
         with self, ui.card():
             self.question = ui.label()
             with ui.row():
-                self.switch = ui.switch(
-                    value=False, on_change=self.toggle_switch_label
-                )
+                self.switch = ui.switch(value=False, on_change=self.toggle_switch_label)
                 self.switch_label = ui.label("No")
             self.submit_btn = ui.button("Submit", on_click=self.close)
 
@@ -98,12 +96,14 @@ class IsExecutableActionDialog(ui.dialog):
 class GetEnvStateDialog(ui.dialog):
     def __init__(self):
         super().__init__()
-        with self, ui.card():
+        with self, ui.card().classes("w-1/2 justify-center items-center"):
             self.action = ui.label()
-            self.env_state_input = ui.textarea("Resulting env state:")
+            self.env_state_input = ui.textarea("(Resulting) env state:")
+            self.env_state_input.classes("w-full")
             self.submit_btn = ui.button("Submit", on_click=self.close)
+            self.submit_btn.props("size=lg")
 
-    async def get_env_state(self, action: Optional[str]) -> str:
+    async def get_env_state_from_user(self, action: str | None) -> str:
         if action is None:
             action = "(none yet)"
         self.action.set_text(f"ACTION: {action}")
@@ -134,18 +134,22 @@ def footer() -> ui.footer:
 
 
 def stringify_instruct_lm_messages(messages: List[InstructLmMessage]) -> str:
-    return "\n\n".join(
-        [f"{msg["role"].upper()}:\n\n{msg["content"]}" for msg in messages]
-    )
+    output_str = ""
+    for msg in messages:
+        output_str += "―" * COL_WRAP_CHARS + "\n"
+        output_str += f"{msg['role'].upper()}:\n"
+        output_str += "―" * COL_WRAP_CHARS + "\n\n"
+        output_str += msg["content"] + "\n\n"
+    return output_str.strip()
 
 
 class GuiApp:
-    OLTHAD_UPDATE_LABEL_FSTR = "Pending OLTHAD Update⠀⠀⠀(cur node={task_id})"
+    OLTHAD_UPDATE_LABEL_FSTR = "Pending OLTHAD Update⠀⠀(cur node={task_id})"
     CUR_AGENT_LABEL_FSTR = "Current Agent: {agent_name}"
 
     def __init__(self):
         add_styles()
-        self.get_env_state = GetEnvStateDialog().get_env_state
+        self.get_env_state_from_user = GetEnvStateDialog().get_env_state_from_user
         self.classify_executable_action = IsExecutableActionDialog().classify
         self.lm_response_text_boxes: List[TextBox] = []
 
@@ -177,11 +181,7 @@ class GuiApp:
             with ui.row().classes("w-1/3 justify-center"):
                 pass  # Nothing in the middle
             with ui.row().classes("w-1/3 justify-center pt-4 align-start"):
-                # accept_btn = ui.button(text="Accept & Proceed")
-                # accept_btn.props("color=green size=lg").classes("w-2/5")
-                # reject_btn = ui.button(text="Run This Step Again")
-                # reject_btn.props("color=red size=lg").classes("w-2/5")
-                with ui.row().classes("w-2/5 justify-between"):
+                with ui.row().classes("w-3/5 justify-between"):
                     self.accept_switch = ui.switch(
                         "Accept",
                         value=True,
@@ -191,20 +191,12 @@ class GuiApp:
                     self.submit_btn.props("color=green size=lg")
 
     def toggle_accept_switch_label(self):
-        self.submit_btn.set_text(
-            "Proceed" if self.accept_switch.value else "Run This Step Again"
-        )
-        self.submit_btn.props(
-            f"color={'green' if self.accept_switch.value else 'red'}"
-        )
+        self.submit_btn.set_text("Proceed" if self.accept_switch.value else "Run Step Again")
+        self.submit_btn.props(f"color={'green' if self.accept_switch.value else 'red'}")
         self.submit_btn.update()
-        self.accept_switch.props(
-            f"color={'green' if self.accept_switch.value else 'red'}"
-        )
+        self.accept_switch.props(f"color={'green' if self.accept_switch.value else 'red'}")
         self.accept_switch.update()
-        self.accept_switch.set_text(
-            "Accept" if self.accept_switch.value else "Reject"
-        )
+        self.accept_switch.set_text("Accept" if self.accept_switch.value else "Reject")
 
     @property
     def handle_streams(self) -> LmStreamsHandler:
@@ -212,9 +204,7 @@ class GuiApp:
 
         # NOTE: This has to inherit from LmStreamsHandler ABC
         class HandleStreams(LmStreamsHandler):
-            def __call__(
-                _, chunk_str: str, stream_idx: Optional[int] = None
-            ) -> None:
+            def __call__(_, chunk_str: str, stream_idx: Optional[int] = None) -> None:
                 if stream_idx is None:
                     stream_idx = 0
                 text_box = self.lm_response_text_boxes[stream_idx]
@@ -226,16 +216,21 @@ class GuiApp:
         self, emission: PreLmGenerationStepEmission
     ) -> None:
         # Update the right column header
-        # Update the current agent label
-        # Update the prompt column text with prompt messages
-        self.prompt_col_text_box.reset(
-            stringify_instruct_lm_messages(emission.prompt_messages).split(
-                "\n"
-            )
+        self.olthad_update_label.set_text(
+            self.OLTHAD_UPDATE_LABEL_FSTR.format(task_id=emission.cur_node_id)
         )
+        # Update the current agent label
+        self.cur_agent_label.set_text(
+            self.CUR_AGENT_LABEL_FSTR.format(agent_name=emission.agent_name)
+        )
+        # Update the prompt column text with prompt messages
+        msgs_str = stringify_instruct_lm_messages(emission.prompt_messages)
+        self.prompt_col_text_box.reset(msgs_str.split("\n"))
         # Empty the OLTHAD update column text
         self.olthad_update_col_text_box.reset([])
         # Update LM response columns to have enough text boxes for streams
+        self.lm_response_col.clear()
+        self.lm_response_text_boxes = []
         with self.lm_response_col:
             ui.separator()
             for _ in range(emission.n_streams_to_handle):
@@ -245,15 +240,13 @@ class GuiApp:
                 self.lm_response_text_boxes.append(text_box)
                 ui.separator()
 
-    async def handle_post_generation_event(
+    async def handle_and_approve_lm_generation_step(
         self, emission: PostLmGenerationStepEmission
     ) -> bool:
         # TODO: Do something with this for annotation?
         # emission.messages
-
         # Update OLTHAD update columns text
-        self.olthad_update_col_text_box.reset(emission.diff_lines)
-
+        self.olthad_update_col_text_box.reset(emission.diff)
         # Await user to indicate acceptance or rejection of the OLTHAD update
         await self.submit_btn.clicked()
         return self.accept_switch.value

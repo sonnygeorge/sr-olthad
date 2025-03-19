@@ -82,7 +82,7 @@ class LmStreamsHandler(ABC):
 
         Args:
             chunk_str (str): The string chunk of LM output.
-            stream_idx (Optional[int], optional): When the stream is one amongst many
+            stream_idx (Optional[int]): When the stream is one amongst many
                 asynchronous LM calls, this is the number/index of which call the stream
                 chunk is coming from. Defaults to None. See `with_implicit_async_voting`.
         """
