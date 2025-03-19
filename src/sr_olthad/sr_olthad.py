@@ -2,18 +2,26 @@ import json
 from typing import Callable, Dict, List, Optional
 
 import sr_olthad.config as cfg
-from agent_framework.schema import InstructLmMessage, LmStreamHandler
+from agent_framework.schema import LmStreamsHandler
 from sr_olthad.agents import (
     AttemptSummarizer,
-    AttemptSummarizerInputData,
     Backtracker,
-    BacktrackerInputData,
     Forgetter,
     Planner,
     PlannerInputData,
 )
-from sr_olthad.task_node import BacktrackedFromTaskStatus, TaskNode, TaskStatus
+from sr_olthad.emissions import (
+    PostLmGenerationStepHandler,
+    PreLmGenerationStepHandler,
+)
+from sr_olthad.olthad import (
+    BacktrackedFromTaskStatus,
+    OlthadTraversal,
+    TaskNode,
+    TaskStatus,
+)
 
+# TODO: Remove prints
 # TODO: Handle "notepad" internally? (i.e., decouple internal functions from environment "skills")
 # TODO: Results string?
 # TODO: Forgetter
@@ -41,21 +49,34 @@ class SrOlthad:
         domain_documentation: str,
         highest_level_task: str,
         classify_if_task_is_executable_action: Callable[[str], bool],
-        callback_after_lm_generation_steps: Optional[
-            Callable[[List[InstructLmMessage]], None]
+        pre_lm_generation_step_handler: Optional[
+            PreLmGenerationStepHandler
         ] = None,
-        stream_handler: Optional[LmStreamHandler] = None,
+        post_lm_generation_step_handler: Optional[
+            PostLmGenerationStepHandler
+        ] = None,
+        streams_handler: Optional[LmStreamsHandler] = None,
     ):
+        if streams_handler is not None and not isinstance(
+            streams_handler, LmStreamsHandler
+        ):
+            raise ValueError(
+                "The `streams_handler` must inherit from the `LmStreamsHandler` ABC."
+            )
+
         # OLTHAD traversal
-        self.root_node: TaskNode = TaskNode(
+        root_node = TaskNode(
             id="1",
             task=highest_level_task,
             status=TaskStatus.IN_PROGRESS,
             retrospective=None,
             parent_id=None,
         )
-        self.cur_node: TaskNode = self.root_node
-        self.nodes: Dict[str, TaskNode] = {self.root_node.id: self.root_node}
+        self.traversal = OlthadTraversal(
+            root_node=root_node,
+            cur_node=root_node,
+            nodes={root_node.id: root_node},
+        )
 
         # Misc.
         self.domain_documentation = domain_documentation
@@ -64,20 +85,28 @@ class SrOlthad:
 
         # Agents
         self.attempt_summarizer = AttemptSummarizer(
-            stream_handler=stream_handler,
-            callback_after_lm_generation_steps=callback_after_lm_generation_steps,
+            olthad_traversal=self.traversal,
+            pre_lm_generation_step_handler=pre_lm_generation_step_handler,
+            post_lm_generation_step_handler=post_lm_generation_step_handler,
+            streams_handler=streams_handler,
         )
         self.backtracker = Backtracker(
-            stream_handler=stream_handler,
-            callback_after_lm_generation_steps=callback_after_lm_generation_steps,
+            olthad_traversal=self.traversal,
+            pre_lm_generation_step_handler=pre_lm_generation_step_handler,
+            post_lm_generation_step_handler=post_lm_generation_step_handler,
+            streams_handler=streams_handler,
         )
         self.planner = Planner(
-            stream_handler=stream_handler,
-            callback_after_lm_generation_steps=callback_after_lm_generation_steps,
+            olthad_traversal=self.traversal,
+            pre_lm_generation_step_handler=pre_lm_generation_step_handler,
+            post_lm_generation_step_handler=post_lm_generation_step_handler,
+            streams_handler=streams_handler,
         )
         self.forgetter = Forgetter(
-            stream_handler=stream_handler,
-            callback_after_lm_generation_steps=callback_after_lm_generation_steps,
+            olthad_traversal=self.traversal,
+            pre_lm_generation_step_handler=pre_lm_generation_step_handler,
+            post_lm_generation_step_handler=post_lm_generation_step_handler,
+            streams_handler=streams_handler,
         )
 
     async def _process_cur_node_until_next_executable_action_is_determined(
@@ -90,13 +119,7 @@ class SrOlthad:
             #############################################################
 
             # Invoke the backtracker and get outputs
-            return_obj = await self.backtracker(
-                BacktrackerInputData(
-                    env_state=env_state,
-                    root_task_node=self.root_node,
-                    current_task_node=self.cur_node,
-                )
-            )
+            return_obj = await self.backtracker(env_state=env_state)
             backtracked_from_status_to_assign = (
                 return_obj.output_data.backtracked_from_status_to_assign
             )
@@ -121,10 +144,10 @@ class SrOlthad:
                 while (
                     self.cur_node.parent_id != id_of_ancestor_to_backtrack_to
                 ):
-                    # Prune
+                    # Prune from the nodes dict
                     for subtask_node in self.cur_node.subtasks:
                         del self.nodes[subtask_node.id]
-                    self.cur_node.wipe_subtasks_list()
+                    self.cur_node.remove_subtasks()
                     # Backtrack
                     self.cur_node = self.nodes[self.cur_node.parent_id]
 
@@ -169,7 +192,7 @@ class SrOlthad:
                 retrospective=None,
             )
             new_planned_subtask_nodes.append(new_subtask_node)
-        self.cur_node.replace_any_planned_subtasks_with(
+        self.cur_node.update_planned_subtasks(
             new_planned_subtasks=new_planned_subtask_nodes
         )
 
@@ -208,22 +231,8 @@ class SrOlthad:
         ## Summarize previous execution (action attempt) ##
         ###################################################
 
-        if self.has_been_called_at_least_once_before:
-            # We've completed the attempt of what previously was the next planned subtask
-            attempted_subtask_node = self.cur_node.next_planned_subtask
-            return_obj = await self.attempt_summarizer(
-                AttemptSummarizerInputData(
-                    env_state=env_state,
-                    root_task_node=self.root_node,
-                    attempted_subtask_node=attempted_subtask_node,
-                )
-            )
-            attempted_subtask_node.update_status(
-                return_obj.output_data.status_to_assign
-            )
-            attempted_subtask_node.update_retrospective(
-                return_obj.output_data.retrospective_to_assign
-            )
+        # if self.has_been_called_at_least_once_before:
+        #     await self.attempt_summarizer(env_state=env_state)
 
         ##########################################################
         ## Enter recursive process to get next action...        ##
@@ -234,9 +243,9 @@ class SrOlthad:
             env_state
         )
         self.has_been_called_at_least_once_before = True
-        print("#" * 80)
-        print("#" * 80, "\n\n")
-        print(self.root_node.stringify())
-        print("\n\n", "#" * 80)
-        print("#" * 80)
+        # print("#" * 80)
+        # print("#" * 80, "\n\n")
+        # print(self.root_node.stringify())
+        # print("\n\n", "#" * 80)
+        # print("#" * 80)
         return output

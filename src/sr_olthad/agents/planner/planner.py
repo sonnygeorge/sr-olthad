@@ -1,17 +1,21 @@
-from typing import Callable, List, Optional
+from typing import List, Optional
 
 from loguru import logger
 from pydantic import BaseModel
 
 from agent_framework.agents import SingleTurnChatAgent
-from agent_framework.schema import Agent, InstructLmMessage, LmStreamHandler
+from agent_framework.schema import Agent, LmStreamsHandler
 from sr_olthad.agents.planner.prompt import (
     PROMPT_REGISTRY,
     PlannerLmResponseOutputData,
     PlannerPromptInputData,
 )
 from sr_olthad.config import PlannerCfg as cfg
-from sr_olthad.task_node import TaskNode
+from sr_olthad.emissions import (
+    PostLmGenerationStepHandler,
+    PreLmGenerationStepHandler,
+)
+from sr_olthad.olthad import OlthadTraversal, TaskNode
 
 
 class PlannerInputData(BaseModel):
@@ -40,15 +44,20 @@ class PlannerReturn(BaseModel):
 class Planner(Agent):
     def __init__(
         self,
-        stream_handler: Optional[LmStreamHandler] = None,
-        callback_after_lm_generation_steps: Optional[
-            Callable[[List[InstructLmMessage], TaskNode], None]
+        olthad_traversal: OlthadTraversal,
+        pre_lm_generation_step_handler: Optional[
+            PreLmGenerationStepHandler
         ] = None,
+        post_lm_generation_step_handler: Optional[
+            PostLmGenerationStepHandler
+        ] = None,
+        streams_handler: Optional[LmStreamsHandler] = None,
     ):
-        self.stream_handler = stream_handler
-        self.callback_after_lm_generation_steps = (
-            callback_after_lm_generation_steps
-        )
+
+        self.traversal = olthad_traversal
+        self.streams_handler = streams_handler
+        self.pre_lm_generation_step_handler = pre_lm_generation_step_handler
+        self.post_lm_generation_step_handler = post_lm_generation_step_handler
 
         planner_prompts = PROMPT_REGISTRY[cfg.PROMPTS_VERSION]
         self._planner: SingleTurnChatAgent[PlannerLmResponseOutputData] = (
@@ -71,7 +80,7 @@ class Planner(Agent):
         )
         return_obj = await self._planner(
             prompt_template_data=planner_input_data,
-            stream_handler=self.stream_handler,
+            stream_handler=self.streams_handler,
         )
         if self.callback_after_lm_generation_steps is not None:
             self.callback_after_lm_generation_steps(return_obj.messages)

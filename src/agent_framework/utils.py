@@ -10,7 +10,7 @@ from typing import Any, Callable, List, Optional, Sequence, Type, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
-from agent_framework.schema import Agent, HasOutputData, LmStreamHandler
+from agent_framework.schema import Agent, HasOutputData, LmStreamsHandler
 
 BaseModelT = TypeVar("T", bound=BaseModel)
 
@@ -76,7 +76,9 @@ def with_retry(
     T = TypeVar("T")
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
-        def log_or_print_exception(e: Exception, tries_remaining: int) -> None:
+        def log_or_print_permissible_exception(
+            e: Exception, tries_remaining: int
+        ) -> None:
             msg = f"Retrying {func.__name__}: {str(e)}, {tries_remaining-1} tries remaining"
             if logger:
                 logger.warning(msg)
@@ -90,7 +92,7 @@ def with_retry(
                 try:
                     return func(*args, **kwargs)
                 except permissible_exceptions as e:
-                    log_or_print_exception(e, tries_remaining)
+                    log_or_print_permissible_exception(e, tries_remaining)
                     tries_remaining -= 1
             return func(
                 *args, **kwargs
@@ -103,7 +105,7 @@ def with_retry(
                 try:
                     return await func(*args, **kwargs)
                 except permissible_exceptions as e:
-                    log_or_print_exception(e, tries_remaining)
+                    log_or_print_permissible_exception(e, tries_remaining)
                     tries_remaining -= 1
             return await func(
                 *args, **kwargs
@@ -185,10 +187,10 @@ def with_implicit_async_voting(
             stream_handler_arg_idxs = []
             stream_handler_kwarg_keys = []
             for i, arg in enumerate(args):
-                if isinstance(arg, LmStreamHandler):
+                if isinstance(arg, LmStreamsHandler):
                     stream_handler_arg_idxs.append(i)
             for key, arg in kwargs.items():
-                if isinstance(arg, LmStreamHandler):
+                if isinstance(arg, LmStreamsHandler):
                     stream_handler_kwarg_keys.append(key)
 
             # Prepare the async calls

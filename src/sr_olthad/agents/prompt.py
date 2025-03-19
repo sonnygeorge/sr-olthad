@@ -1,4 +1,4 @@
-from sr_olthad.task_node import TaskNode, TaskStatus
+from sr_olthad.olthad import TaskNode, TaskStatus
 
 _example_task_in_question = TaskNode(
     id="1.3.1",
@@ -14,7 +14,7 @@ _example_olthad = TaskNode(
     task="Do a thing.",
     status=TaskStatus.IN_PROGRESS,
     retrospective=None,
-    subtasks=[
+    _non_planned_subtasks=[
         TaskNode(
             id="1.1",
             parent_id="1",
@@ -35,8 +35,10 @@ _example_olthad = TaskNode(
             task="Do this other sub-thing.",
             status=TaskStatus.IN_PROGRESS,
             retrospective=None,
-            subtasks=[
+            _non_planned_subtasks=[
                 _example_task_in_question,
+            ],
+            _planned_subtasks=[
                 TaskNode(
                     id="1.3.2",
                     parent_id="1.3",
@@ -46,6 +48,8 @@ _example_olthad = TaskNode(
                 ),
             ],
         ),
+    ],
+    _planned_subtasks=[
         TaskNode(
             id="1.4",
             parent_id="1",

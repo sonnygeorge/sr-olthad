@@ -8,12 +8,12 @@ from sr_olthad.agents.prompt import (
     EXAMPLE_OLTHAD_FOR_SYS_PROMPT,
     EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT,
 )
+from sr_olthad.olthad import TaskStatus
 from sr_olthad.schema import (
     MultipleChoiceQuestionOption,
     PromptRegistry,
     SingleTurnPromptTemplates,
 )
-from sr_olthad.task_node import TaskStatus
 from sr_olthad.utils import BinaryChoiceOptions
 
 WAS_SUCCESSFULLY_COMPLETED_OPTIONS: BinaryChoiceOptions = {

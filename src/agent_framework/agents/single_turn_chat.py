@@ -60,7 +60,7 @@ class SingleTurnChatAgent(Agent, Generic[BaseModelT]):
             logger=self.logger,
         )(self._get_valid_response)
 
-    def _prepare_input_messages(
+    def prepare_input_messages(
         self, input_data: BaseModel
     ) -> List[InstructLmMessage]:
         # TODO: Raise error if model and template fields don't match up
@@ -97,9 +97,7 @@ class SingleTurnChatAgent(Agent, Generic[BaseModelT]):
         stream_handler: Optional[LmStreamHandler] = None,
         **kwargs,  # kwargs passed through to the InstructLm.generate method
     ) -> SingleTurnChatAgentReturn[BaseModelT]:
-        messages = self._prepare_input_messages(
-            input_data=prompt_template_data
-        )
+        messages = self.prepare_input_messages(input_data=prompt_template_data)
         output_data = await self._get_valid_response(
             input_messages=messages, stream_handler=stream_handler, **kwargs
         )

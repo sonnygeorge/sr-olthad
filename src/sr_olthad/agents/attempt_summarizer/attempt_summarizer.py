@@ -1,54 +1,42 @@
-from typing import Callable, List, Optional
+import inspect
+from typing import Optional
 
 from loguru import logger
-from pydantic import BaseModel
 
 from agent_framework.agents import SingleTurnChatAgent
-from agent_framework.schema import Agent, InstructLmMessage, LmStreamHandler
+from agent_framework.schema import LmStreamsHandler
 from sr_olthad.agents.attempt_summarizer.prompt import (
     PROMPT_REGISTRY,
     AttemptSummarizerLmResponseOutputData,
     AttemptSummarizerPromptInputData,
 )
 from sr_olthad.config import AttemptSummarizerCfg as cfg
-from sr_olthad.task_node import AttemptedTaskStatus, TaskNode
+from sr_olthad.emissions import (
+    PostLmGenerationStepEmission,
+    PostLmGenerationStepHandler,
+    PreLmGenerationStepEmission,
+    PreLmGenerationStepHandler,
+)
+from sr_olthad.olthad import OlthadTraversal
+from sr_olthad.schema import AgentName
 
 
-class AttemptSummarizerInputData(BaseModel):
-    """
-    Input data for the Attempt Summarizer agent.
-
-    Attributes:
-        env_state (str): PRE-STRINGIFIED current environment state.
-        root_task_node (TaskNode): The root task node of the OLTHAD.
-        attempted_subtask_node (TaskNode): The subtask node whose attempt we want to
-            summarize.
-    """
-
-    env_state: str
-    root_task_node: TaskNode
-    attempted_subtask_node: TaskNode
-
-
-class AttemptSummarizerOutputData(BaseModel):
-    status_to_assign: AttemptedTaskStatus
-    retrospective_to_assign: str
-
-
-class AttemptSummarizerSummarizerReturn(BaseModel):
-    output_data: AttemptSummarizerOutputData
-
-
-class AttemptSummarizer(Agent):
+class AttemptSummarizer:
     def __init__(
         self,
-        stream_handler: Optional[LmStreamHandler] = None,
-        callback_after_lm_generation_steps: Optional[
-            Callable[[List[InstructLmMessage]], None]
+        olthad_traversal: OlthadTraversal,
+        pre_lm_generation_step_handler: Optional[
+            PreLmGenerationStepHandler
         ] = None,
+        post_lm_generation_step_handler: Optional[
+            PostLmGenerationStepHandler
+        ] = None,
+        streams_handler: Optional[LmStreamsHandler] = None,
     ):
-        self.stream_handler = stream_handler
-        self.callback_after_each_lm_step = callback_after_lm_generation_steps
+        self.traversal = olthad_traversal
+        self.streams_handler = streams_handler
+        self.pre_lm_generation_step_handler = pre_lm_generation_step_handler
+        self.post_lm_step_handler = post_lm_generation_step_handler
 
         attempt_summarizer_prompts = PROMPT_REGISTRY[cfg.PROMPTS_VERSION]
         self._attempt_summarizer: SingleTurnChatAgent[
@@ -63,42 +51,63 @@ class AttemptSummarizer(Agent):
             logger=logger,
         )
 
-    async def __call__(
-        self, input_data: AttemptSummarizerInputData
-    ) -> AttemptSummarizerSummarizerReturn:
-        planner_input_data = AttemptSummarizerPromptInputData(
-            env_state=input_data.env_state,
-            olthad=input_data.root_task_node.stringify(
-                obfuscate_status_of=input_data.attempted_subtask_node.id
+    async def __call__(self, env_state: str) -> None:
+        # Prepare input data
+        attempted_subtask = self.traversal.cur_node.in_progress_subtask
+        input_data = AttemptSummarizerPromptInputData(
+            env_state=env_state,
+            olthad=self.traversal.root_node.stringify(
+                obfuscate_status_of=attempted_subtask.id
             ),
-            attempted_subtask_node=input_data.attempted_subtask_node.stringify(
-                obfuscate_status_of=input_data.attempted_subtask_node.id
+            attempted_subtask_node=attempted_subtask.stringify(
+                obfuscate_status_of=attempted_subtask.id
             ),
         )
-        return_obj = await self._attempt_summarizer(
-            prompt_template_data=planner_input_data,
-            stream_handler=self.stream_handler,
-        )
-        if self.callback_after_each_lm_step is not None:
-            self.callback_after_each_lm_step(return_obj.messages)
 
-        status_to_assign_str = return_obj.output_data.status_to_assign
-        status_to_assign = None
-        for status in AttemptedTaskStatus:
-            clean_status = status.value.lower().strip()
-            clean_status_to_assign_str = status_to_assign_str.lower().strip()
-            if clean_status == clean_status_to_assign_str:
-                status_to_assign = status
+        # Pre-LM-generation step handler
+        if self.pre_lm_generation_step_handler is not None:
+            in_messages = self._attempt_summarizer.prepare_input_messages(
+                input_data
+            )  # TODO: Redundant call... rethink design bc of this? (see README)
+            emission = PreLmGenerationStepEmission(
+                agent_name=AgentName.ATTEMPT_SUMMARIZER,
+                prompt_messages=in_messages,
+                n_streams_to_handle=1,
+            )
+            if inspect.iscoroutinefunction(
+                self.pre_lm_generation_step_handler
+            ):
+                await self.pre_lm_generation_step_handler(emission)
+            else:
+                self.pre_lm_generation_step_handler(emission)
+
+        step_is_approved = False
+        while not step_is_approved:
+            # Invoke `self._attempt_summarizer`
+            return_obj = await self._attempt_summarizer(
+                prompt_template_data=input_data,
+                stream_handler=self.streams_handler,
+            )
+
+            if self.post_lm_step_handler is None:
                 break
-        if status_to_assign is None:
-            raise NotImplementedError(
-                f"LM-assigned '{status_to_assign_str}' is not recognized. "
-                "Handling this is not yet implemented."
+            # Otherwise, call the post-LM-generation step handler to get approval
+            make_update_after_approval = self.traversal.cur_node.update_status_and_retrospective_of_in_progress_subtask(
+                return_obj.output_data.status_to_assign,
+                return_obj.output_data.retrospective_to_assign,
+                should_yield_diff_and_receive_approval_before_update=True,
+                diff_root_node=self.traversal.root_node,
             )
+            difflines = next(make_update_after_approval)
+            full_messages = return_obj.messages
+            emission = PostLmGenerationStepEmission(
+                diff_lines=difflines,
+                full_messages=full_messages,
+            )
+            if inspect.iscoroutinefunction(self.post_lm_step_handler):
+                step_is_approved = await self.post_lm_step_handler(emission)
+            else:
+                step_is_approved = self.post_lm_step_handler(emission)
 
-        return AttemptSummarizerSummarizerReturn(
-            output_data=AttemptSummarizerOutputData(
-                status_to_assign=status_to_assign,
-                retrospective_to_assign=return_obj.output_data.retrospective_to_assign,
-            )
-        )
+            # Send approval back to generator so it knows to make update
+            make_update_after_approval.send(step_is_approved)

@@ -7,8 +7,8 @@ from sr_olthad.agents.prompt import (
     EXAMPLE_OLTHAD_FOR_SYS_PROMPT,
     EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT,
 )
+from sr_olthad.olthad import AttemptedTaskStatus
 from sr_olthad.schema import PromptRegistry, SingleTurnPromptTemplates
-from sr_olthad.task_node import AttemptedTaskStatus
 
 
 class AttemptSummarizerPromptInputData(BaseModel):
@@ -99,8 +99,11 @@ The you
 
 Finally, you will be prompted to to think step-by-step before providing your final response to the question, "{V1_0_QUESTION}".
 
+!IMPORTANT:
+- Look for evidence of the attempt's in the environment state and not the progress/plans.
+- Only refer to the plans to consider the greater context for what where the intentions of this attempt.
 
-Only after thinking it throuhg, you will respond in a JSON that strictly adheres to the following format:
+Only after thinking it through, you will respond in a JSON that strictly adheres to the following format:
 
 ```json
 {JSON_FORMAT_SYS_PROMPT_INSERT}

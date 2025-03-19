@@ -1,11 +1,17 @@
 <!--
-TODO: Callback after every OLTHAD update?
+TODO: Get rid of Agent ABC (bruh there's no point lol)
+TODO: Make prepare messages be a util and make SingleTurnChatAgent take a user message (and make other contexts render their own templates)
+TODO: Rename "GUI" to "dashboard"?
 TODO: Add m-coding style logging
 TODO: Build a GUI app to step through sr-OLTHAD LM-calls w/ a "next" button (w/ a more human-readable plan string?) (and simulate environment)
 TODO: Ranking of multiple async "Planner" outputs?
 TODO: Annotation GUI?
 TODO: RAG of SemanticSteve tutorials?
 -->
+
+# sr-OLTHAD
+
+Structured Reasoning with Open-Language Hierarchies of Any Depth
 
 ```python
 📦sr-olthad

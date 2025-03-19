@@ -1,11 +1,14 @@
 import sys
 
-from dotenv import load_dotenv
-
 sys.path.append("src")
 
-from gui.gui import run
+from dotenv import load_dotenv
+from nicegui import ui
+
+from gui.gui import GuiApp
 
 load_dotenv()
 
-run()
+# Run the UI
+GuiApp()
+ui.run(title="sr-OLTHAD")
