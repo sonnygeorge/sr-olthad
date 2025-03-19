@@ -77,12 +77,12 @@ class InstructLm(ABC):
 
 class LmStreamsHandler(ABC):
     @abstractmethod
-    def __call__(self, chunk_str: str, async_call_idx: Optional[int] = None):
+    def __call__(self, chunk_str: str, stream_idx: Optional[int] = None):
         """A `Callable` that handles streaming potentially multiple LM streams.
 
         Args:
             chunk_str (str): The string chunk of LM output.
-            async_call_idx (Optional[int], optional): When the stream is one amongst many
+            stream_idx (Optional[int], optional): When the stream is one amongst many
                 asynchronous LM calls, this is the number/index of which call the stream
                 chunk is coming from. Defaults to None. See `with_implicit_async_voting`.
         """

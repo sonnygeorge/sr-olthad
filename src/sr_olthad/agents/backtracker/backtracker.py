@@ -5,7 +5,10 @@ from loguru import logger
 
 from agent_framework.agents import SingleTurnChatAgent
 from agent_framework.schema import Agent, LmStreamsHandler
-from agent_framework.utils import with_implicit_async_voting
+from agent_framework.utils import (
+    prepare_input_messages,
+    with_implicit_async_voting,
+)
 from sr_olthad.agents.backtracker.prompt import (
     EXHAUSTIVE_EFFORT_CLF_PROMPT_REGISTRY,
     MOST_WORTHWHILE_PURSUIT_CLF_PROMPT_REGISTRY,
@@ -169,6 +172,7 @@ class Backtracker(Agent):
         )(self.successful_completion_clf)
 
     async def __call__(self, env_state: str) -> None:
+        """..."""
 
         sub_agent_input_data = BacktrackerSubAgentPromptInputData(
             env_state=env_state,
@@ -188,14 +192,21 @@ class Backtracker(Agent):
 
         logger.info("Checking if the task has been successfully completed...")
 
+        input_messages = prepare_input_messages(
+            input_data=sub_agent_input_data,
+            user_prompt_template=SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY[
+                cfg.SuccessfulCompletionClfCfg.PROMPTS_VERSION
+            ].user_prompt_template,
+            sys_prompt=SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY[
+                cfg.SuccessfulCompletionClfCfg.PROMPTS_VERSION
+            ].sys_prompt_template.render(),  # TODO: Render dynamically
+        )
+
         # Pre-LM-generation step handler
         if self.pre_lm_generation_step_handler is not None:
-            in_messages = self.successful_completion_clf.prepare_input_messages(
-                input_data=sub_agent_input_data
-            )  # TODO: Redundant call... rethink design bc of this? (see README)
             emission = PreLmGenerationStepEmission(
                 agent_name=AgentName.SUCCESSFUL_COMPLETION_CLF,
-                prompt_messages=in_messages,
+                prompt_messages=input_messages,
                 n_streams_to_handle=cfg.SuccessfulCompletionClfCfg.N_CALLS_FOR_VOTING,
             )
             if inspect.iscoroutinefunction(
@@ -209,7 +220,7 @@ class Backtracker(Agent):
         while not step_is_approved:
             # Invoke `self.successful_completion_clf`
             return_obj = await self.successful_completion_clf(
-                prompt_template_data=sub_agent_input_data,
+                input_messages=input_messages,
                 stream_handler=self.streams_handler,
             )
 

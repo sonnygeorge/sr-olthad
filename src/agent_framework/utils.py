@@ -8,11 +8,35 @@ import warnings
 from collections import Counter, defaultdict
 from typing import Any, Callable, List, Optional, Sequence, Type, TypeVar
 
+from jinja2 import Template
 from pydantic import BaseModel, ValidationError
 
-from agent_framework.schema import Agent, HasOutputData, LmStreamsHandler
+from agent_framework.schema import (
+    Agent,
+    HasOutputData,
+    InstructLmChatRole,
+    InstructLmMessage,
+    LmStreamsHandler,
+)
 
 BaseModelT = TypeVar("T", bound=BaseModel)
+
+
+def prepare_input_messages(  # TODO: Docstring
+    input_data: BaseModel,
+    user_prompt_template: Template,
+    sys_prompt: Optional[str] = None,
+) -> List[InstructLmMessage]:
+    # TODO: Raise error if model and template fields don't match up
+    input_data = {k: str(v) for k, v in input_data.__dict__.items()}
+    user_prompt = user_prompt_template.render(**input_data)
+    messages = [
+        InstructLmMessage(role=InstructLmChatRole.SYS, content=sys_prompt),
+        InstructLmMessage(role=InstructLmChatRole.USER, content=user_prompt),
+    ]
+    if sys_prompt is None:
+        messages.pop(0)
+    return messages
 
 
 def detect_extract_and_parse_json_from_text(
@@ -201,11 +225,11 @@ def with_implicit_async_voting(
                 # between simultanous LM streams
                 for idx in stream_handler_arg_idxs:
                     args[idx] = functools.partial(
-                        args[idx], async_call_idx=async_call_idx
+                        args[idx], stream_idx=async_call_idx
                     )
                 for key in stream_handler_kwarg_keys:
                     kwargs[key] = functools.partial(
-                        kwargs[key], async_call_idx=async_call_idx
+                        kwargs[key], stream_idx=async_call_idx
                     )
 
                 async_calls.append(

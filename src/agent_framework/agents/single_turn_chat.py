@@ -1,5 +1,5 @@
 import logging
-from typing import Generic, List, Optional, Type, TypeVar
+from typing import Generic, List, Optional, Tuple, Type, TypeVar
 
 from jinja2 import Template
 from pydantic import BaseModel, ValidationError
@@ -60,47 +60,37 @@ class SingleTurnChatAgent(Agent, Generic[BaseModelT]):
             logger=self.logger,
         )(self._get_valid_response)
 
-    def prepare_input_messages(
-        self, input_data: BaseModel
-    ) -> List[InstructLmMessage]:
-        # TODO: Raise error if model and template fields don't match up
-        input_data = {k: str(v) for k, v in input_data.__dict__.items()}
-        user_prompt = self.user_prompt_template.render(**input_data)
-        messages = [
-            InstructLmMessage(
-                role=InstructLmChatRole.SYS, content=self.sys_prompt
-            ),
-            InstructLmMessage(
-                role=InstructLmChatRole.USER, content=user_prompt
-            ),
-        ]
-        if self.sys_prompt is None:
-            messages.pop(0)
-        return messages
-
     async def _get_valid_response(
         self,
         input_messages: List[InstructLmMessage],
         stream_handler: Optional[LmStreamHandler] = None,
         **kwargs,  # kwargs passed through to the InstructLm.generate method
-    ) -> BaseModelT:
+    ) -> Tuple[BaseModelT, str]:
         response = await self.instruct_lm.generate(
             messages=input_messages, stream_handler=stream_handler, **kwargs
         )
-        return detect_extract_and_parse_json_from_text(
-            text=response, model_to_extract=self.output_data_model
+        return (
+            detect_extract_and_parse_json_from_text(
+                text=response, model_to_extract=self.output_data_model
+            ),
+            response,
         )
 
     async def __call__(  # TODO: Docstring
         self,
-        prompt_template_data: BaseModel,
+        input_messages: List[InstructLmMessage],
         stream_handler: Optional[LmStreamHandler] = None,
         **kwargs,  # kwargs passed through to the InstructLm.generate method
     ) -> SingleTurnChatAgentReturn[BaseModelT]:
-        messages = self.prepare_input_messages(input_data=prompt_template_data)
-        output_data = await self._get_valid_response(
-            input_messages=messages, stream_handler=stream_handler, **kwargs
+        output_data, response = await self._get_valid_response(
+            input_messages=input_messages,
+            stream_handler=stream_handler,
+            **kwargs,
+        )
+        assistant_message = InstructLmMessage(
+            role=InstructLmChatRole.ASSISTANT, content=response
         )
         return SingleTurnChatAgentReturn(
-            output_data=output_data, messages=messages
+            output_data=output_data,
+            messages=input_messages + [assistant_message],
         )

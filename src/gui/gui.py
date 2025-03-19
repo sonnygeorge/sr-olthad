@@ -2,9 +2,9 @@ import os
 import textwrap
 from typing import List, Optional
 
-from nicegui import ui
+from nicegui import html, ui
 
-from agent_framework.schema import LmStreamsHandler
+from agent_framework.schema import InstructLmMessage, LmStreamsHandler
 from sr_olthad.emissions import (
     PostLmGenerationStepEmission,
     PreLmGenerationStepEmission,
@@ -27,40 +27,49 @@ class TextBox(ui.element):
         lines: Optional[List[str]] = None,
         is_diff: bool = False,
     ) -> None:
-        super().__init__("div")
-        self.classes("w-full")
+
         self.is_diff = is_diff
+        self.lines = []
+        self.spans = []
+
+        super().__init__("div")
+        with self:
+            self.pre = ui.element("pre").classes("p-2")
+        self.pre.style("font-family: monospace; line-height: 0.78em;")
+
         if lines is not None:
             self.reset(lines)
 
     def reset(self, lines: List[str]) -> None:
-        self.clear()
-        html = '<pre style="font-family: monospace; line-height: 0.78em;">'
-        for line in lines:
-            if self.is_diff or len(line) < COL_WRAP_CHARS:
-                sublines = [line]
-            else:
-                sublines = textwrap.wrap(line, COL_WRAP_CHARS)
-            for subln in sublines:
-                if subln[-1] != "\n":
-                    subln += "\n"
-                if self.is_diff:
-                    if subln.startswith("- "):
-                        html += f'<span style="color: #ff4444">{subln}</span>'
-                    elif subln.startswith("+ "):
-                        html += f'<span style="color: #44ff44">{subln}</span>'
-                    elif subln.startswith("? "):
-                        html += f'<span style="color: #888888">{subln}</span>'
-                    else:
-                        html += f'<span style="color: #ffffff">{subln}</span>'
+        self.pre.clear()
+        self.lines = []
+        self.spans = []
+        with self.pre:
+            for line in lines:
+                if self.is_diff or len(line) < COL_WRAP_CHARS:
+                    sublines = [line]
                 else:
-                    html += f'<span style="color: #ffffff">{subln}</span>'
-        html += "</pre>"
-        with self:
-            ui.html(html).classes("p-2 text-white")
+                    sublines = textwrap.wrap(line, COL_WRAP_CHARS)
+                for subln in sublines:
+                    if not subln or subln[-1] != "\n":
+                        subln += "\n"
+                    if self.is_diff:
+                        if subln.startswith("- "):
+                            span = html.span(subln).style("color: #ff4444")
+                        elif subln.startswith("+ "):
+                            span = html.span(subln).style("color: #44ff44")
+                        elif subln.startswith("? "):
+                            span = html.span(subln).style("color: #888888")
+                        else:
+                            span = html.span(subln).style("color: #ffffff")
+                    else:
+                        span = html.span(subln).style("color: #ffffff")
+                    self.lines.append(subln)
+                    self.spans.append(span)
 
     def append_chunk(self, chunk: str) -> None:
-        pass  # TODO
+        with self.pre:
+            html.span(chunk).style("color: #ffffff")
 
 
 class IsExecutableActionDialog(ui.dialog):
@@ -124,6 +133,12 @@ def footer() -> ui.footer:
     return footer.classes("bg-gray-900 p-0 gap-0 items-start")
 
 
+def stringify_instruct_lm_messages(messages: List[InstructLmMessage]) -> str:
+    return "\n\n".join(
+        [f"{msg["role"].upper()}:\n\n{msg["content"]}" for msg in messages]
+    )
+
+
 class GuiApp:
     OLTHAD_UPDATE_LABEL_FSTR = "Pending OLTHAD Update⠀⠀⠀(cur node={task_id})"
     CUR_AGENT_LABEL_FSTR = "Current Agent: {agent_name}"
@@ -132,7 +147,7 @@ class GuiApp:
         add_styles()
         self.get_env_state = GetEnvStateDialog().get_env_state
         self.classify_executable_action = IsExecutableActionDialog().classify
-        self.lm_response_text_boxes = []
+        self.lm_response_text_boxes: List[TextBox] = []
 
         # Header
         with header():
@@ -149,8 +164,8 @@ class GuiApp:
             prompt_col = ui.element("div").classes("c-column left")
             with prompt_col.style(f"height: {COL_HEIGHT}"):
                 self.prompt_col_text_box = TextBox()
-            lm_responses_col = ui.element("div").classes("c-column middle")
-            lm_responses_col.style(f"height: {COL_HEIGHT}")
+            self.lm_response_col = ui.element("div").classes("c-column middle")
+            self.lm_response_col.style(f"height: {COL_HEIGHT}")
             olthad_update_col = ui.element("div").classes("c-column right")
             with olthad_update_col.style(f"height: {COL_HEIGHT}"):
                 self.olthad_update_col_text_box = TextBox(is_diff=True)
@@ -161,11 +176,35 @@ class GuiApp:
                 self.cur_agent_label = ui.label()
             with ui.row().classes("w-1/3 justify-center"):
                 pass  # Nothing in the middle
-            with ui.row().classes("w-1/3 justify-center pt-4"):
-                accept_btn = ui.button(text="Accept & Proceed")
-                accept_btn.props("color=green size=lg").classes("w-2/5")
-                reject_btn = ui.button(text="Run This Step Again")
-                reject_btn.props("color=red size=lg").classes("w-2/5")
+            with ui.row().classes("w-1/3 justify-center pt-4 align-start"):
+                # accept_btn = ui.button(text="Accept & Proceed")
+                # accept_btn.props("color=green size=lg").classes("w-2/5")
+                # reject_btn = ui.button(text="Run This Step Again")
+                # reject_btn.props("color=red size=lg").classes("w-2/5")
+                with ui.row().classes("w-2/5 justify-between"):
+                    self.accept_switch = ui.switch(
+                        "Accept",
+                        value=True,
+                        on_change=self.toggle_accept_switch_label,
+                    ).props("color=green")
+                    self.submit_btn = ui.button("Proceed").classes("w-1/2")
+                    self.submit_btn.props("color=green size=lg")
+
+    def toggle_accept_switch_label(self):
+        self.submit_btn.set_text(
+            "Proceed" if self.accept_switch.value else "Run This Step Again"
+        )
+        self.submit_btn.props(
+            f"color={'green' if self.accept_switch.value else 'red'}"
+        )
+        self.submit_btn.update()
+        self.accept_switch.props(
+            f"color={'green' if self.accept_switch.value else 'red'}"
+        )
+        self.accept_switch.update()
+        self.accept_switch.set_text(
+            "Accept" if self.accept_switch.value else "Reject"
+        )
 
     @property
     def handle_streams(self) -> LmStreamsHandler:
@@ -174,9 +213,11 @@ class GuiApp:
         # NOTE: This has to inherit from LmStreamsHandler ABC
         class HandleStreams(LmStreamsHandler):
             def __call__(
-                _, chunk_str: str, async_call_idx: Optional[int] = None
+                _, chunk_str: str, stream_idx: Optional[int] = None
             ) -> None:
-                text_box = self.lm_response_text_boxs[async_call_idx]
+                if stream_idx is None:
+                    stream_idx = 0
+                text_box = self.lm_response_text_boxes[stream_idx]
                 text_box.append_chunk(chunk_str)
 
         return HandleStreams()
@@ -187,31 +228,32 @@ class GuiApp:
         # Update the right column header
         # Update the current agent label
         # Update the prompt column text with prompt messages
+        self.prompt_col_text_box.reset(
+            stringify_instruct_lm_messages(emission.prompt_messages).split(
+                "\n"
+            )
+        )
         # Empty the OLTHAD update column text
         self.olthad_update_col_text_box.reset([])
-        # Update LM response column
-        # with lm_responses_col:
-        #     ui.separator()
-        #     for _ in range(7):
-        #         box = ui.element("div").classes("c-row")
-        #         with box:
-        #             Text(TEXT1.splitlines(keepends=True))
-        #         ui.separator()
-        # Return stream handlers
+        # Update LM response columns to have enough text boxes for streams
+        with self.lm_response_col:
+            ui.separator()
+            for _ in range(emission.n_streams_to_handle):
+                container = ui.element("div").classes("c-row")
+                with container:
+                    text_box = TextBox()
+                self.lm_response_text_boxes.append(text_box)
+                ui.separator()
 
     async def handle_post_generation_event(
         self, emission: PostLmGenerationStepEmission
     ) -> bool:
-        # TODO: Do something with this for annotation
+        # TODO: Do something with this for annotation?
         # emission.messages
 
         # Update OLTHAD update columns text
-        pre_update_olthad_str = emission.pre_update_olthad.stringify()
-        post_update_olthad_str = emission.post_olthad_update.stringify()
-        diff = self.differ.compare(
-            pre_update_olthad_str.splitlines(keepends=True),  # FIXME
-            post_update_olthad_str.splitlines(keepends=True),
-        )
-        self.olthad_update_col_text_box.reset(list(diff))
+        self.olthad_update_col_text_box.reset(emission.diff_lines)
 
         # Await user to indicate acceptance or rejection of the OLTHAD update
+        await self.submit_btn.clicked()
+        return self.accept_switch.value

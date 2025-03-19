@@ -1,4 +1,5 @@
 <!--
+TODO: Solve problem of LM Response Text Boxes Not clearing on GUI reject + update top right & bottom right labels
 TODO: Get rid of Agent ABC (bruh there's no point lol)
 TODO: Make prepare messages be a util and make SingleTurnChatAgent take a user message (and make other contexts render their own templates)
 TODO: Rename "GUI" to "dashboard"?

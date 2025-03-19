@@ -5,6 +5,7 @@ from loguru import logger
 
 from agent_framework.agents import SingleTurnChatAgent
 from agent_framework.schema import LmStreamsHandler
+from agent_framework.utils import prepare_input_messages
 from sr_olthad.agents.attempt_summarizer.prompt import (
     PROMPT_REGISTRY,
     AttemptSummarizerLmResponseOutputData,
@@ -66,9 +67,11 @@ class AttemptSummarizer:
 
         # Pre-LM-generation step handler
         if self.pre_lm_generation_step_handler is not None:
-            in_messages = self._attempt_summarizer.prepare_input_messages(
-                input_data
-            )  # TODO: Redundant call... rethink design bc of this? (see README)
+            in_messages = prepare_input_messages(
+                input_data,
+                user_prompt_template=...,
+                sys_prompt=...,
+            )
             emission = PreLmGenerationStepEmission(
                 agent_name=AgentName.ATTEMPT_SUMMARIZER,
                 prompt_messages=in_messages,
