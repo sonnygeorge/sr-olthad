@@ -18,9 +18,7 @@ from sr_olthad.agents.backtracker.prompt.most_worthwhile_pursuit import (
 from sr_olthad.agents.backtracker.prompt.partial_success import (
     PROMPT_REGISTRY as PARTIAL_SUCCESS_CLF_PROMPT_REGISTRY,
 )
-from sr_olthad.agents.backtracker.prompt.partial_success import (
-    WAS_PARTIAL_SUCCESS_OPTIONS,
-)
+from sr_olthad.agents.backtracker.prompt.partial_success import WAS_PARTIAL_SUCCESS_OPTIONS
 from sr_olthad.agents.backtracker.prompt.successful_completion import (
     PROMPT_REGISTRY as SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY,
 )

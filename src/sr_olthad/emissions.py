@@ -2,10 +2,7 @@ from typing import List, Protocol
 
 from pydantic import BaseModel
 
-from agent_framework.schema import (
-    InstructLmMessage,
-    PotentiallyNestedInstructLmMessages,
-)
+from agent_framework.schema import InstructLmMessage, PotentiallyNestedInstructLmMessages
 from sr_olthad.schema import AgentName
 
 
