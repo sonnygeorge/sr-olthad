@@ -11,10 +11,7 @@ from agent_framework.schema import (
     LmStreamHandler,
     PotentiallyNestedInstructLmMessages,
 )
-from agent_framework.utils import (
-    detect_extract_and_parse_json_from_text,
-    with_retry,
-)
+from agent_framework.utils import detect_extract_and_parse_json_from_text, with_retry
 
 BaseModelT = TypeVar("OutputDataT", bound=BaseModel)
 

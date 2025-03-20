@@ -5,10 +5,7 @@ from typing import List, Optional
 from nicegui import html, ui
 
 from agent_framework.schema import InstructLmMessage, LmStreamsHandler
-from sr_olthad.emissions import (
-    PostLmGenerationStepEmission,
-    PreLmGenerationStepEmission,
-)
+from sr_olthad.emissions import PostLmGenerationStepEmission, PreLmGenerationStepEmission
 
 HEADER_HEIGHT_PX = 30
 FOOTER_HEIGHT_PX = 80

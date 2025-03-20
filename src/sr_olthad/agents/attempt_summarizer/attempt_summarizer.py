@@ -5,9 +5,7 @@ from loguru import logger
 
 from agent_framework.agents import InstructLmChatAgent
 from agent_framework.schema import LmStreamsHandler
-from agent_framework.utils import (
-    render_single_turn_prompt_templates_and_get_messages,
-)
+from agent_framework.utils import render_single_turn_prompt_templates_and_get_messages
 from sr_olthad.agents.attempt_summarizer.prompt import (
     PROMPT_REGISTRY,
     AttemptSummarizerLmResponseOutputData,
