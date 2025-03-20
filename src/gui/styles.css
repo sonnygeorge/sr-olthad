@@ -70,24 +70,20 @@ footer {
     min-height: 170px;
 }
 
-/* Custom Scrollbar Styling */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 
 }
 
-/* Track */
 ::-webkit-scrollbar-track {
     background: #040527;
 }
 
-/* Handle */
 ::-webkit-scrollbar-thumb {
     background: #141032
 }
 
-/* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
     background: #24203e;
 }

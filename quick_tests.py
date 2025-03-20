@@ -1,12 +1,10 @@
 import sys
-from typing import Optional
 
 from dotenv import load_dotenv
 
 sys.path.append("src")
 
-from agent_framework.schema import LmStreamsHandler
-from sr_olthad.emissions import PostLmGenerationStepEmission
+from sr_olthad.olthad import TaskNode, TaskStatus
 
 load_dotenv()
 
@@ -82,8 +80,6 @@ def print_backtracker_agent_prompts():
     print(successful_completion_prompts.user_prompt_template.render())
 
 
-from sr_olthad.olthad import TaskNode, TaskStatus
-
 DUMMY_TASK_IN_QUESTION = TaskNode(
     _id="1.1",
     _parent_id="1",
@@ -146,101 +142,22 @@ def test_obfuscate_and_redact_in_stringification():
     )
 
 
-class PrintOneLmStreamsHandler(LmStreamsHandler):
-    def __call__(self, chunk_str: str, async_call_idx: Optional[int] = None):
-        # I.e. don't print more than the first of a series of async calls
-        if async_call_idx is None or async_call_idx == 0:
-            print(chunk_str, end="", flush=True)
+# class PrintOneLmStreamsHandler(LmStreamsHandler):
+#     def __call__(self, chunk_str: str, async_call_idx: Optional[int] = None):
+#         # I.e. don't print more than the first of a series of async calls
+#         if async_call_idx is None or async_call_idx == 0:
+#             print(chunk_str, end="", flush=True)
 
 
-def get_approval_from_user(
-    emission: PostLmGenerationStepEmission,
-) -> bool:
-    print("\n\nDIFF:\n")
-    print("".join(emission.diff))
-    user_input = input("\n\nApprove the update? (y/n): ")
-    return user_input.lower() == "y"
-
-
-# def test_backtracker():
-#     from sr_olthad.agents import Backtracker, BacktrackerInputData
-#     from sr_olthad.olthad import TaskNode, TaskStatus
-
-#     # env_state = "You are sitting at a wood table. Two slices of pizza remain."
-#     env_state = "It's 4:56pm. You feel full. The pizza is cold."
-#     task_in_question = TaskNode(
-#         _id="1.1",
-#         _parent_id="1",
-#         _task="Eat all four slices of the pizza.",
-#         _status=TaskStatus.IN_PROGRESS,
-#         _retrospective=None,
-#         _non_planned_subtasks=[
-#             TaskNode(
-#                 _id="1.1.1",
-#                 _parent_id="1.1",
-#                 _task="Eat the first slice.",
-#                 _status=TaskStatus.SUCCESS,
-#                 _retrospective="You ate the first slice of pizza.",
-#             ),
-#             TaskNode(
-#                 _id="1.1.2",
-#                 _parent_id="1.1",
-#                 _task="Eat the second slice.",
-#                 _status=TaskStatus.SUCCESS,
-#                 _retrospective="You ate the second slice of pizza.",
-#             ),
-#             TaskNode(
-#                 _id="1.1.3",
-#                 _parent_id="1.1",
-#                 _task="Eat the third slice.",
-#                 _status=TaskStatus.IN_PROGRESS,
-#                 _retrospective=None,
-#             ),
-#         ],
-#         _planned_subtasks=[
-#             TaskNode(
-#                 _id="1.1.4",
-#                 _parent_id="1.1",
-#                 _task="Eat the fourth slice.",
-#                 _status=TaskStatus.PLANNED,
-#                 _retrospective=None,
-#             ),
-#         ],
-#     )
-#     olthad = TaskNode(
-#         _id="1",
-#         _parent_id=None,
-#         _task="Satiate your hunger.",
-#         _status=TaskStatus.IN_PROGRESS,
-#         _retrospective=None,
-#         _non_planned_subtasks=[task_in_question],
-#     )
-
-#     backtracker_input_data = BacktrackerInputData(
-#         env_state=env_state,
-#         root_task_node=olthad,
-#         current_task_node=task_in_question,
-#     )
-
-#     backtracker = Backtracker(
-#         streams_handler=PrintOneLmStreamsHandler(),
-#         callback_after_lm_generation_steps=get_approval_from_user,
-#     )
-#     return_obj = asyncio.run(
-#         backtracker(
-#             input_data=backtracker_input_data,
-#         )
-#     )
-#     print("\n\nCHOSEN STATUS:\n")
-#     print(return_obj.output_data.backtracked_from_status_to_assign)
-#     print("\nRETROSPECTIVE:\n")
-#     print(return_obj.output_data.retrospective_to_assign)
-#     print("\nBACKTRACK TO:\n")
-#     print(return_obj.output_data.id_of_ancestor_to_backtrack_to)
+# def get_approval_from_user(
+#     emission: PostLmGenerationStepEmission,
+# ) -> bool:
+#     print("\n\nDIFF:\n")
+#     print("".join(emission.diff))
+#     user_input = input("\n\nApprove the update? (y/n): ")
+#     return user_input.lower() == "y"
 
 
 if __name__ == "__main__":
     # print_backtracker_agent_prompts()
     test_obfuscate_and_redact_in_stringification()
-    # test_backtracker()
-    # test_sr_olthad()

@@ -15,12 +15,6 @@ from pydantic import BaseModel
 # Agent
 
 
-# NOTE: The idea behind this pattern was I wanted to separate what is thought of as
-# an agent's "output data" from potential other artifacts (e.g., the "messages" from a
-# `SingleTurnChatAgent`). There are probably other (cleaner?) ways to do this, but this
-# is what I went with.
-
-
 class HasOutputData(Protocol):
     output_data: BaseModel
 
@@ -50,11 +44,12 @@ class InstructLmMessage(TypedDict):
     content: str
 
 
-# NOTE: Whenever an agent could be potentially wrapped w/ `with_implicit_async_voting`
+# NOTE: Whenever an agent could be potentially wrapped w/ the `with_implicit_async_voting`
 # decorator, attributes of the return object as well as the `output_data` attribute of the
 # return object should be thought of as potentially nested.
-# This is weird, but I didn't want to rewrite voting logic over and over again so my
-# idea was to put it in that decorator.
+
+# ...This is kinda weird, but I didn't want to rewrite voting logic over and over again so
+# my idea was to put it in that decorator...
 
 PotentiallyNestedInstructLmMessages: TypeAlias = (
     List[InstructLmMessage] | List[List[InstructLmMessage]]
@@ -78,7 +73,12 @@ class InstructLm(ABC):
 class LmStreamsHandler(ABC):
     @abstractmethod
     def __call__(self, chunk_str: str, stream_idx: Optional[int] = None):
-        """A `Callable` that handles streaming potentially multiple LM streams.
+        """
+        A `Callable` that handles streaming from potentially multiple asynchronous LM streams.
+
+        NOTE: This is not merely a "protocol"; in order for the `with_implicit_async_voting`
+        decorator to automatically bind the `stream_idx` to your `LmStreamsHandler` handler,
+        you must inherit from this ABC and have kwargs that match the signature of this method.
 
         Args:
             chunk_str (str): The string chunk of LM output.

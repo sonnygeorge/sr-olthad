@@ -1,6 +1,6 @@
 from sr_olthad.olthad import TaskNode, TaskStatus
 
-# NOTE: Mock data, hence the setting of "private" attributes directly.
+# NOTE: Mock data objects for prompts, hence the setting of "private" attributes directly.
 
 _example_task_in_question = TaskNode(
     _id="1.3.1",

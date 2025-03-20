@@ -24,7 +24,6 @@ class OpenAIInstructLm(InstructLm):
         **kwargs
         # E.g., temperature, max_tokens, top_p, presence_penalty, frequency_penalty...
     ) -> str:
-        print("GENERATE CALLED")
         if stream_handler is not None:
             response_generator = await self.client.chat.completions.create(
                 model=self.model, messages=messages, stream=True, **kwargs

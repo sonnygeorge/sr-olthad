@@ -16,7 +16,7 @@ from sr_olthad.agents.attempt_summarizer.prompt import (
 from sr_olthad.config import AttemptSummarizerCfg as cfg
 from sr_olthad.emissions import (
     PostLmGenerationStepEmission,
-    PostLmGenerationStepHandler,
+    PostLmGenerationStepHandlerAndApprover,
     PreLmGenerationStepEmission,
     PreLmGenerationStepHandler,
 )
@@ -29,7 +29,9 @@ class AttemptSummarizer:
         self,
         olthad_traversal: OlthadTraversal,
         pre_lm_generation_step_handler: Optional[PreLmGenerationStepHandler] = None,
-        post_lm_generation_step_handler: Optional[PostLmGenerationStepHandler] = None,
+        post_lm_generation_step_handler: Optional[
+            PostLmGenerationStepHandlerAndApprover
+        ] = None,
         streams_handler: Optional[LmStreamsHandler] = None,
     ):
         self.traversal = olthad_traversal
@@ -37,7 +39,6 @@ class AttemptSummarizer:
         self.pre_lm_generation_step_handler = pre_lm_generation_step_handler
         self.post_lm_step_handler = post_lm_generation_step_handler
 
-        attempt_summarizer_prompts = PROMPT_REGISTRY[cfg.PROMPTS_VERSION]
         self._attempt_summarizer: InstructLmChatAgent[
             AttemptSummarizerLmResponseOutputData
         ] = InstructLmChatAgent(
@@ -48,64 +49,4 @@ class AttemptSummarizer:
         )
 
     async def __call__(self, env_state: str) -> None:
-        # Prepare input data
-        attempted_subtask = self.traversal._cur_node.in_progress_subtask
-        input_data = AttemptSummarizerPromptInputData(
-            env_state=env_state,
-            olthad=self.traversal._root_node.stringify(
-                obfuscate_status_of=attempted_subtask.id
-            ),
-            attempted_subtask_node=attempted_subtask.stringify(
-                obfuscate_status_of=attempted_subtask.id
-            ),
-        )
-
-        # Pre-LM-generation step handler
-        if self.pre_lm_generation_step_handler is not None:
-            in_messages = render_single_turn_prompt_templates_and_get_messages(
-                input_data,
-                user_prompt_template=...,
-                sys_prompt_template=...,
-            )
-            emission = PreLmGenerationStepEmission(
-                agent_name=AgentName.ATTEMPT_SUMMARIZER,
-                prompt_messages=in_messages,
-                n_streams_to_handle=1,
-            )
-            if inspect.iscoroutinefunction(self.pre_lm_generation_step_handler):
-                await self.pre_lm_generation_step_handler(emission)
-            else:
-                self.pre_lm_generation_step_handler(emission)
-
-        step_is_approved = False
-        while not step_is_approved:
-            # Invoke `self._attempt_summarizer`
-            return_obj = await self._attempt_summarizer(
-                prompt_template_data=input_data,
-                stream_handler=self.streams_handler,
-            )
-
-            if self.post_lm_step_handler is None:
-                break
-            # Otherwise, call the post-LM-generation step handler to get approval
-            make_update_after_approval = (
-                self.traversal._cur_node.get_status_and_retrospective_updater(
-                    return_obj.output_data.status_to_assign,
-                    return_obj.output_data.retrospective_to_assign,
-                    should_yield_diff_and_receive_approval_before_update=True,
-                    root_ancestor=self.traversal._root_node,
-                )
-            )
-            difflines = next(make_update_after_approval)
-            full_messages = return_obj.messages
-            emission = PostLmGenerationStepEmission(
-                diff=difflines,
-                full_messages=full_messages,
-            )
-            if inspect.iscoroutinefunction(self.post_lm_step_handler):
-                step_is_approved = await self.post_lm_step_handler(emission)
-            else:
-                step_is_approved = self.post_lm_step_handler(emission)
-
-            # Send approval back to generator so it knows to make update
-            make_update_after_approval.send(step_is_approved)
+        raise NotImplementedError

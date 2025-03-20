@@ -18,7 +18,7 @@ from sr_olthad.agents.backtracker.prompt import (
 from sr_olthad.config import BacktrackerCfg as cfg
 from sr_olthad.emissions import (
     PostLmGenerationStepEmission,
-    PostLmGenerationStepHandler,
+    PostLmGenerationStepHandlerAndApprover,
     PreLmGenerationStepEmission,
     PreLmGenerationStepHandler,
 )
@@ -39,7 +39,9 @@ class Backtracker(Agent):
         self,
         olthad_traversal: OlthadTraversal,
         pre_lm_generation_step_handler: Optional[PreLmGenerationStepHandler] = None,
-        post_lm_generation_step_handler: Optional[PostLmGenerationStepHandler] = None,
+        post_lm_generation_step_handler: Optional[
+            PostLmGenerationStepHandlerAndApprover
+        ] = None,
         streams_handler: Optional[LmStreamsHandler] = None,
     ):
         self.traversal = olthad_traversal
@@ -233,68 +235,31 @@ class Backtracker(Agent):
             # Return True to indicate that backtracking occured
             return True
 
-        # #####################################################################
-        # ### Classify whether the task has been given an exhaustive effort ###
-        # #####################################################################
+        ##############################################################################
+        ### LM STEP: Classify whether the task has been given an exhaustive effort ###
+        ##############################################################################
 
         raise NotImplementedError
 
         # logger.info("Checking if an exhaustive effort was given...")
 
-        # return_obj = await self.exhaustive_effort_clf(
-        #     prompt_template_data=sub_agent_input_data,
-        #     stream_handler=self.streams_handler,
-        # )
-
-        # if self.callback_after_each_lm_step is not None:
-        #     self.callback_after_each_lm_step(return_obj.messages)
-
-        # choice = extract_letter_from_multiple_choice_question_response(
-        #     return_obj.output_data.answer, EFFORT_WAS_EXHAUSTIVE_OPTIONS
-        # )
+        # ...
 
         # if lm_choice == EFFORT_WAS_EXHAUSTIVE_OPTIONS[True].letter:
 
-        #     #############################################################
-        #     ### Classify whether the completion was a partial success ###
-        #     #############################################################
+        #     ######################################################################
+        #     ### LM STEP: Classify whether the completion was a partial success ###
+        #     ######################################################################
 
         #     logger.info("Checking if task was partial succes (or failure)...")
 
-        #     return_obj = await self.partial_success_clf(
-        #         prompt_template_data=sub_agent_input_data,
-        #         stream_handler=self.streams_handler,
-        #     )
-
-        #     if self.callback_after_each_lm_step is not None:
-        #         self.callback_after_each_lm_step(return_obj.messages)
-
-        #     choice = extract_letter_from_multiple_choice_question_response(
-        #         return_obj.output_data.answer, WAS_PARTIAL_SUCCESS_OPTIONS
-        #     )
-
-        #     if choice == WAS_PARTIAL_SUCCESS_OPTIONS[True].letter:
-        #         return BacktrackerReturn(
-        #             output_data=BacktrackerOutputData(
-        #                 backtracked_from_status_to_assign=BacktrackedFromTaskStatus.PARTIAL_SUCCESS,
-        #                 retrospective_to_assign=return_obj.output_data.retrospective,
-        #                 id_of_ancestor_to_backtrack_to=input_data.current_task_node.parent_id,
-        #             )
-        #         )
-        #     else:
-        #         return BacktrackerReturn(
-        #             output_data=BacktrackerOutputData(
-        #                 backtracked_from_status_to_assign=BacktrackedFromTaskStatus.FAILURE,
-        #                 retrospective_to_assign=return_obj.output_data.retrospective,
-        #                 id_of_ancestor_to_backtrack_to=input_data.current_task_node.parent_id,
-        #             )
-        #         )
+        #     ...
 
         # else:  # Effort was not deemed exhaustive
 
-        #     ###########################################################################
-        #     ### Classify if ancestor tasks are (still) the most worthwhile pursuits ###
-        #     ###########################################################################
+        #     #######################################################################################
+        #     ### LM STEP(S): Classify if ancestor tasks are (still) the most worthwhile pursuits ###
+        #     #######################################################################################
 
         #     logger.info("Checking if ancestors are still worthwhile...")
 
@@ -303,44 +268,9 @@ class Backtracker(Agent):
         #         cur_node,
         #     ) in input_data.root_task_node.iter_in_progress_descendants():
 
-        #         sub_agent_input_data = BacktrackerSubAgentPromptInputData(
-        #             env_state=input_data.env_state,
-        #             olthad=root_node.stringify(
-        #                 redact_planned_subtasks_below=cur_node.id,
-        #                 obfuscate_status_of=cur_node.id,
-        #             ),
-        #             task_in_question=cur_node.stringify(
-        #                 redact_planned_subtasks_below=cur_node.id,
-        #                 obfuscate_status_of=cur_node.id,
-        #             ),
-        #         )
-
-        #         return_obj = await self.most_worthwhile_pursuit_clf(
-        #             prompt_template_data=sub_agent_input_data,
-        #             stream_handler=self.streams_handler,
-        #         )
-
-        #         if self.callback_after_each_lm_step is not None:
-        #             self.callback_after_each_lm_step(return_obj.messages)
-
-        #         choice = extract_letter_from_multiple_choice_question_response(
-        #             return_obj.output_data.answer, IS_MOST_WORTHWHILE_OPTIONS
-        #         )
+        #         ...
 
         #         if choice == IS_MOST_WORTHWHILE_OPTIONS[False].letter:
-        #             return BacktrackerReturn(
-        #                 output_data=BacktrackerOutputData(
-        #                     backtracked_from_status_to_assign=BacktrackedFromTaskStatus.DROPPED,
-        #                     retrospective_to_assign=return_obj.output_data.retrospective,
-        #                     id_of_ancestor_to_backtrack_to=cur_node.parent_id,
-        #                 )
-        #             )
+        #             # Backtrack to the this node
 
         #     # Finally, if ancestors are still deemed worthwhile, no backtracking warranted
-        #     return BacktrackerReturn(
-        #         output_data=BacktrackerOutputData(
-        #             backtracked_from_status_to_assign=None,
-        #             retrospective_to_assign=None,
-        #             id_of_ancestor_to_backtrack_to=None,
-        #         )
-        #     )

@@ -6,7 +6,7 @@ from agent_framework.schema import (
     InstructLmMessage,
     PotentiallyNestedInstructLmMessages,
 )
-from sr_olthad.schema import AgentName, DiffLines
+from sr_olthad.schema import AgentName
 
 
 class PreLmGenerationStepEmission(BaseModel):
@@ -17,7 +17,8 @@ class PreLmGenerationStepEmission(BaseModel):
 
 
 class PostLmGenerationStepEmission(BaseModel):
-    diff: DiffLines
+    # TODO: Change - the exhaustive effort classifier never outputs a diff
+    diff: List[str]
     full_messages: PotentiallyNestedInstructLmMessages
 
 
@@ -36,10 +37,10 @@ class PreLmGenerationStepHandler(Protocol):
         pass
 
 
-class PostLmGenerationStepHandler(Protocol):
+class PostLmGenerationStepHandlerAndApprover(Protocol):
     """
-    Callable that handles a `PostLmGenerationStepEmission` and returns whether to accept
-    the olthad update or force a re-run of the LM generation step.
+    Callable that handles a `PostLmGenerationStepEmission` and returns whether to "approve"
+    the LM generation step or force a re-run of the LM generation step.
 
     Args:
         emission (PostLmGenerationStepEmission): Emission data.

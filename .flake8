@@ -5,8 +5,8 @@ extend-ignore =
     W503
     E266
     E501
-    ; TODO: Remove below
-    F841
+    ; TODO: Remove below when I want to make sure to delete unused imports
+    F401
 per-file-ignores =
     __init__.py:F401
     quick_tests.py:E402

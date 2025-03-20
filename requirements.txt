@@ -3,4 +3,4 @@ loguru
 nicegui==2.12.1
 openai
 pydantic
-transformers
+python-dotenv

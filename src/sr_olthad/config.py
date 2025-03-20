@@ -6,11 +6,6 @@ class SrOlthadCfg:
     JSON_DUMPS_INDENT = 3
 
 
-################
-#### Agents ####
-################
-
-
 class AttemptSummarizerCfg:
     MAX_TRIES_TO_GET_VALID_LM_RESPONSE: int = 1  # 3
     INSTRUCT_LM: InstructLm = OpenAIInstructLm(model="gpt-3.5-turbo")

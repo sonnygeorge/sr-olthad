@@ -1,25 +1,11 @@
 from typing import Optional
 
-from pydantic import BaseModel
-
 from agent_framework.schema import Agent, LmStreamsHandler
 from sr_olthad.emissions import (
-    PostLmGenerationStepHandler,
+    PostLmGenerationStepHandlerAndApprover,
     PreLmGenerationStepHandler,
 )
 from sr_olthad.olthad import OlthadTraversal
-
-
-class ForgetterInputData(BaseModel):
-    pass  # TODO
-
-
-class ForgetterOutputData(BaseModel):
-    pass  # TODO
-
-
-class ForgetterReturn:
-    output_data: ForgetterOutputData
 
 
 class Forgetter(Agent):
@@ -27,7 +13,9 @@ class Forgetter(Agent):
         self,
         olthad_traversal: OlthadTraversal,
         pre_lm_generation_step_handler: Optional[PreLmGenerationStepHandler] = None,
-        post_lm_generation_step_handler: Optional[PostLmGenerationStepHandler] = None,
+        post_lm_generation_step_handler: Optional[
+            PostLmGenerationStepHandlerAndApprover
+        ] = None,
         streams_handler: Optional[LmStreamsHandler] = None,
     ):
         self.traversal = olthad_traversal
@@ -35,5 +23,5 @@ class Forgetter(Agent):
         self.pre_lm_generation_step_handler = pre_lm_generation_step_handler
         self.post_lm_generation_step_handler = post_lm_generation_step_handler
 
-    async def __call__(self, input_data: ForgetterInputData) -> ForgetterReturn:
-        pass  # TODO
+    async def __call__(self, env_state: str) -> None:
+        raise NotImplementedError

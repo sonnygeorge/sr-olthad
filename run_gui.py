@@ -2,7 +2,7 @@ import sys
 from functools import partial
 
 from dotenv import load_dotenv
-from nicegui import ui
+from nicegui import app, ui
 
 sys.path.append("src")
 
@@ -11,12 +11,8 @@ from sr_olthad import SrOlthad
 
 load_dotenv()
 
-# Run the UI
-gui_app = GuiApp()
-ui.run(title="sr-OLTHAD", show=False)
 
-
-async def main(highest_level_task: str, domain_documentation: str):
+async def run_sr_olthad(highest_level_task: str, domain_documentation: str):
     sr_olthad = SrOlthad(
         highest_level_task=highest_level_task,
         domain_documentation=domain_documentation,
@@ -26,7 +22,7 @@ async def main(highest_level_task: str, domain_documentation: str):
         streams_handler=gui_app.handle_streams,
     )
 
-    # FIXME: Remove this monkey patch
+    # FIXME: Remove this monkey patch once all agents are implemented
     sr_olthad.has_been_called_at_least_once_before = True
 
     next_action = None
@@ -39,10 +35,16 @@ async def main(highest_level_task: str, domain_documentation: str):
             break
 
 
-if __name__ in {"__main__", "__mp_main__"}:
-    highest_level_task = "Acquire iron"
-    domain_documentation = "You are controlling a player in a vanilla Minecraft survival world that is set to peaceful mode."
+highest_level_task = "Acquire iron"
+domain_documentation = "You are controlling a player in a vanilla Minecraft survival world that is set to peaceful mode."
+run_sr_olthad = partial(run_sr_olthad, highest_level_task, domain_documentation)
 
-    # Run main in NiceGUI event loop
-    run_main = partial(main, highest_level_task, domain_documentation)
-    ui.timer(0.1, run_main, once=True)
+
+@app.on_startup
+async def startup_actions():
+    await run_sr_olthad()
+
+
+# Run the UI
+gui_app = GuiApp()
+ui.run(title="sr-OLTHAD")

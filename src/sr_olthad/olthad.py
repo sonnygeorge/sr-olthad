@@ -5,7 +5,6 @@ from enum import StrEnum
 from typing import Callable, ClassVar, Dict, Generator, List, Optional, Tuple
 
 from sr_olthad.config import SrOlthadCfg as cfg
-from sr_olthad.schema import DiffLines
 
 # TODO: How would the "Forgetter" agent update the OLTHAD?
 # ...Pruning one node at a time?
@@ -43,9 +42,9 @@ class TaskStatus(StrEnum):
 @dataclass
 class PendingOlthadUpdate:
     _do_update: Callable[[], None]
-    _get_diff: Callable[[], DiffLines]
+    _get_diff: Callable[[], List[str]]
 
-    def get_diff(self) -> DiffLines:
+    def get_diff(self) -> List[str]:
         return self._get_diff()
 
     def commit(self) -> None:
@@ -79,7 +78,7 @@ class OlthadTraversal:
             _parent_id=None,
             _task=highest_level_task,
             _status=TaskStatus.IN_PROGRESS,
-            _retrospective="",
+            _retrospective=None,
         )
         self._cur_node = self._root_node
         self._nodes = {self._root_node.id: self._root_node}
@@ -132,6 +131,10 @@ class OlthadTraversal:
         self, new_planned_subtasks: List[str]
     ) -> PendingOlthadUpdate:
 
+        if len(new_planned_subtasks) == 0:
+            msg = "The list of new planned subtasks cannot be empty."
+            raise OlthadUsageError(msg)
+
         new_subtask_node_objects: List["TaskNode"] = []
         for i, new_planned_subtask in enumerate(new_planned_subtasks):
             new_subtask_node = TaskNode(
@@ -147,6 +150,15 @@ class OlthadTraversal:
             for new_subtask_node in new_subtask_node_objects:
                 self._nodes[new_subtask_node._id] = new_subtask_node
             self._cur_node._planned_subtasks = new_subtask_node_objects
+            if (
+                len(self._cur_node._non_planned_subtasks) > 0
+                and self._cur_node._non_planned_subtasks[-1]._status
+                != TaskStatus.IN_PROGRESS
+            ):
+                # We need to pop the next planned sibling and make it the new in-progress subtask
+                next_planned_sibling = self._cur_node._planned_subtasks.pop(0)
+                next_planned_sibling._status = TaskStatus.IN_PROGRESS
+                self._cur_node._non_planned_subtasks.append(next_planned_sibling)
 
         def get_diff():
             pending_changes = {n._id: n for n in new_subtask_node_objects}
@@ -367,12 +379,12 @@ class TaskNode:
         obfuscate_status_of: Optional[str] = None,
         pending_changes: Optional[Dict[str, "TaskNode"]] = None,
         get_diff_lines: bool = False,
-    ) -> str | DiffLines:
+    ) -> str | List[str]:
         """
         Stringifies the task node to get an LM-friendly string.
 
         NOTE: If `pending_node_updates` is provided, this function will return a
-            `DiffLines` object (List[str]).
+            "diff" (List[str]).
 
         Args:
             indent (int): The number of spaces to indent each level of the task node.
@@ -381,12 +393,12 @@ class TaskNode:
             obfuscate_status_of (Optional[str], optional): If provided, the status of the
                 task with this description will be obfuscated. Defaults to None.
             pending_changes (Optional[List[TaskNode]], optional): If provided, this
-                function will return a `DiffLines` object (List[str]).
+                function will return a "diff" (List[str]).
             get_diff_lines (Optional[bool], optional): If True, this function will return
-                a `DiffLines` object (List[str]). Defaults to False.
+                a "diff" (List[str]). Defaults to False.
 
         Returns:
-            str | DiffLines: The string representation or the `DiffLines` (List[str]) if
+            str | List[str]: The string representation or the "diff" (List[str]) if
                 `pending_changes` is provided or `get_diff_lines` is True.
         """
 
@@ -499,15 +511,15 @@ class TaskNode:
         output_str = output_str.strip()
         output_str_w_changes = output_str_w_changes.strip()
         if pending_changes:
-            # Create/return `DiffLines` object (List[str]) and return it
+            # Create/return "diff" (List[str]) and return it
             differ = difflib.Differ()
-            diff_lines = differ.compare(
+            diff = differ.compare(
                 # TODO: Possible optimization - changing above logic to have
                 # appended lines to a list in order to avoid this split
                 output_str.splitlines(keepends=True),
                 output_str_w_changes.splitlines(keepends=True),
             )
-            return list(diff_lines)
+            return list(diff)
         elif get_diff_lines:
             # Sometimes we want to get a "diff" even when there's no pending changes
             output_lines = output_str.splitlines(keepends=True)

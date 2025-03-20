@@ -10,11 +10,6 @@ from sr_olthad.emissions import (
     PreLmGenerationStepEmission,
 )
 
-# TODO: Loading spinner
-# IDEA: Task node update could yield a diff then await a boolean send for whether to commit the pending update
-# ...configure whether to do this or not on TaskNode instantiation
-# TODO: Change async_call_idx to streams idx
-
 HEADER_HEIGHT_PX = 30
 FOOTER_HEIGHT_PX = 80
 COL_HEIGHT = f"calc(100vh - {HEADER_HEIGHT_PX + FOOTER_HEIGHT_PX}px)"
@@ -243,8 +238,7 @@ class GuiApp:
     async def handle_and_approve_lm_generation_step(
         self, emission: PostLmGenerationStepEmission
     ) -> bool:
-        # TODO: Do something with this for annotation?
-        # emission.messages
+        # TODO: Do something with full messages for annotation?
         # Update OLTHAD update columns text
         self.olthad_update_col_text_box.reset(emission.diff)
         # Await user to indicate acceptance or rejection of the OLTHAD update
