@@ -1,0 +1,93 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+span {
+    font-size: 0.67em;
+}
+
+.nicegui-content {
+    gap: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.q-separator {
+    background-color: #292643;
+    height: 3px;
+}
+
+header {
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1;
+}
+
+footer {
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+    z-index: 1;
+}
+
+.c-columns {
+    flex: 1;
+    display: flex;
+    width: 100%;
+}
+
+.c-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    min-width: 0;
+    flex-wrap: nowrap;
+    border-right: 14px solid #040527;
+}
+
+.c-column.left {
+    border-left: 14px solid #040527;
+}
+
+.right {
+    display: flex;
+    flex-direction: column;
+}
+
+.c-row {
+    flex: 1;
+    width: 100%;
+    overflow: auto;
+    min-height: 170px;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+
+}
+
+::-webkit-scrollbar-track {
+    background: #040527;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #141032;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #24203e;
+}
+
+::-webkit-scrollbar-corner {
+    background: #040527;
+}
