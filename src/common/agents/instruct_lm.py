@@ -3,6 +3,7 @@ import logging
 import warnings
 from collections import Counter
 from functools import partial
+from json import JSONDecodeError
 from typing import Generic, Protocol, TypeVar
 
 from pydantic import BaseModel, ValidationError
@@ -167,7 +168,7 @@ class InstructLmAgent(Agent, Generic[LmJsonOutputModelT]):
                 )
                 return output_data, response
             # TODO: Change `Exception` to specific exceptions
-            except (ValidationError, Exception) as e:
+            except (ValidationError, JSONDecodeError, Exception) as e:
                 if tries_left == 1:
                     raise e
                 tries_left -= 1

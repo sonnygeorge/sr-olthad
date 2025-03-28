@@ -157,7 +157,7 @@ class OlthadTraversal:
         new_status: BacktrackedFromTaskStatus | AttemptedTaskStatus,
         new_retrospective: str,
     ):
-        if node != self._cur_node and self.cur_node not in self._cur_node.subtasks:
+        if node != self._cur_node and node._parent_id != self._cur_node._id:
             msg = "`node` can only be the current node or one of its subtasks."
             raise OlthadUsageError(msg)
 
