@@ -1,0 +1,37 @@
+from sr_olthad.config import (
+    AttemptSummarizerCfg,
+    BacktrackerCfg,
+    ForgetterCfg,
+    LmAgentConfig,
+    PlannerCfg,
+)
+from sr_olthad.prompts import (
+    ATTEMPT_SUMMARIZER_PROMPT_REGISTRY,
+    EXHAUSTIVE_EFFORT_CLF_PROMPT_REGISTRY,
+    FORGETTER_PROMPT_REGISTRY,
+    MOST_WORTHWHILE_PURSUIT_CLF_PROMPT_REGISTRY,
+    PARTIAL_SUCCESS_CLF_PROMPT_REGISTRY,
+    PLANNER_PROMPT_REGISTRY,
+    SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY,
+)
+from sr_olthad.schema import LmAgentName, PromptRegistry
+
+LM_AGENT_CONFIGS_REGISTRY: dict[LmAgentName, LmAgentConfig] = {
+    LmAgentName.ATTEMPT_SUMMARIZER: AttemptSummarizerCfg,
+    LmAgentName.EXHAUSTIVE_EFFORT_CLF: BacktrackerCfg.ExhaustiveEffortClf,
+    LmAgentName.MOST_WORTHWHILE_PURSUIT_CLF: BacktrackerCfg.MostWorthwhilePursuitClfCfg,
+    LmAgentName.PARTIAL_SUCCESS_CLF: BacktrackerCfg.PartialSuccessClfCfg,
+    LmAgentName.SUCCESSFUL_COMPLETION_CLF: BacktrackerCfg.SuccessfulCompletionClfCfg,
+    LmAgentName.FORGETTER: ForgetterCfg,
+    LmAgentName.PLANNER: PlannerCfg,
+}
+
+PROMPT_REGISTRIES_REGISTRY: dict[LmAgentName, PromptRegistry] = {
+    LmAgentName.ATTEMPT_SUMMARIZER: ATTEMPT_SUMMARIZER_PROMPT_REGISTRY,
+    LmAgentName.EXHAUSTIVE_EFFORT_CLF: EXHAUSTIVE_EFFORT_CLF_PROMPT_REGISTRY,
+    LmAgentName.MOST_WORTHWHILE_PURSUIT_CLF: MOST_WORTHWHILE_PURSUIT_CLF_PROMPT_REGISTRY,
+    LmAgentName.PARTIAL_SUCCESS_CLF: PARTIAL_SUCCESS_CLF_PROMPT_REGISTRY,
+    LmAgentName.SUCCESSFUL_COMPLETION_CLF: SUCCESSFUL_COMPLETION_CLF_PROMPT_REGISTRY,
+    LmAgentName.FORGETTER: FORGETTER_PROMPT_REGISTRY,
+    LmAgentName.PLANNER: PLANNER_PROMPT_REGISTRY,
+}
