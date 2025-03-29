@@ -1,3 +1,33 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sr-olthad"
+version = "0.1.0"
+description = "Structured Reasoning With Open-Language Hierarchies of Any Depth"
+authors = [
+    { name = "Sonny George", email = "sonnygeorge5@gmail.com" },
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "jinja2>=3.0.0,<4",
+    "pydantic>=2.0.0,<3",
+    # TODO: nicegui and openai should be declared as "optional dependencies" (think `pip install sr-olthad[openai]`)
+    #   see also: https://docs.astral.sh/uv/concepts/projects/dependencies/#optional-dependencies
+    "nicegui>=2.0.0,<3",
+    "openai>=1.60.0,<2",
+]
+
+[dependency-groups]
+dev = [
+    "python-dotenv>=1.1.0",
+]
+
+[tool.uv]
+default-groups = "all"
+
 [tool.ruff]
 line-length = 93
 target-version = "py310"
@@ -38,4 +68,4 @@ unfixable = []
 quote-style = "double"
 
 [tool.ruff.lint.isort]
-known-first-party = ["your_project_name"]
+known-first-party = ["sr_olthad"]
