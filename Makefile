@@ -1,4 +1,3 @@
-# Clean up repo junk files
 cleanse:
 	@echo "Cleaning up junk files..."
 	find . -name '*.pyc' -delete

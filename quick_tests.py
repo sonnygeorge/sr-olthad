@@ -165,15 +165,6 @@ def test_obfuscate_and_redact_in_stringification():
 #             print(chunk_str, end="", flush=True)
 
 
-# def get_approval_from_user(
-#     emission: PostLmGenerationStepEmission,
-# ) -> bool:
-#     print("\n\nDIFF:\n")
-#     print("".join(emission.diff))
-#     user_input = input("\n\nApprove the update? (y/n): ")
-#     return user_input.lower() == "y"
-
-
 if __name__ == "__main__":
     print_backtracker_agent_prompts()
     # test_obfuscate_and_redact_in_stringification()
