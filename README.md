@@ -35,30 +35,30 @@ This project uses the following tooling:
 ```python
 📦sr-olthad
  ┣ 📂src
- ┃ ┣ 📂agent_framework # Package for generic language agent framework
- ┃ ┃ ┣ 📂agents # Package for generic plug-and-play "agents"
- ┃ ┃ ┃ ┗ 📜single_turn_chat.py
- ┃ ┃ ┣ 📜lms.py # Module (soon-to-be package) for a variety of LMs
+ ┃ ┣ 📂common
+ ┃ ┃ ┣ 📂agents
+ ┃ ┃ ┃ ┗ 📜instruct_lm.py
+ ┃ ┃ ┣ 📜lms.py
  ┃ ┃ ┣ 📜schema.py
  ┃ ┃ ┗ 📜utils.py
  ┃ ┃
- ┃ ┣ 📂gui # GUI code
+ ┃ ┣ 📂gui
  ┃ ┃
  ┃ ┣ 📂react # Code pertaining to the recreation of another comparable method
  ┃ ┃         # ...(e.g. ReAct prompting)
  ┃ ┃
  ┃ ┗ 📂sr_olthad # Package for sr-OLTHAD
  ┃   ┣ 📂agents # Package for the "agents" of sr-OLTHAD
- ┃   ┃ ┣ 📂attempt_summarizer
- ┃   ┃ ┣ 📂backtracker
- ┃   ┃ ┣ 📂forgetter
- ┃   ┃ ┣ 📂planner
+ ┃   ┃ ┣ 📜attempt_summarizer
+ ┃   ┃ ┣ 📜backtracker
+ ┃   ┃ ┣ 📜forgetter
+ ┃   ┃ ┗ 📜planner
  ┃   ┣ ...
- ┃   ┣ 📜sr_olthad.py # Main importable sr-OLTHAD class
  ┃   ┣ 📜olthad.py # Everything OLTHAD-related: OlthadTraversal, TaskNode, etc.
+ ┃   ┣ 📜sr_olthad.py # Main importable sr-OLTHAD class
  ┃   ┗ 📜utils.py
  ┃
- ┣ 📜pyproject.toml # Project and Package setup
+ ┣ 📜pyproject.toml # Project and package setup
  ┣ 📜quick_tests.py # Ad-hoc testing scripts
  ┗ 📜run_gui.py
 ```
