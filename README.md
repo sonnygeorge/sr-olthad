@@ -15,13 +15,22 @@ TODO: Ranking of multiple async "Planner" outputs?
 
 **S**tructured **R**easoning With **O**pen-**L**anguage **H**ierarchies of **A**ny **D**epth
 
-## How To Run
+## Contributing
 
-1. Install the requirements: `pip install -r requirements.txt`
-2. Make sure you have an `OPENAI_API_KEY` environment variable: `export OPENAI_API_KEY={your key}` (or add to a .env file that `load_dotenv()` can read)
-3. Run the GUI: `python run_gui.py`
+This project uses the following tooling:
+- [uv](https://docs.astral.sh/uv/) for dependency/version management
+- [ruff](https://docs.astral.sh/ruff/) for linting and formatting
 
-## Repo Structure
+### Quick Start
+
+1. Make sure you have `uv` installed (official installation instructions [here](https://docs.astral.sh/uv/getting-started/installation/))
+2. Run `./setup.sh`
+3. Make sure you have environment variable `OPENAI_API_KEY` set
+    - The setup script creates a `.env` file for you where you can put your API key
+    - You can also use any normal method for setting environment variables, such as `export OPENAI_API_KEY={your key}`
+4. Run the GUI with `uv run run_gui.py`
+
+### Repo Structure
 
 ```python
 📦sr-olthad
@@ -49,7 +58,7 @@ TODO: Ranking of multiple async "Planner" outputs?
  ┃   ┣ 📜olthad.py # Everything OLTHAD-related: OlthadTraversal, TaskNode, etc.
  ┃   ┗ 📜utils.py
  ┃
+ ┣ 📜pyproject.toml # Project and Package setup
  ┣ 📜quick_tests.py # Ad-hoc testing scripts
- ┣ 📜run_gui.py
- ┗ 📜requirements.txt
+ ┗ 📜run_gui.py
 ```
