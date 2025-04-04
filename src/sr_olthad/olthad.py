@@ -3,14 +3,14 @@ Objects/logic relating to OLTHADs: task nodes, pending updates, etc.
 
 NOTE: This module generally shouldn't import from files like sr_olthad.utils, etc. since it
 is very high-up in the import hierarchy due to it being imported by sr_olthad.prompts._common
-to construct and strigify example OLTHADs for the prompts (which are declared at import time).
+to construct and stringify example OLTHADs for the prompts (which are declared at import time).
 """
 
 import difflib
 import json
 from collections.abc import Callable, Generator
 from dataclasses import dataclass, field
-from typing import ClassVar, Optional
+from typing import ClassVar, Self
 
 from sr_olthad.config import SrOlthadCfg
 from sr_olthad.schema import AttemptedTaskStatus, BacktrackedFromTaskStatus, TaskStatus
@@ -63,7 +63,7 @@ class OlthadTraversal:
             _status=TaskStatus.IN_PROGRESS,
             _retrospective=None,
         )
-        self._cur_node = self._root_node
+        self._cur_node: TaskNode | None = self._root_node
         self._nodes = {self._root_node.id: self._root_node}
 
     @property
@@ -238,8 +238,8 @@ class TaskNode:
     _status: TaskStatus
     _retrospective: str | None
     _parent_id: str | None
-    _non_planned_subtasks: list["TaskNode"] = field(default_factory=list)
-    _planned_subtasks: list["TaskNode"] = field(default_factory=list)
+    _non_planned_subtasks: list[Self] = field(default_factory=list)
+    _planned_subtasks: list[Self] = field(default_factory=list)
 
     def __str__(self) -> str:
         return self.stringify()
@@ -265,14 +265,14 @@ class TaskNode:
         return self._parent_id
 
     @property
-    def subtasks(self) -> list["TaskNode"]:
+    def subtasks(self) -> list[Self]:
         return self._non_planned_subtasks + self._planned_subtasks
 
     @property
-    def in_progress_subtask(self) -> Optional["TaskNode"]:
+    def in_progress_subtask(self) -> Self | None:
         return self._get_in_progress_subtask()
 
-    def _get_in_progress_subtask(self) -> Optional["TaskNode"]:
+    def _get_in_progress_subtask(self) -> Self | None:
         if len(self._non_planned_subtasks) == 0 and len(self._planned_subtasks) == 0:
             return None
 
@@ -292,7 +292,7 @@ class TaskNode:
 
     def iter_in_progress_descendants(
         self,
-    ) -> Generator[tuple["TaskNode", "TaskNode"], None, None]:
+    ) -> Generator[tuple[Self, Self], None, None]:
         """
         Generator that gradually rebuilds the node's tree of descendents, yielding
         the PARTIALLY REBUILT root alongside the current depth level's "in-progress"
@@ -365,7 +365,7 @@ class TaskNode:
         indent: int = SrOlthadCfg.JSON_DUMPS_INDENT,
         redact_planned_subtasks_below: str | None = None,
         obfuscate_status_of: str | None = None,
-        pending_changes: dict[str, "TaskNode"] | None = None,
+        pending_changes: dict[str, Self] | None = None,
         get_diff: bool = False,
     ) -> str | list[str]:
         """

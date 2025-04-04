@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from common.schema import InstructLmMessage
 from common.utils import render_single_turn_prompt_templates_and_get_messages
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 def get_input_messages(
     lm_agent_name: LmAgentName,
     user_prompt_input_data: CommonUserPromptInputData,
-    get_domain_specific_insert: Optional["GetDomainSpecificInsert"] = None,
+    get_domain_specific_insert: GetDomainSpecificInsert | None = None,
 ) -> list[InstructLmMessage]:
     """
     Gets agent prompt templates from the registries and renders necessary data into them.
