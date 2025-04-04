@@ -2,7 +2,7 @@ import asyncio
 import inspect
 import json
 import re
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable, Coroutine
 from typing import Any, TypeVar
 
 from jinja2 import Template
@@ -17,7 +17,7 @@ from common.schema import (
 BaseModelT = TypeVar("BaseModelT", bound=BaseModel)
 
 
-def get_prompt_json_spec(model_class: type[BaseModel]) -> dict[str, str]:
+def get_prompt_json_spec(model_class: type[BaseModel]) -> str:
     """
     Given a Pydantic BaseModel type, returns a string to communicate the specifications of
     a JSON (e.g., that it should output).
@@ -97,20 +97,21 @@ def detect_extract_and_parse_json_from_text(
         raise ValueError(f"Error processing text: {str(e)}") from e
 
 
+P = ParamSpec("P")
+T = TypeVar("T")
+
+
 def get_semaphore_bound_coroutine(
     semaphore: asyncio.Semaphore,
-    func: Callable[..., Any],
-    *args: Any,
-    **kwargs: Any,
-) -> Any:
-    async def _semaphore_bound_coroutine():
+    func: Callable[P, Awaitable[T]],
+    *args: P.args,
+    **kwargs: P.kwargs,
+) -> Coroutine[Any, Any, T]:
+    async def _semaphore_bound_coroutine() -> T:
         async with semaphore:
             return await func(*args, **kwargs)
 
     return _semaphore_bound_coroutine()
-
-
-P = ParamSpec("P")
 
 
 async def call_or_await(fn: Callable[P, Any], *args: P.args, **kwargs: P.kwargs):
