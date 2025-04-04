@@ -10,7 +10,7 @@ authors = [
     { name = "Sonny George", email = "sonnygeorge5@gmail.com" },
 ]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "jinja2>=3.0.0,<4",
     "pydantic>=2.0.0,<3",
@@ -30,7 +30,7 @@ default-groups = "all"
 
 [tool.ruff]
 line-length = 93
-target-version = "py310"
+target-version = "py311"
 
 extend-exclude = [
     ".venv",
