@@ -7,6 +7,7 @@ from typing import Any, TypeVar
 
 from jinja2 import Template
 from pydantic import BaseModel, ValidationError
+from typing_extensions import ParamSpec
 
 from common.schema import (
     InstructLmChatRole,
@@ -109,7 +110,10 @@ def get_semaphore_bound_coroutine(
     return _semaphore_bound_coroutine()
 
 
-async def call_or_await(fn, *args, **kwargs):
+P = ParamSpec("P")
+
+
+async def call_or_await(fn: Callable[P, Any], *args: P.args, **kwargs: P.kwargs):
     if inspect.iscoroutinefunction(fn) or inspect.isasyncgenfunction(fn):
         return await fn(*args, **kwargs)
     return fn(*args, **kwargs)
