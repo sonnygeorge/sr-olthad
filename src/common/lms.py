@@ -1,5 +1,3 @@
-import os
-
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
 
@@ -10,7 +8,6 @@ class OpenAIInstructLm(InstructLm):
     def __init__(self, api_key: str | None = None, model: str = "gpt-3.5-turbo"):
         super().__init__()
 
-        api_key = os.getenv("OPENAI_API_KEY") if api_key is None else api_key
         self.client = AsyncOpenAI(api_key=api_key)
         self.model = model
 
