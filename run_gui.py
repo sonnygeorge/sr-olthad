@@ -1,11 +1,9 @@
-import sys
 from functools import partial
 
 from dotenv import load_dotenv
 from nicegui import app, ui
 
 load_dotenv()
-sys.path.append("src")
 
 from gui.gui import GuiApp
 from sr_olthad import GetDomainSpecificInsert, SrOlthad
