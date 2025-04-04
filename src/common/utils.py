@@ -13,7 +13,7 @@ from common.schema import (
     InstructLmMessage,
 )
 
-BaseModelT = TypeVar("T", bound=BaseModel)
+BaseModelT = TypeVar("BaseModelT", bound=BaseModel)
 
 
 def get_prompt_json_spec(model_class: type[BaseModel]) -> dict[str, str]:
