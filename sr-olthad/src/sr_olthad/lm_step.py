@@ -12,7 +12,7 @@ from sr_olthad.common.agents import (
 from sr_olthad.common.schema import InstructLmMessage
 from sr_olthad.olthad import PendingOlthadUpdate
 from sr_olthad.schema import CommonUserPromptInputData, LmAgentName
-from sr_olthad.utils import get_input_messages
+from sr_olthad.utils import GetDomainSpecificInsert, get_input_messages
 
 
 class PreLmStepEmission(BaseModel):
@@ -50,25 +50,6 @@ class PostLmStepApprover(Protocol):
     """
 
     def __call__(self, emission: PostLmStepEmission) -> bool: ...
-
-
-class GetDomainSpecificInsert(Protocol):
-    """
-    Callable that takes an LmAgentName and returns a domain-specific insert for the LM
-    agent prompts.
-
-    Args:
-        lm_agent_name (LmAgentName): The name of the LM agent.
-        input_data (CommonUserPromptInputData): The input data for the current invocation
-            of the LM agent.
-
-    Returns:
-        str: The domain-specific prompt insert
-    """
-
-    def __call__(
-        self, lm_agent_name: LmAgentName, input_data: CommonUserPromptInputData
-    ) -> str: ...
 
 
 LmStepOutputT = TypeVar("LmStepOutputT")

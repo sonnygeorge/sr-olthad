@@ -6,12 +6,12 @@ from sr_olthad.agents import AttemptSummarizer, Backtracker, Forgetter, Planner
 from sr_olthad.common.agents import LmRetryHandler
 from sr_olthad.common.schema import LmStreamsHandler
 from sr_olthad.lm_step import (
-    GetDomainSpecificInsert,
     LmStepTemplate,
     PostLmStepApprover,
     PreLmStepHandler,
 )
 from sr_olthad.olthad import OlthadTraversal
+from sr_olthad.utils import GetDomainSpecificInsert
 
 # TODO: Forgetter(?)
 
