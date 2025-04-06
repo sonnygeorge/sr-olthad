@@ -3,10 +3,11 @@ import inspect
 import json
 import re
 from collections.abc import Awaitable, Callable, Coroutine
-from typing import Any, ParamSpec, TypeVar
+from typing import Any, TypeVar
 
 from jinja2 import Template
 from pydantic import BaseModel, ValidationError
+from typing_extensions import ParamSpec
 
 from sr_olthad.common.schema import (
     InstructLmChatRole,

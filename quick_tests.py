@@ -2,9 +2,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from sr_olthad.lm_step import get_input_messages
 from sr_olthad.olthad import TaskNode
 from sr_olthad.schema import CommonUserPromptInputData, LmAgentName, TaskStatus
+from sr_olthad.utils import get_input_messages
 
 DUMMY_TASK_IN_QUESTION = TaskNode(
     _id="1.1",
