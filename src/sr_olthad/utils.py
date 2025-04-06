@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import Protocol
 
 from common.schema import InstructLmMessage
 from common.utils import render_single_turn_prompt_templates_and_get_messages
@@ -11,14 +11,30 @@ from sr_olthad.schema import (
     NonBinaryChoiceOptions,
 )
 
-if TYPE_CHECKING:
-    from sr_olthad.lm_step import GetDomainSpecificInsert
+
+class GetDomainSpecificInsert(Protocol):
+    """
+    Callable that takes an LmAgentName and returns a domain-specific insert for the LM
+    agent prompts.
+
+    Args:
+        lm_agent_name (LmAgentName): The name of the LM agent.
+        input_data (CommonUserPromptInputData): The input data for the current invocation
+            of the LM agent.
+
+    Returns:
+        str: The domain-specific prompt insert
+    """
+
+    def __call__(
+        self, lm_agent_name: LmAgentName, input_data: CommonUserPromptInputData
+    ) -> str: ...
 
 
 def get_input_messages(
     lm_agent_name: LmAgentName,
     user_prompt_input_data: CommonUserPromptInputData,
-    get_domain_specific_insert: Optional["GetDomainSpecificInsert"] = None,
+    get_domain_specific_insert: GetDomainSpecificInsert | None = None,
 ) -> list[InstructLmMessage]:
     """
     Gets agent prompt templates from the registries and renders necessary data into them.

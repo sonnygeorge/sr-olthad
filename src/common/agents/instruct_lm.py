@@ -24,7 +24,7 @@ from common.utils import (
 
 
 class LmRetryHandler(Protocol):
-    def __call__(idx: int, msg: str) -> None: ...
+    def __call__(self, idx: int, msg: str) -> None: ...
 
 
 LmJsonOutputModelT = TypeVar("LmJsonOutputModelT", bound=BaseModel)

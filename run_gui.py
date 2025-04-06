@@ -1,14 +1,12 @@
-import sys
-from functools import partial
-
 from dotenv import load_dotenv
 from nicegui import app, ui
 
 load_dotenv()
-sys.path.append("src")
 
 from gui.gui import GuiApp
 from sr_olthad import GetDomainSpecificInsert, SrOlthad
+
+gui_app = GuiApp()
 
 
 async def run_sr_olthad(
@@ -36,17 +34,15 @@ async def run_sr_olthad(
             break
 
 
-highest_level_task = "Acquire iron"
-domain_specific_insert = "You are controlling a player in a vanilla Minecraft survival world that is set to peaceful mode."
-get_domain_specific_insert = lambda _, __: domain_specific_insert  # noqa: E731
-run_sr_olthad = partial(run_sr_olthad, highest_level_task, get_domain_specific_insert)
-
-
 @app.on_startup
 async def startup_actions():
-    await run_sr_olthad()
+    domain_specific_insert = "You are controlling a player in a vanilla Minecraft survival world that is set to peaceful mode."
+    get_domain_specific_insert = lambda _, __: domain_specific_insert  # noqa: E731
+    await run_sr_olthad(
+        highest_level_task="Acquire iron",
+        get_domain_specific_insert=get_domain_specific_insert,
+    )
 
 
 # Run the UI
-gui_app = GuiApp()
 ui.run(title="sr-OLTHAD")
