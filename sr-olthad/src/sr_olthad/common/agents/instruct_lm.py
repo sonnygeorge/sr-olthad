@@ -8,7 +8,7 @@ from typing import Generic, Protocol, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
-from common.schema import (
+from sr_olthad.common.schema import (
     Agent,
     InstructLm,
     InstructLmChatRole,
@@ -16,7 +16,7 @@ from common.schema import (
     LmStreamHandler,
     LmStreamsHandler,
 )
-from common.utils import (
+from sr_olthad.common.utils import (
     call_or_await,
     detect_extract_and_parse_json_from_text,
     get_semaphore_bound_coroutine,

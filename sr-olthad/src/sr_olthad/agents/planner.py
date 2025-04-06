@@ -1,5 +1,5 @@
-from common.agents import InstructLmAgent
-from common.schema import LmStreamsHandler
+from sr_olthad.common.agents import InstructLmAgent
+from sr_olthad.common.schema import LmStreamsHandler
 from sr_olthad.config import PlannerCfg as cfg
 from sr_olthad.lm_step import LmStepTemplate
 from sr_olthad.olthad import OlthadTraversal

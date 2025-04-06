@@ -1,6 +1,7 @@
 from jinja2 import Template
 
-from common.utils import get_prompt_json_spec
+from sr_olthad.common.utils import get_prompt_json_spec
+from sr_olthad.olthad import TaskStatus
 from sr_olthad.prompts._strings import (
     EXAMPLE_OLTHAD_FOR_SYS_PROMPT,
     EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT,
@@ -17,23 +18,26 @@ from sr_olthad.schema import (
     SingleTurnPromptTemplates,
 )
 
-EFFORT_WAS_EXHAUSTIVE_OPTIONS: BinaryChoiceOptions = {
+WAS_SUCCESSFULLY_COMPLETED_OPTIONS: BinaryChoiceOptions = {
     True: MultipleChoiceQuestionOption(
         letter="A",
-        text="Yes, all situationally reasonable strategies have been exhausted.",
+        text="It can be said with confidence that the task has now been successfully completed.",
     ),
     False: MultipleChoiceQuestionOption(
         letter="B",
-        text="No, there are still reasonable things that could be done to accomplish the task.",
+        text="What the task is aiming to achieve has not yet been fully realized.",
     ),
 }
+
 
 ######################
 ######## v1.0 ########
 ######################
 
 
-V1_0_QUESTION = "Thinking ONLY about what's been done so far, has the task been given an exhaustive effort or, are there still obvious things we could do to accomplish it? Which of the following statements is more true?"
+V1_0_QUESTION = (
+    "Can the task in question be considered done? I.e., which statement is more true?"
+)
 
 SYS_1_0 = f"""You are a helpful AI agent who plays a crucial role in a hierarchical reasoning and acting system. Your specific job is as follows.
 
@@ -53,7 +57,7 @@ PROGRESS/PLANS:
 {EXAMPLE_OLTHAD_FOR_SYS_PROMPT}
 ```
 
-3. Followed by an indication of which in-progress task about which you will be questioned, e.g.:
+3. Followed by an indication of which in-progress task to which you will consider assigning the "{TaskStatus.SUCCESS}" status. E.g.,:
 
 ```text
 TASK IN QUESTION:
@@ -63,8 +67,8 @@ TASK IN QUESTION:
 Finally, you will be asked the following:
 
 {V1_0_QUESTION}
-{EFFORT_WAS_EXHAUSTIVE_OPTIONS[True].letter}. {EFFORT_WAS_EXHAUSTIVE_OPTIONS[True].text}
-{EFFORT_WAS_EXHAUSTIVE_OPTIONS[False].letter}. {EFFORT_WAS_EXHAUSTIVE_OPTIONS[False].text}
+{WAS_SUCCESSFULLY_COMPLETED_OPTIONS[True].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[True].text}
+{WAS_SUCCESSFULLY_COMPLETED_OPTIONS[False].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[False].text}
 
 You will answer by first carefully thinking things through step-by-step. Only after you've thoroughly reasoned through things, provide a BRIEF final response in a JSON that strictly adheres to the following format:
 
@@ -90,8 +94,8 @@ TASK IN QUESTION:
 ```
 
 {V1_0_QUESTION}
-{EFFORT_WAS_EXHAUSTIVE_OPTIONS[True].letter}. {EFFORT_WAS_EXHAUSTIVE_OPTIONS[True].text}
-{EFFORT_WAS_EXHAUSTIVE_OPTIONS[False].letter}. {EFFORT_WAS_EXHAUSTIVE_OPTIONS[False].text}
+{WAS_SUCCESSFULLY_COMPLETED_OPTIONS[True].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[True].text}
+{WAS_SUCCESSFULLY_COMPLETED_OPTIONS[False].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[False].text}
 """
 
 V1_0_PROMPTS = SingleTurnPromptTemplates(

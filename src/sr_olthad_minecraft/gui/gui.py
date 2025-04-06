@@ -3,7 +3,7 @@ import textwrap
 
 from nicegui import html, ui
 
-from common.schema import InstructLmMessage, LmStreamsHandler
+from sr_olthad.common.schema import InstructLmMessage, LmStreamsHandler
 from sr_olthad.lm_step import PostLmStepEmission, PreLmStepEmission
 
 HEADER_HEIGHT_PX = 30
@@ -120,15 +120,15 @@ def add_styles():
 
 
 def header() -> ui.header:
-    header = ui.header().style(f"height: {HEADER_HEIGHT_PX}px;")
-    header.style("background-color: #040527")
-    return header.classes("p-0 gap-0 items-center")
+    header_ = ui.header().style(f"height: {HEADER_HEIGHT_PX}px;")
+    header_.style("background-color: #040527")
+    return header_.classes("p-0 gap-0 items-center")
 
 
 def footer() -> ui.footer:
-    footer = ui.footer().style(f"height: {FOOTER_HEIGHT_PX}px;")
-    footer.style("background-color: #040527")
-    return footer.classes("bg-gray-900 p-0 gap-0 items-start")
+    footer_ = ui.footer().style(f"height: {FOOTER_HEIGHT_PX}px;")
+    footer_.style("background-color: #040527")
+    return footer_.classes("bg-gray-900 p-0 gap-0 items-start")
 
 
 def stringify_instruct_lm_messages(messages: list[InstructLmMessage]) -> str:

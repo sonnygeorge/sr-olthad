@@ -1,7 +1,7 @@
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
 
-from common.schema import InstructLm, InstructLmMessage, LmStreamHandler
+from sr_olthad.common.schema import InstructLm, InstructLmMessage, LmStreamHandler
 
 
 class OpenAIInstructLm(InstructLm):

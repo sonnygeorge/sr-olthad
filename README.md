@@ -34,31 +34,33 @@ This project uses the following tooling:
 
 ```python
 📦sr-olthad
- ┣ 📂src
- ┃ ┣ 📂common
- ┃ ┃ ┣ 📂agents
- ┃ ┃ ┃ ┗ 📜instruct_lm.py
- ┃ ┃ ┣ 📜lms.py
- ┃ ┃ ┣ 📜schema.py
- ┃ ┃ ┗ 📜utils.py
- ┃ ┃
- ┃ ┣ 📂gui
- ┃ ┃
- ┃ ┣ 📂react # Code pertaining to the recreation of another comparable method
- ┃ ┃         # ...(e.g. ReAct prompting)
- ┃ ┃
- ┃ ┗ 📂sr_olthad # Package for sr-OLTHAD
- ┃   ┣ 📂agents # Package for the "agents" of sr-OLTHAD
- ┃   ┃ ┣ 📜attempt_summarizer
- ┃   ┃ ┣ 📜backtracker
- ┃   ┃ ┣ 📜forgetter
- ┃   ┃ ┗ 📜planner
- ┃   ┣ ...
- ┃   ┣ 📜olthad.py # Everything OLTHAD-related: OlthadTraversal, TaskNode, etc.
- ┃   ┣ 📜sr_olthad.py # Main importable sr-OLTHAD class
- ┃   ┗ 📜utils.py
+ ┣ 📂sr-olthad # Generalized package that could be published to PyPI
+ ┃ ┗ 📂src
+ ┃   ┗ 📂sr_olthad # Package for sr-OLTHAD
+ ┃     ┣ 📂agents # Package for the "agents" of sr-OLTHAD
+ ┃     ┃ ┣ 📜attempt_summarizer.py
+ ┃     ┃ ┣ 📜backtracker.py
+ ┃     ┃ ┣ 📜forgetter.py
+ ┃     ┃ ┗ 📜planner.py
+ ┃     ┣ 📂common
+ ┃     ┃ ┣ 📂agents
+ ┃     ┃ ┃ ┗ 📜instruct_lm.py
+ ┃     ┃ ┣ 📜lms.py
+ ┃     ┃ ┣ 📜schema.py
+ ┃     ┃ ┗ 📜utils.py
+ ┃     ┣ ...
+ ┃     ┣ 📜olthad.py # Everything OLTHAD-related: OlthadTraversal, TaskNode, etc.
+ ┃     ┣ 📜sr_olthad.py # Main importable sr-OLTHAD class
+ ┃     ┗ 📜utils.py
  ┃
- ┣ 📜pyproject.toml # Project and package setup
+ ┃ # Can hypothetically include other packages for other methods, such as:
+ ┣ 📂react # Code pertaining to the recreation of ReAct prompting
+ ┃
+ ┣ 📂src # Code specifically to apply sr-OLTHAD to Minecraft
+ ┃ ┗ 📂sr_olthad_minecraft
+ ┃   ┗ 📂gui
+ ┃
+ ┣ 📜pyproject.toml # Project setup
  ┣ 📜quick_tests.py # Ad-hoc testing scripts
  ┗ 📜run_gui.py
 ```

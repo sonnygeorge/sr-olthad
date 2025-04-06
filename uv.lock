@@ -2,6 +2,12 @@ version = 1
 revision = 1
 requires-python = ">=3.11"
 
+[manifest]
+members = [
+    "sr-olthad",
+    "sr-olthad-minecraft",
+]
+
 [[package]]
 name = "aiofiles"
 version = "24.1.0"
@@ -973,12 +979,27 @@ wheels = [
 [[package]]
 name = "sr-olthad"
 version = "0.1.0"
-source = { editable = "." }
+source = { editable = "sr-olthad" }
 dependencies = [
     { name = "jinja2" },
-    { name = "nicegui" },
     { name = "openai" },
     { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "jinja2", specifier = ">=3.0.0,<4" },
+    { name = "openai", specifier = ">=1.60.0,<2" },
+    { name = "pydantic", specifier = ">=2.0.0,<3" },
+]
+
+[[package]]
+name = "sr-olthad-minecraft"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "nicegui" },
+    { name = "sr-olthad" },
 ]
 
 [package.dev-dependencies]
@@ -988,10 +1009,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "jinja2", specifier = ">=3.0.0,<4" },
     { name = "nicegui", specifier = ">=2.0.0,<3" },
-    { name = "openai", specifier = ">=1.60.0,<2" },
-    { name = "pydantic", specifier = ">=2.0.0,<3" },
+    { name = "sr-olthad", editable = "sr-olthad" },
 ]
 
 [package.metadata.requires-dev]

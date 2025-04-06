@@ -4,12 +4,12 @@ from typing import Generic, Protocol, TypeVar
 
 from pydantic import BaseModel
 
-from common.agents import (
+from sr_olthad.common.agents import (
     InstructLmAgentOutput,
     InstructLmAgentRunMethod,
     LmRetryHandler,
 )
-from common.schema import InstructLmMessage
+from sr_olthad.common.schema import InstructLmMessage
 from sr_olthad.olthad import PendingOlthadUpdate
 from sr_olthad.schema import CommonUserPromptInputData, LmAgentName
 from sr_olthad.utils import get_input_messages

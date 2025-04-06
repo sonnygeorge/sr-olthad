@@ -3,8 +3,8 @@ from nicegui import app, ui
 
 load_dotenv()
 
-from gui.gui import GuiApp
 from sr_olthad import GetDomainSpecificInsert, SrOlthad
+from sr_olthad_minecraft.gui.gui import GuiApp
 
 gui_app = GuiApp()
 

@@ -1,5 +1,5 @@
-from common.agents import InstructLmAgent, InstructLmAgentOutput
-from common.schema import LmStreamsHandler
+from sr_olthad.common.agents import InstructLmAgent, InstructLmAgentOutput
+from sr_olthad.common.schema import LmStreamsHandler
 from sr_olthad.config import BacktrackerCfg as cfg
 from sr_olthad.lm_step import LmStepTemplate
 from sr_olthad.olthad import OlthadTraversal, PendingOlthadUpdate
@@ -183,7 +183,7 @@ class Backtracker:
         if cur_task_was_deemed_successfully_completed:
             # Backtrack to the parent of the current node
             self.traversal.backtrack_to(self.traversal.cur_node.parent_id)
-            # Return True to indicate that backtracking occured
+            # Return True to indicate that backtracking occurred
             return True
 
         ##############################################################################

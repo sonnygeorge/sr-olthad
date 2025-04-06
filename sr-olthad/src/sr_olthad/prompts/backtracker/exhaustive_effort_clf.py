@@ -1,6 +1,6 @@
 from jinja2 import Template
 
-from common.utils import get_prompt_json_spec
+from sr_olthad.common.utils import get_prompt_json_spec
 from sr_olthad.prompts._strings import (
     EXAMPLE_OLTHAD_FOR_SYS_PROMPT,
     EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT,
@@ -17,14 +17,14 @@ from sr_olthad.schema import (
     SingleTurnPromptTemplates,
 )
 
-WAS_PARTIAL_SUCCESS_OPTIONS: BinaryChoiceOptions = {
+EFFORT_WAS_EXHAUSTIVE_OPTIONS: BinaryChoiceOptions = {
     True: MultipleChoiceQuestionOption(
         letter="A",
-        text="It's better to think about the stated outcome(s) as having been partially realized.",
+        text="Yes, all situationally reasonable strategies have been exhausted.",
     ),
     False: MultipleChoiceQuestionOption(
         letter="B",
-        text="It's better to consider the attempt a failure (i.e., semantically, it's more of a one-or-the-other kind of thing).",
+        text="No, there are still reasonable things that could be done to accomplish the task.",
     ),
 }
 
@@ -33,7 +33,7 @@ WAS_PARTIAL_SUCCESS_OPTIONS: BinaryChoiceOptions = {
 ######################
 
 
-V1_0_QUESTION = "Should the task be considered a partial success?"
+V1_0_QUESTION = "Thinking ONLY about what's been done so far, has the task been given an exhaustive effort or, are there still obvious things we could do to accomplish it? Which of the following statements is more true?"
 
 SYS_1_0 = f"""You are a helpful AI agent who plays a crucial role in a hierarchical reasoning and acting system. Your specific job is as follows.
 
@@ -63,10 +63,10 @@ TASK IN QUESTION:
 Finally, you will be asked the following:
 
 {V1_0_QUESTION}
-{WAS_PARTIAL_SUCCESS_OPTIONS[True].letter}. {WAS_PARTIAL_SUCCESS_OPTIONS[True].text}
-{WAS_PARTIAL_SUCCESS_OPTIONS[False].letter}. {WAS_PARTIAL_SUCCESS_OPTIONS[False].text}
+{EFFORT_WAS_EXHAUSTIVE_OPTIONS[True].letter}. {EFFORT_WAS_EXHAUSTIVE_OPTIONS[True].text}
+{EFFORT_WAS_EXHAUSTIVE_OPTIONS[False].letter}. {EFFORT_WAS_EXHAUSTIVE_OPTIONS[False].text}
 
-Carefully think things through step-by-step. Finally, only once you've concluded your deliberation, provide your final response in a JSON that strictly adheres to the following format:
+You will answer by first carefully thinking things through step-by-step. Only after you've thoroughly reasoned through things, provide a BRIEF final response in a JSON that strictly adheres to the following format:
 
 ```json
 {get_prompt_json_spec(BacktrackerSubAgentLmResponseOutputData)}
@@ -90,8 +90,8 @@ TASK IN QUESTION:
 ```
 
 {V1_0_QUESTION}
-{WAS_PARTIAL_SUCCESS_OPTIONS[True].letter}. {WAS_PARTIAL_SUCCESS_OPTIONS[True].text}
-{WAS_PARTIAL_SUCCESS_OPTIONS[False].letter}. {WAS_PARTIAL_SUCCESS_OPTIONS[False].text}
+{EFFORT_WAS_EXHAUSTIVE_OPTIONS[True].letter}. {EFFORT_WAS_EXHAUSTIVE_OPTIONS[True].text}
+{EFFORT_WAS_EXHAUSTIVE_OPTIONS[False].letter}. {EFFORT_WAS_EXHAUSTIVE_OPTIONS[False].text}
 """
 
 V1_0_PROMPTS = SingleTurnPromptTemplates(

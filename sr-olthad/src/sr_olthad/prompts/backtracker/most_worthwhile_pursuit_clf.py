@@ -1,6 +1,6 @@
 from jinja2 import Template
 
-from common.utils import get_prompt_json_spec
+from sr_olthad.common.utils import get_prompt_json_spec
 from sr_olthad.prompts._strings import (
     EXAMPLE_OLTHAD_FOR_SYS_PROMPT,
     EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT,

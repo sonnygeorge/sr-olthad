@@ -1,7 +1,6 @@
 from jinja2 import Template
 
-from common.utils import get_prompt_json_spec
-from sr_olthad.olthad import TaskStatus
+from sr_olthad.common.utils import get_prompt_json_spec
 from sr_olthad.prompts._strings import (
     EXAMPLE_OLTHAD_FOR_SYS_PROMPT,
     EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT,
@@ -18,26 +17,23 @@ from sr_olthad.schema import (
     SingleTurnPromptTemplates,
 )
 
-WAS_SUCCESSFULLY_COMPLETED_OPTIONS: BinaryChoiceOptions = {
+WAS_PARTIAL_SUCCESS_OPTIONS: BinaryChoiceOptions = {
     True: MultipleChoiceQuestionOption(
         letter="A",
-        text="It can be said with confidence that the task has now been successfully completed.",
+        text="It's better to think about the stated outcome(s) as having been partially realized.",
     ),
     False: MultipleChoiceQuestionOption(
         letter="B",
-        text="What the task is aiming to achieve has not yet been fully realized.",
+        text="It's better to consider the attempt a failure (i.e., semantically, it's more of a one-or-the-other kind of thing).",
     ),
 }
-
 
 ######################
 ######## v1.0 ########
 ######################
 
 
-V1_0_QUESTION = (
-    "Can the task in question be considered done? I.e., which statement is more true?"
-)
+V1_0_QUESTION = "Should the task be considered a partial success?"
 
 SYS_1_0 = f"""You are a helpful AI agent who plays a crucial role in a hierarchical reasoning and acting system. Your specific job is as follows.
 
@@ -57,7 +53,7 @@ PROGRESS/PLANS:
 {EXAMPLE_OLTHAD_FOR_SYS_PROMPT}
 ```
 
-3. Followed by an indication of which in-progress task to which you will consider assigning the "{TaskStatus.SUCCESS}" status. E.g.,:
+3. Followed by an indication of which in-progress task about which you will be questioned, e.g.:
 
 ```text
 TASK IN QUESTION:
@@ -67,10 +63,10 @@ TASK IN QUESTION:
 Finally, you will be asked the following:
 
 {V1_0_QUESTION}
-{WAS_SUCCESSFULLY_COMPLETED_OPTIONS[True].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[True].text}
-{WAS_SUCCESSFULLY_COMPLETED_OPTIONS[False].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[False].text}
+{WAS_PARTIAL_SUCCESS_OPTIONS[True].letter}. {WAS_PARTIAL_SUCCESS_OPTIONS[True].text}
+{WAS_PARTIAL_SUCCESS_OPTIONS[False].letter}. {WAS_PARTIAL_SUCCESS_OPTIONS[False].text}
 
-You will answer by first carefully thinking things through step-by-step. Only after you've thoroughly reasoned through things, provide a BRIEF final response in a JSON that strictly adheres to the following format:
+Carefully think things through step-by-step. Finally, only once you've concluded your deliberation, provide your final response in a JSON that strictly adheres to the following format:
 
 ```json
 {get_prompt_json_spec(BacktrackerSubAgentLmResponseOutputData)}
@@ -94,8 +90,8 @@ TASK IN QUESTION:
 ```
 
 {V1_0_QUESTION}
-{WAS_SUCCESSFULLY_COMPLETED_OPTIONS[True].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[True].text}
-{WAS_SUCCESSFULLY_COMPLETED_OPTIONS[False].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[False].text}
+{WAS_PARTIAL_SUCCESS_OPTIONS[True].letter}. {WAS_PARTIAL_SUCCESS_OPTIONS[True].text}
+{WAS_PARTIAL_SUCCESS_OPTIONS[False].letter}. {WAS_PARTIAL_SUCCESS_OPTIONS[False].text}
 """
 
 V1_0_PROMPTS = SingleTurnPromptTemplates(

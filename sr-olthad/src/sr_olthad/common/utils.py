@@ -9,7 +9,7 @@ from jinja2 import Template
 from pydantic import BaseModel, ValidationError
 from typing_extensions import ParamSpec
 
-from common.schema import (
+from sr_olthad.common.schema import (
     InstructLmChatRole,
     InstructLmMessage,
 )

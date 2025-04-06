@@ -1,4 +1,4 @@
-from common.schema import LmStreamsHandler
+from sr_olthad.common.schema import LmStreamsHandler
 from sr_olthad.lm_step import LmStepTemplate
 from sr_olthad.olthad import OlthadTraversal
 

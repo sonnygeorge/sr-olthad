@@ -1,4 +1,4 @@
-from common.agents.instruct_lm import (
+from sr_olthad.common.agents.instruct_lm import (
     InstructLmAgent,
     InstructLmAgentOutput,
     InstructLmAgentRunMethod,

@@ -16,7 +16,7 @@ class LmAgentName(StrEnum):
     ATTEMPT_SUMMARIZER = "Attempt Summarizer"
     FORGETTER = "Forgetter"
     PLANNER = "Planner"
-    EXHAUSTIVE_EFFORT_CLF = "Backtracker: Exhaustive Effort Classifer"
+    EXHAUSTIVE_EFFORT_CLF = "Backtracker: Exhaustive Effort Classifier"
     MOST_WORTHWHILE_PURSUIT_CLF = "Backtracker: Most Worthwhile Pursuit Classifier"
     PARTIAL_SUCCESS_CLF = "Backtracker: Partial Success Classifier"
     SUCCESSFUL_COMPLETION_CLF = "Backtracker: Successful Completion Classifier"
@@ -36,7 +36,7 @@ class AttemptedTaskStatus(StrEnum):
 
 
 class BacktrackedFromTaskStatus(StrEnum):
-    """Statuses that warrant backtracking or indicate that backtracking occured."""
+    """Statuses that warrant backtracking or indicate that backtracking occurred."""
 
     SUCCESS = AttemptedTaskStatus.SUCCESS
     PARTIAL_SUCCESS = AttemptedTaskStatus.PARTIAL_SUCCESS

@@ -1,7 +1,7 @@
 from typing import Protocol
 
-from common.lms import OpenAIInstructLm
-from common.schema import InstructLm
+from sr_olthad.common.lms import OpenAIInstructLm
+from sr_olthad.common.schema import InstructLm
 
 # General config
 
