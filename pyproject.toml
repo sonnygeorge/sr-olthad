@@ -1,20 +1,14 @@
 [project]
-name = "sr-olthad-minecraft"
+name = "sr-olthad-research"
 version = "0.1.0"
-description = "Using sr-olthad for Minecraft"
+description = "sr-OLTHAD research repository"
 readme = "README.md"
 authors = [
     { name = "Sonny George", email = "sonnygeorge5@gmail.com" },
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "nicegui>=2.0.0,<3",
     "sr-olthad",
-]
-
-[dependency-groups]
-dev = [
-    "python-dotenv>=1.1.0",
 ]
 
 [tool.uv.workspace]
@@ -22,6 +16,11 @@ members = ["sr-olthad"]
 
 [tool.uv.sources]
 sr-olthad = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "python-dotenv>=1.1.0",
+]
 
 [tool.ruff]
 line-length = 93
@@ -35,22 +34,8 @@ extend-exclude = [
 ]
 
 [tool.ruff.lint]
-select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflakes
-    "I",  # isort
-    "B",  # flake8-bugbear
-    "C4",  # flake8-comprehensions
-    "UP",  # pyupgrade
-]
-
-ignore = [
-    "E203",  # whitespace before ':' (black-compatible)
-    "E266",  # too many leading '#' for block comment
-    "E501",  # line too long (handled by line-length setting)
-]
-
+select = ["E", "W", "F", "I", "B", "C4", "UP"]
+ignore = ["E203", "E266", "E501"]
 fixable = ["A", "B", "C", "D", "E", "F", "I"]
 unfixable = []
 

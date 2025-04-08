@@ -1,3 +1,5 @@
-# Structured Reasoning With Open-Language Hierarchies of Any Depth
+# sr-olthad
 
-Plain python package for just the core sr-OLTHAD logic, independent of any specific application.
+**S**tructured **R**easoning With **O**pen-**L**anguage **H**ierarchies of **A**ny **D**epth
+
+Standalone sr-OLTHAD package for distribution
