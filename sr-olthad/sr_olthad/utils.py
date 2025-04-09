@@ -1,55 +1,25 @@
-from typing import Protocol
-
 from sr_olthad.framework.schema import InstructLmMessage
 from sr_olthad.framework.utils import render_single_turn_prompt_templates_and_get_messages
 from sr_olthad.registry import LM_AGENT_CONFIGS_REGISTRY, PROMPT_REGISTRIES_REGISTRY
 from sr_olthad.schema import (
     BinaryChoiceOptions,
-    CommonSysPromptInputData,
-    CommonUserPromptInputData,
+    DomainSpecificSysPromptInputData,
     LmAgentName,
     NonBinaryChoiceOptions,
+    UserPromptInputData,
 )
-
-
-class GetDomainSpecificInsert(Protocol):
-    """
-    Callable that takes an LmAgentName and returns a domain-specific insert for the LM
-    agent prompts.
-
-    Args:
-        lm_agent_name (LmAgentName): The name of the LM agent.
-        input_data (CommonUserPromptInputData): The input data for the current invocation
-            of the LM agent.
-
-    Returns:
-        str: The domain-specific prompt insert
-    """
-
-    def __call__(
-        self, lm_agent_name: LmAgentName, input_data: CommonUserPromptInputData
-    ) -> str: ...
 
 
 def get_input_messages(
     lm_agent_name: LmAgentName,
-    user_prompt_input_data: CommonUserPromptInputData,
-    get_domain_specific_insert: GetDomainSpecificInsert | None = None,
+    user_prompt_input_data: UserPromptInputData,
+    sys_prompt_input_data: DomainSpecificSysPromptInputData | None = None,
 ) -> list[InstructLmMessage]:
     """
     Gets agent prompt templates from the registries and renders necessary data into them.
     """
     cfg = LM_AGENT_CONFIGS_REGISTRY[lm_agent_name]
     prompt_registry = PROMPT_REGISTRIES_REGISTRY[lm_agent_name]
-
-    if get_domain_specific_insert is None:
-        sys_prompt_input_data = None
-    else:
-        sys_prompt_input_data = CommonSysPromptInputData(
-            domain_specific_insert=get_domain_specific_insert(
-                lm_agent_name, user_prompt_input_data
-            ),
-        )
 
     return render_single_turn_prompt_templates_and_get_messages(
         user_prompt_template=prompt_registry[cfg.PROMPTS_VERSION].user_prompt_template,

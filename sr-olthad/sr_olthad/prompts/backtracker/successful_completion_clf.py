@@ -11,11 +11,11 @@ from sr_olthad.prompts.backtracker._common import (
 )
 from sr_olthad.schema import (
     BinaryChoiceOptions,
-    CommonSysPromptInputFields,
-    CommonUserPromptInputFields,
+    DomainSpecificSysPromptInputFields,
     MultipleChoiceQuestionOption,
     PromptRegistry,
     SingleTurnPromptTemplates,
+    UserPromptInputFields,
 )
 
 WAS_SUCCESSFULLY_COMPLETED_OPTIONS: BinaryChoiceOptions = {
@@ -76,21 +76,21 @@ You will answer by first carefully thinking things through step-by-step. Only af
 {get_prompt_json_spec(BacktrackerSubAgentLmResponseOutputData)}
 ```
 
-{{{{ {CommonSysPromptInputFields.DOMAIN_SPECIFIC_INSERT} }}}}"""
+{{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}"""
 
 USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:
 ```text
-{{{{ {CommonUserPromptInputFields.ENV_STATE} }}}}
+{{{{ {UserPromptInputFields.ENV_STATE} }}}}
 ```
 
 PROGRESS/PLANS:
 ```json
-{{{{ {CommonUserPromptInputFields.OLTHAD} }}}}
+{{{{ {UserPromptInputFields.OLTHAD} }}}}
 ```
 
 TASK IN QUESTION:
 ```json
-{{{{ {CommonUserPromptInputFields.TASK_IN_QUESTION} }}}}
+{{{{ {UserPromptInputFields.TASK_IN_QUESTION} }}}}
 ```
 
 {V1_0_QUESTION}

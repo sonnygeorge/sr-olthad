@@ -11,7 +11,7 @@ from sr_olthad.lm_step import (
     PreLmStepHandler,
 )
 from sr_olthad.olthad import OlthadTraversal
-from sr_olthad.utils import GetDomainSpecificInsert
+from sr_olthad.schema import GetDomainSpecificSysPromptInputData
 
 # TODO: Forgetter(?)
 
@@ -43,7 +43,8 @@ class SrOlthad:
         # TODO: Make this non-optional since sr-OLTHAD will never been run w/out domains?
         # ...or keep it optional for _true_ plug-and-play to enable seeing if the LM can
         # just infer good plans/actions without explicit domain exposition?
-        get_domain_specific_insert: GetDomainSpecificInsert | None = None,
+        get_domain_specific_sys_prompt_input_data: GetDomainSpecificSysPromptInputData
+        | None = None,
         streams_handler: LmStreamsHandler | None = None,
     ):
         super().__init__()
@@ -56,7 +57,7 @@ class SrOlthad:
             pre_lm_step_handler=pre_lm_step_handler,
             lm_retry_handler=lm_retry_handler,
             post_lm_step_approver=post_lm_step_approver,
-            get_domain_specific_insert=get_domain_specific_insert,
+            get_domain_specific_sys_prompt_input_data=get_domain_specific_sys_prompt_input_data,
         )
 
         self.attempt_summarizer = AttemptSummarizer(

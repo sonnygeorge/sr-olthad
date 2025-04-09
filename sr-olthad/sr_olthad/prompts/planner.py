@@ -9,10 +9,10 @@ from sr_olthad.prompts._strings import (
     EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT,
 )
 from sr_olthad.schema import (
-    CommonSysPromptInputFields,
-    CommonUserPromptInputFields,
+    DomainSpecificSysPromptInputFields,
     PromptRegistry,
     SingleTurnPromptTemplates,
+    UserPromptInputFields,
 )
 
 
@@ -74,21 +74,21 @@ Carefully think step-by-step. Finally, only once you've concluded your deliberat
 {get_prompt_json_spec(PlannerLmResponseOutputData)}
 ```
 
-{{{{ {CommonSysPromptInputFields.DOMAIN_SPECIFIC_INSERT} }}}}"""
+{{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}"""
 
 USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:
 ```text
-{{{{ {CommonUserPromptInputFields.ENV_STATE} }}}}
+{{{{ {UserPromptInputFields.ENV_STATE} }}}}
 ```
 
 PROGRESS/PLANS:
 ```json
-{{{{ {CommonUserPromptInputFields.OLTHAD} }}}}
+{{{{ {UserPromptInputFields.OLTHAD} }}}}
 ```
 
 TASK IN QUESTION:
 ```json
-{{{{ {CommonUserPromptInputFields.TASK_IN_QUESTION} }}}}
+{{{{ {UserPromptInputFields.TASK_IN_QUESTION} }}}}
 ```
 """
 

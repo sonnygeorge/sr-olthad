@@ -10,10 +10,10 @@ from sr_olthad.prompts._strings import (
 )
 from sr_olthad.schema import (
     AttemptedTaskStatus,
-    CommonSysPromptInputFields,
-    CommonUserPromptInputFields,
+    DomainSpecificSysPromptInputFields,
     PromptRegistry,
     SingleTurnPromptTemplates,
+    UserPromptInputFields,
 )
 
 
@@ -93,21 +93,21 @@ Only after thinking it through, you will respond in a JSON that strictly adheres
 {get_prompt_json_spec(AttemptSummarizerLmResponseOutputData)}
 ```
 
-{{{{ {CommonSysPromptInputFields.DOMAIN_SPECIFIC_INSERT} }}}}"""
+{{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}"""
 
 USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:
 ```text
-{{{{ {CommonUserPromptInputFields.ENV_STATE} }}}}
+{{{{ {UserPromptInputFields.ENV_STATE} }}}}
 ```
 
 PROGRESS/PLANS:
 ```json
-{{{{ {CommonUserPromptInputFields.OLTHAD} }}}}
+{{{{ {UserPromptInputFields.OLTHAD} }}}}
 ```
 
 ATTEMPTED TASK IN QUESTION:
 ```json
-{{{{ {CommonUserPromptInputFields.TASK_IN_QUESTION} }}}}
+{{{{ {UserPromptInputFields.TASK_IN_QUESTION} }}}}
 ```
 
 {V1_0_QUESTION}

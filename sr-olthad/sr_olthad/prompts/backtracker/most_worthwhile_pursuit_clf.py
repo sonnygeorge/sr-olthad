@@ -10,11 +10,11 @@ from sr_olthad.prompts.backtracker._common import (
 )
 from sr_olthad.schema import (
     BinaryChoiceOptions,
-    CommonSysPromptInputFields,
-    CommonUserPromptInputFields,
+    DomainSpecificSysPromptInputFields,
     MultipleChoiceQuestionOption,
     PromptRegistry,
     SingleTurnPromptTemplates,
+    UserPromptInputFields,
 )
 
 IS_MOST_WORTHWHILE_PURSUIT_OPTIONS: BinaryChoiceOptions = {
@@ -85,21 +85,21 @@ Think things through step-by-step, considering each of the above points as you g
 
 IMPORTANT: The highest-level task with id "1" is the highly important user-requested task. If this task is in question, you should only answer {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[False].letter} IF THE TASK IS IMMORAL OR LEARNED TO BE IMPOSSIBLE. DO NOT ABANDON THE HIGHEST-LEVEL IN FAVOR OF SOMETHING ELSE!
 
-{{{{ {CommonSysPromptInputFields.DOMAIN_SPECIFIC_INSERT} }}}}"""
+{{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}"""
 
 USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:
 ```text
-{{{{ {CommonUserPromptInputFields.ENV_STATE} }}}}
+{{{{ {UserPromptInputFields.ENV_STATE} }}}}
 ```
 
 PROGRESS/PLANS:
 ```json
-{{{{ {CommonUserPromptInputFields.OLTHAD} }}}}
+{{{{ {UserPromptInputFields.OLTHAD} }}}}
 ```
 
 TASK IN QUESTION:
 ```json
-{{{{ {CommonUserPromptInputFields.TASK_IN_QUESTION} }}}}
+{{{{ {UserPromptInputFields.TASK_IN_QUESTION} }}}}
 ```
 
 {V1_0_QUESTION}

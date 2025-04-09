@@ -11,8 +11,12 @@ from sr_olthad.framework.agents import (
 )
 from sr_olthad.framework.schema import InstructLmMessage
 from sr_olthad.olthad import PendingOlthadUpdate
-from sr_olthad.schema import CommonUserPromptInputData, LmAgentName
-from sr_olthad.utils import GetDomainSpecificInsert, get_input_messages
+from sr_olthad.schema import (
+    GetDomainSpecificSysPromptInputData,
+    LmAgentName,
+    UserPromptInputData,
+)
+from sr_olthad.utils import get_input_messages
 
 
 class PreLmStepEmission(BaseModel):
@@ -64,7 +68,9 @@ class LmStepTemplate:
     pre_lm_step_handler: PreLmStepHandler = lambda _: None
     lm_retry_handler: LmRetryHandler = lambda _, __: None
     post_lm_step_approver: PostLmStepApprover = lambda _: True
-    get_domain_specific_insert: GetDomainSpecificInsert | None = None
+    get_domain_specific_sys_prompt_input_data: GetDomainSpecificSysPromptInputData | None = (
+        None
+    )
 
     def compose(
         self,
@@ -74,14 +80,23 @@ class LmStepTemplate:
         ],
         lm_agent_name: LmAgentName,
         cur_node_id: str,
-        prompt_input_data: CommonUserPromptInputData,
+        prompt_input_data: UserPromptInputData,
         n_streams_to_handle: int = 1,
     ) -> LmStep[LmStepOutputT]:
         async def _lm_step() -> LmStepOutputT:
+            # Get sys prompt input data dynamically by calling the getter callback if any
+            if self.get_domain_specific_sys_prompt_input_data is None:
+                sys_prompt_input_data = None
+            else:
+                sys_prompt_input_data = self.get_domain_specific_sys_prompt_input_data(
+                    lm_agent_name=lm_agent_name, user_prompt_input_data=prompt_input_data
+                )
+
+            # Get input messages
             input_messages = get_input_messages(
                 lm_agent_name=lm_agent_name,
                 user_prompt_input_data=prompt_input_data,
-                get_domain_specific_insert=self.get_domain_specific_insert,
+                sys_prompt_input_data=sys_prompt_input_data,
             )
 
             # Prepare pre-lm callback

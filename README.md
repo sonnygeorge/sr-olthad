@@ -26,7 +26,16 @@ This project uses the following tooling:
 3. Make sure you have environment variable `OPENAI_API_KEY` set
    - The `setup.sh` script creates a `.env` file for you where you can put your API key
    - You can also use any normal method for setting environment variables, such as `export OPENAI_API_KEY={your key}`
-4. Use `sr-olthad`, e.g., run the GUI with `uv run research/scripts/run_gui.py`
+4. Finally, to run sr-OLTHAD with SemanticSteve and visualize outputs in the GUI, you have to install SemanticSteve with this (temporarily manual) process:
+
+   1. Make sure you `node` and `yarn` installed
+   2. Install SemanticSteve from the most actualized branch: `uv pip install git+https://github.com/sonnygeorge/semantic-steve.git@gen/refactor`
+   3. Manually install its new requirements: `uv pip install prompt_toolkit pyzmq`
+   4. Manually install the `semantic-steve` JS dependencies:
+      - `cd .venv/lib/python3.11/site-packages/semantic_steve/js`
+      - `yarn install`
+
+Now you should be able to run sr-OLTHAD with SemanticSteve and visualize outputs in the GUI with `uv run research/scripts/run_gui_semantic_steve.py`.
 
 ### Repo Structure
 

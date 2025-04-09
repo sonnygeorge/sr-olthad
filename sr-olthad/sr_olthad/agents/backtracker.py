@@ -9,8 +9,8 @@ from sr_olthad.prompts import (
 )
 from sr_olthad.schema import (
     BacktrackedFromTaskStatus,
-    CommonUserPromptInputData,
     LmAgentName,
+    UserPromptInputData,
 )
 from sr_olthad.utils import extract_letter_from_multiple_choice_response
 
@@ -150,7 +150,7 @@ class Backtracker:
         """
 
         # Prepare prompt input used by all classifiers except most_worthwhile_pursuit_clf
-        prompt_input_data = CommonUserPromptInputData(
+        prompt_input_data = UserPromptInputData(
             env_state=env_state,
             olthad=self.traversal._root_node.stringify(
                 redact_planned_subtasks_below=self.traversal.cur_node.id,

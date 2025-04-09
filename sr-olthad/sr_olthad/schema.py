@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import TypeAlias
+from typing import Protocol, TypeAlias
 
 from jinja2 import Template
 from pydantic import BaseModel
@@ -55,29 +55,31 @@ class TaskStatus(StrEnum):
     PLANNED = "Tentatively planned"
 
 
-######################
-### Prompt-related ###
-######################
+#################################
+### Dynamic prompt input data ###
+#################################
 
 
-class CommonSysPromptInputData(BaseModel):
-    """Fields/data dynamically rendered into the system prompt for all lm agents."""
+class DomainSpecificSysPromptInputData(BaseModel):
+    """Fields/data dynamically rendered into the system prompt (of all lm agents)."""
 
-    domain_specific_insert: str | None = None
+    lm_role_as_verb_phrase: str
+    domain_exposition: str
 
 
-class CommonSysPromptInputFields(StrEnum):
+class DomainSpecificSysPromptInputFields(StrEnum):
     """
-    Enum of the fields in the CommonSysPromptInputData model.
+    Enum of the fields in the DomainSpecificSysPromptInputData model.
 
     NOTE: These strings must be identical to the above field names in the
     `CommonSysPromptInputData` model.
     """
 
-    DOMAIN_SPECIFIC_INSERT = "domain_specific_insert"
+    LM_ROLE_AS_VERB_PHRASE = "lm_role_as_verb_phrase"
+    DOMAIN_EXPOSITION = "domain_exposition"
 
 
-class CommonUserPromptInputData(BaseModel):
+class UserPromptInputData(BaseModel):
     """
     Fields/data dynamically rendered into the user prompt all lm agents.
 
@@ -93,7 +95,7 @@ class CommonUserPromptInputData(BaseModel):
     task_in_question: str
 
 
-class CommonUserPromptInputFields(StrEnum):
+class UserPromptInputFields(StrEnum):
     """
     Enum of the fields in the CommonUserPromptInputData model.
 
@@ -106,6 +108,37 @@ class CommonUserPromptInputFields(StrEnum):
     TASK_IN_QUESTION = "task_in_question"
 
 
+##########################
+### Callable protocols ###
+##########################
+
+
+class GetDomainSpecificSysPromptInputData(Protocol):
+    """
+    Callable that, given knowledge about what LM agent is being invoked and what its
+    current user-prompt input data is (e.g. the task in question), returns data (e.g.
+    situation-relevant in-context examples) to be dynamically rendered into the system
+    prompt at inference time.
+
+    Args:
+        lm_agent_name (LmAgentName): The name of the LM agent.
+        input_data (UserPromptInputData): The input data for the current invocation
+            of the LM agent.
+
+    Returns:
+        DomainSpecificSysPromptInputData: The data to be rendered into the system prompt.
+    """
+
+    def __call__(
+        self, lm_agent_name: LmAgentName, user_prompt_input_data: UserPromptInputData
+    ) -> DomainSpecificSysPromptInputData: ...
+
+
+######################################
+### Some more prompt-related stuff ###
+######################################
+
+
 @dataclass
 class SingleTurnPromptTemplates:
     user_prompt_template: Template
@@ -114,12 +147,6 @@ class SingleTurnPromptTemplates:
 
 PromptVersionString: TypeAlias = str
 PromptRegistry = dict[PromptVersionString, SingleTurnPromptTemplates]
-
-
-########################################
-### Multiple-choice question options ###
-########################################
-
 
 LetterStr: TypeAlias = str
 

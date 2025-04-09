@@ -2,8 +2,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from sr_olthad import DomainSpecificSysPromptInputData
 from sr_olthad.olthad import TaskNode
-from sr_olthad.schema import CommonUserPromptInputData, LmAgentName, TaskStatus
+from sr_olthad.schema import LmAgentName, TaskStatus, UserPromptInputData
 from sr_olthad.utils import get_input_messages
 
 DUMMY_TASK_IN_QUESTION = TaskNode(
@@ -54,28 +55,27 @@ DUMMY_ROOT_TASK_NODE = TaskNode(
     _non_planned_subtasks=[DUMMY_TASK_IN_QUESTION],
 )
 
-DUMMY_ENV_STATE = "Only one slice remains."
+SYS_PROMPT_INPUT_DATA = DomainSpecificSysPromptInputData(
+    lm_role_as_verb_phrase="controls a human in a video game",
+    domain_exposition="In the video game, you have access to all reasonable human controls/actions.",
+)
 
-
-def dummy_get_domain_specific_insert(_, __):
-    return "You are a human in a video game."
+USER_PROMPT_INPUT_DATA = UserPromptInputData(
+    env_state="Only one slice remains.",
+    olthad=DUMMY_ROOT_TASK_NODE.stringify(),
+    task_in_question=DUMMY_TASK_IN_QUESTION.stringify(),
+)
 
 
 def print_backtracker_agent_prompts():
-    prompt_input_data = CommonUserPromptInputData(
-        env_state=DUMMY_ENV_STATE,
-        olthad=DUMMY_ROOT_TASK_NODE.stringify(),
-        task_in_question=DUMMY_TASK_IN_QUESTION.stringify(),
-    )
-
     print("\n###############################################" * 2)
     print("######### Exhaustive Effort Classifier ########")
     print("###############################################\n" * 2)
 
     messages = get_input_messages(
         lm_agent_name=LmAgentName.EXHAUSTIVE_EFFORT_CLF,
-        user_prompt_input_data=prompt_input_data,
-        get_domain_specific_insert=dummy_get_domain_specific_insert,
+        user_prompt_input_data=USER_PROMPT_INPUT_DATA,
+        sys_prompt_input_data=SYS_PROMPT_INPUT_DATA,
     )
     print("***********")
     print("*** SYS ***")
@@ -92,8 +92,8 @@ def print_backtracker_agent_prompts():
 
     messages = get_input_messages(
         lm_agent_name=LmAgentName.MOST_WORTHWHILE_PURSUIT_CLF,
-        user_prompt_input_data=prompt_input_data,
-        get_domain_specific_insert=dummy_get_domain_specific_insert,
+        user_prompt_input_data=USER_PROMPT_INPUT_DATA,
+        sys_prompt_input_data=SYS_PROMPT_INPUT_DATA,
     )
     print("***********")
     print("*** SYS ***")
@@ -110,8 +110,8 @@ def print_backtracker_agent_prompts():
 
     messages = get_input_messages(
         lm_agent_name=LmAgentName.PARTIAL_SUCCESS_CLF,
-        user_prompt_input_data=prompt_input_data,
-        get_domain_specific_insert=dummy_get_domain_specific_insert,
+        user_prompt_input_data=USER_PROMPT_INPUT_DATA,
+        sys_prompt_input_data=SYS_PROMPT_INPUT_DATA,
     )
     print("***********")
     print("*** SYS ***")
@@ -128,8 +128,8 @@ def print_backtracker_agent_prompts():
 
     messages = get_input_messages(
         lm_agent_name=LmAgentName.SUCCESSFUL_COMPLETION_CLF,
-        user_prompt_input_data=prompt_input_data,
-        get_domain_specific_insert=dummy_get_domain_specific_insert,
+        user_prompt_input_data=USER_PROMPT_INPUT_DATA,
+        sys_prompt_input_data=SYS_PROMPT_INPUT_DATA,
     )
     print("***********")
     print("*** SYS ***")
