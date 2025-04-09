@@ -14,7 +14,7 @@ DOMAIN_EXPOSITION_TEMPLATE = f"""You are controlling a Minecraft player using Se
 Here is the documentation for all usable SemanticSteve skill functions:
 {SKILLS_DOCS_STR}
 
-Here is some general information/tips for using SemanticSteve:
+Here are some general tips for using SemanticSteve:
 - The best way to find things is to think about what is visible in each direction and approach something in the direction that you think is most likely to get you closer to your goals/the things you want to find.
 """
 

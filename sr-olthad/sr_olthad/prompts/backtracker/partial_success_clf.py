@@ -1,10 +1,6 @@
 from jinja2 import Template
 
 from sr_olthad.framework.utils import get_prompt_json_spec
-from sr_olthad.prompts._strings import (
-    EXAMPLE_OLTHAD_FOR_SYS_PROMPT,
-    EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT,
-)
 from sr_olthad.prompts.backtracker._common import (
     BacktrackerSubAgentLmResponseOutputData,
 )
@@ -35,36 +31,35 @@ WAS_PARTIAL_SUCCESS_OPTIONS: BinaryChoiceOptions = {
 
 V1_0_QUESTION = "Should the task be considered a partial success?"
 
-SYS_1_0 = f"""You are a helpful AI agent who plays a crucial role in a hierarchical reasoning and acting system. Your specific job is as follows.
+SYS_1_0 = f"""You are a helpful thinking assistant that {{{{ {DomainSpecificSysPromptInputFields.LM_ROLE_AS_VERB_PHRASE} }}}}.  Your job is to determine whether a task should be considered a partial success or a failure.
 
-You will be given:
+### Your Inputs
 
-1. Information representing/describing the current, up-to-date state of the environment:
+You will be provided:
 
-```text
-CURRENT ACTOR/ENVIRONMENT STATE:
+1. A JSON depicting your ongoing progress (memory) and ever-evolving hierarchical plans, where the highest-most (root) task is requested from a human user.
+PROGRESS/PLANS:
+```json
 ...
 ```
 
-2. A representation of the ongoing progress/plans, e.g.:
-
-```text
-PROGRESS/PLANS:
-{EXAMPLE_OLTHAD_FOR_SYS_PROMPT}
-```
-
-3. Followed by an indication of which in-progress task about which you will be questioned, e.g.:
-
-```text
+2. An indication of the "task in question" (i.e., the task you are evaluating the completion of). Please note that the "status" of your "task in question" will be a question mark since you are evaluating it.
 TASK IN QUESTION:
-{EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT}
+```json
+...
 ```
 
-Finally, you will be asked the following:
+3. A representation of the most recently observed state of the world (i.e., the environment you are in).
+CURRENT ENVIRONMENT STATE:
+...
 
+4. The question you are being asked:
+QUESTION:
 {V1_0_QUESTION}
 {WAS_PARTIAL_SUCCESS_OPTIONS[True].letter}. {WAS_PARTIAL_SUCCESS_OPTIONS[True].text}
 {WAS_PARTIAL_SUCCESS_OPTIONS[False].letter}. {WAS_PARTIAL_SUCCESS_OPTIONS[False].text}
+
+### Your Response
 
 Carefully think things through step-by-step. Finally, only once you've concluded your deliberation, provide your final response in a JSON that strictly adheres to the following format:
 
@@ -72,14 +67,11 @@ Carefully think things through step-by-step. Finally, only once you've concluded
 {get_prompt_json_spec(BacktrackerSubAgentLmResponseOutputData)}
 ```
 
+### Potentially Useful Auxiliary Information About Domain
+
 {{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}"""
 
-USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:
-```text
-{{{{ {UserPromptInputFields.ENV_STATE} }}}}
-```
-
-PROGRESS/PLANS:
+USER_1_0 = f"""PROGRESS/PLANS:
 ```json
 {{{{ {UserPromptInputFields.OLTHAD} }}}}
 ```
@@ -89,6 +81,10 @@ TASK IN QUESTION:
 {{{{ {UserPromptInputFields.TASK_IN_QUESTION} }}}}
 ```
 
+CURRENT ENVIRONMENT STATE:
+{{{{ {UserPromptInputFields.ENV_STATE} }}}}
+
+QUESTION:
 {V1_0_QUESTION}
 {WAS_PARTIAL_SUCCESS_OPTIONS[True].letter}. {WAS_PARTIAL_SUCCESS_OPTIONS[True].text}
 {WAS_PARTIAL_SUCCESS_OPTIONS[False].letter}. {WAS_PARTIAL_SUCCESS_OPTIONS[False].text}
@@ -98,7 +94,6 @@ V1_0_PROMPTS = SingleTurnPromptTemplates(
     sys_prompt_template=Template(SYS_1_0),
     user_prompt_template=Template(USER_1_0),
 )
-
 
 ######################
 ###### Registry ######

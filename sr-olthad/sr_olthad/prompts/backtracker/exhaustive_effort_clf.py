@@ -1,10 +1,6 @@
 from jinja2 import Template
 
 from sr_olthad.framework.utils import get_prompt_json_spec
-from sr_olthad.prompts._strings import (
-    EXAMPLE_OLTHAD_FOR_SYS_PROMPT,
-    EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT,
-)
 from sr_olthad.prompts.backtracker._common import (
     BacktrackerSubAgentLmResponseOutputData,
 )
@@ -35,51 +31,50 @@ EFFORT_WAS_EXHAUSTIVE_OPTIONS: BinaryChoiceOptions = {
 
 V1_0_QUESTION = "Thinking ONLY about what's been done so far, has the task been given an exhaustive effort or, are there still obvious things we could do to accomplish it? Which of the following statements is more true?"
 
-SYS_1_0 = f"""You are a helpful AI agent who plays a crucial role in a hierarchical reasoning and acting system. Your specific job is as follows.
+SYS_1_0 = f"""You are a helpful thinking assistant that {{{{ {DomainSpecificSysPromptInputFields.LM_ROLE_AS_VERB_PHRASE} }}}}. Your specific job is to decide whether a task has been given a reasonably exhaustive effort given your situation.
 
-You will be given:
+### Your Inputs
 
-1. Information representing/describing the current, up-to-date state of the environment:
+You will be provided:
 
-```text
-CURRENT ACTOR/ENVIRONMENT STATE:
+1. A JSON depicting your ongoing progress (memory) and ever-evolving hierarchical plans, where the highest-most (root) task is requested from a human user.
+PROGRESS/PLANS:
+```json
 ...
 ```
 
-2. A representation of the ongoing progress/plans, e.g.:
-
-```text
-PROGRESS/PLANS:
-{EXAMPLE_OLTHAD_FOR_SYS_PROMPT}
-```
-
-3. Followed by an indication of which in-progress task about which you will be questioned, e.g.:
-
-```text
+2. An indication of the "task in question" (i.e., the task you are evaluating the completion of). Please note that the "status" of your "task in question" will be a question mark since you are evaluating it.
 TASK IN QUESTION:
-{EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT}
+```json
+...
 ```
 
-Finally, you will be asked the following:
+3. A representation of the most recently observed state of the world (i.e., the environment you are in).
+CURRENT ENVIRONMENT STATE:
+...
 
+4. The question you are being asked:
+QUESTION:
 {V1_0_QUESTION}
 {EFFORT_WAS_EXHAUSTIVE_OPTIONS[True].letter}. {EFFORT_WAS_EXHAUSTIVE_OPTIONS[True].text}
 {EFFORT_WAS_EXHAUSTIVE_OPTIONS[False].letter}. {EFFORT_WAS_EXHAUSTIVE_OPTIONS[False].text}
 
-You will answer by first carefully thinking things through step-by-step. Only after you've thoroughly reasoned through things, provide a BRIEF final response in a JSON that strictly adheres to the following format:
+### Your Response
+
+1. You will reason about (1) what, in your current situation, a "reasonably exhaustive effort" might entail, and (2) whether the attempted effort (attempted subtasks of the "task in question", if any) has been exhaustive:
+    - Given a realistic evaluation of your capabilities, have you exhausted all situationally reasonable strategies for accomplishing this task? (You don't need to "go to the ends of the earth"; just try all the reasonable approaches.)
+    - Are you leaving obvious steps/strategies on the table? (Think about what you have available to you in your environment and what, given this, you might be capable of.)
+2. Only after reasoning through the above, you will output your final answer as a JSON that strictly adheres to this specification:
 
 ```json
 {get_prompt_json_spec(BacktrackerSubAgentLmResponseOutputData)}
 ```
 
+### Potentially Useful Auxiliary Information About Domain
+
 {{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}"""
 
-USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:
-```text
-{{{{ {UserPromptInputFields.ENV_STATE} }}}}
-```
-
-PROGRESS/PLANS:
+USER_1_0 = f"""PROGRESS/PLANS:
 ```json
 {{{{ {UserPromptInputFields.OLTHAD} }}}}
 ```
@@ -89,6 +84,10 @@ TASK IN QUESTION:
 {{{{ {UserPromptInputFields.TASK_IN_QUESTION} }}}}
 ```
 
+CURRENT ENVIRONMENT STATE:
+{{{{ {UserPromptInputFields.ENV_STATE} }}}}
+
+QUESTION:
 {V1_0_QUESTION}
 {EFFORT_WAS_EXHAUSTIVE_OPTIONS[True].letter}. {EFFORT_WAS_EXHAUSTIVE_OPTIONS[True].text}
 {EFFORT_WAS_EXHAUSTIVE_OPTIONS[False].letter}. {EFFORT_WAS_EXHAUSTIVE_OPTIONS[False].text}

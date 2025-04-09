@@ -1,10 +1,6 @@
 from jinja2 import Template
 
 from sr_olthad.framework.utils import get_prompt_json_spec
-from sr_olthad.prompts._strings import (
-    EXAMPLE_OLTHAD_FOR_SYS_PROMPT,
-    EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT,
-)
 from sr_olthad.prompts.backtracker._common import (
     BacktrackerSubAgentLmResponseOutputData,
 )
@@ -35,47 +31,48 @@ IS_MOST_WORTHWHILE_PURSUIT_OPTIONS: BinaryChoiceOptions = {
 
 V1_0_QUESTION = "Which statement is more true?"
 
-SYS_1_0 = f"""You are a helpful AI agent who plays a crucial role in a hierarchical reasoning and acting system. Your specific job is as follows.
+SYS_1_0 = f"""You are a helpful thinking assistant that {{{{ {DomainSpecificSysPromptInputFields.LM_ROLE_AS_VERB_PHRASE} }}}}. Your job is determine whether a task is still your most worthy pursuit.
 
-You will be given:
+### Your Inputs
 
-1. Information representing/describing the current, up-to-date state of the environment:
+You will be provided:
 
-```text
-CURRENT ACTOR/ENVIRONMENT STATE:
+1. A JSON depicting your ongoing progress (memory) and ever-evolving hierarchical plans, where the highest-most (root) task is requested from a human user.
+PROGRESS/PLANS:
+```json
 ...
 ```
 
-2. A representation of the ongoing progress/plans, e.g.:
-
-```text
-PROGRESS/PLANS:
-{EXAMPLE_OLTHAD_FOR_SYS_PROMPT}
-```
-
-3. Followed by an indication of which in-progress task about which you will be questioned, e.g.:
-
-```text
+2. An indication of the "task in question" (i.e., the task you are evaluating the completion of). Please note that the "status" of your "task in question" will be a question mark since you are evaluating it.
 TASK IN QUESTION:
-{EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT}
+```json
+...
 ```
 
-Finally, you will be asked the following:
+3. A representation of the most recently observed state of the world (i.e., the environment you are in).
+CURRENT ENVIRONMENT STATE:
+...
 
+4. The question you are being asked:
+QUESTION:
 {V1_0_QUESTION}
 {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[True].letter}. {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[True].text}
 {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[False].letter}. {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[False].text}
 
+### Your Response
+
 Now, there are many possible reasons why answer choice "B" might be better. Here are a few examples:
-1. The task was foolishly proposed/poorly conceived in the first place (e.g., was not the best idea or was ambiguously phrased).
-2. There is some—now more useful—thing that falls outside of the semantic scope of how the task is phrased—regardless of whether, by virtue of some now-evident reason:
-    1. **Only a _slight_ semantic tweak to the task is warranted**
-        - E.g., let's say the task in question was to 'pick strawberries' in order to 'get some fruit.' If it has become evident that the nearest available fruit bush is raspberry, adjusting 'pick strawberries' to 'pick raspberries' may now be more appropriate.
-    2. Or, **a semantically different task should replace it (at least for now)**.
-        - E.g., the task, although perhaps still useful as-is, should be shelved in favor of something else
-        - E.g., the utility of the task has been rendered moot altogether (e.g., if the task was to 'find a TV show to help Lisa fall asleep' and it was clear that Lisa had already fallen asleep).
-3. Something has emerged that makes the task significantly harder than perhaps was previously assumed, making it less worthwhile in light of potentially easier alternatives.
+1. The "task in question" was foolishly proposed/poorly conceived in the first place (e.g., was not the best idea or was ambiguously phrased).
+2. There is some—now more useful—thing that falls outside of the semantic scope of how the "task in question" is phrased... regardless of whether, by virtue of some now-evident reason:
+    1. **Only a _slight_ semantic tweak to the "task in question" is warranted**
+        - E.g., let's say the "task in question" was to 'pick strawberries' in order to 'get some fruit.' If it has become evident that the nearest available fruit bush is raspberry, adjusting 'pick strawberries' to 'pick raspberries' may now be more appropriate.
+    2. Or, **a semantically different task should replace the "task in question" (at least for now)**.
+        - E.g., the "task in question", although perhaps still useful as-is, should be shelved in favor of something else
+        - E.g., the utility of the "task in question" has been rendered moot altogether (e.g., if the "task in question" was to 'find a lullaby to help Lisa fall asleep' and it was clear that Lisa had already fallen asleep).
+3. Something has emerged that makes the "task in question" significantly harder than perhaps was previously assumed, making it less worthwhile in light of potentially easier alternatives.
 4. ...
+
+IMPORTANT: The highest-level task with id "1" is was requested of you by a human user. Therefore, if it is the "task in question", you should never favor pursuing something else (such an opinion would not override the user's). The root task with id "1" is inherently more worthwhile than alternatives BECAUSE THE USER REQUESTED IT! Nevertheless, you should propose dropping the root task if it is immoral or learned to be impossible, otherwise answer {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[True].letter} if the user-requested root task with id "1" is the "task in question".
 
 Think things through step-by-step, considering each of the above points as you go. Finally, only once you've concluded your deliberation, provide your final response in a JSON that strictly adheres to the following format:
 
@@ -83,16 +80,9 @@ Think things through step-by-step, considering each of the above points as you g
 {get_prompt_json_spec(BacktrackerSubAgentLmResponseOutputData)}
 ```
 
-IMPORTANT: The highest-level task with id "1" is the highly important user-requested task. If this task is in question, you should only answer {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[False].letter} IF THE TASK IS IMMORAL OR LEARNED TO BE IMPOSSIBLE. DO NOT ABANDON THE HIGHEST-LEVEL IN FAVOR OF SOMETHING ELSE!
-
 {{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}"""
 
-USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:
-```text
-{{{{ {UserPromptInputFields.ENV_STATE} }}}}
-```
-
-PROGRESS/PLANS:
+USER_1_0 = f"""PROGRESS/PLANS:
 ```json
 {{{{ {UserPromptInputFields.OLTHAD} }}}}
 ```
@@ -102,6 +92,10 @@ TASK IN QUESTION:
 {{{{ {UserPromptInputFields.TASK_IN_QUESTION} }}}}
 ```
 
+CURRENT ENVIRONMENT STATE:
+{{{{ {UserPromptInputFields.ENV_STATE} }}}}
+
+QUESTION:
 {V1_0_QUESTION}
 {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[True].letter}. {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[True].text}
 {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[False].letter}. {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[False].text}

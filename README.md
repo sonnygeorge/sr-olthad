@@ -1,4 +1,5 @@
 <!--
+TODO: Move config as options passed to SrOlthad __init__?
 TODO: Wrap lines in LM `TextBox`s?
 TODO: Internal "notepad"
 -->

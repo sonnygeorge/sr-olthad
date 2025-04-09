@@ -292,7 +292,7 @@ class TaskNode:
 
     def iter_in_progress_descendants(
         self,
-    ) -> Generator[tuple[Self, Self], None, None]:
+    ) -> Generator[tuple[Self, Self, Self], None, None]:
         """
         Generator that gradually rebuilds the node's tree of descendents, yielding
         the PARTIALLY REBUILT root alongside the current depth level's "in-progress"
@@ -301,9 +301,13 @@ class TaskNode:
         NOTE: This method should only be called if the node is in-progress.
 
         Yields:
-            tuple[TaskNode, TaskNode]: Tuple where the first item is the partially
-                rebuilt root node and the second item is the current depth level's
-                "in-progress" node.
+            tuple[TaskNode, TaskNode, TaskNode]: Tuple where:
+                - The first element is the root of the rebuild (a copy of the node
+                    with no subtasks).
+                - The second element is the current depth level's "in-progress" node
+                    (a copy of the node with no subtasks).
+                - The third element is the current depth level's "in-progress" node
+                    (the original node).
         """
 
         if self._status != TaskStatus.IN_PROGRESS:
@@ -329,7 +333,7 @@ class TaskNode:
         root_of_rebuild = childless_copy_of_self
 
         while True:
-            yield root_of_rebuild, cur_in_progress_node_childless_copy
+            yield root_of_rebuild, cur_in_progress_node_childless_copy, cur_in_progress_node
 
             if len(cur_in_progress_node.subtasks) == 0:  # If rebuild complete
                 break

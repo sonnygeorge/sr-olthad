@@ -32,7 +32,7 @@ async def run_sr_olthad_with_semantic_steve_and_gui(
     with SemanticSteve(should_rebuild_typescript=True, debug=True) as ss:
         while True:
             data_from_minecraft = await ss.wait_for_data_from_minecraft()
-            env_state = data_from_minecraft.get_readable_string()
+            env_state = f"```json\n{data_from_minecraft.get_readable_string()}\n```"
             skill_invocation = await sr_olthad.get_next_skill_invocation(env_state)
             if skill_invocation is None:
                 print("Root task completed or dropped")
