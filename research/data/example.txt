@@ -1,0 +1,1 @@
+This is an example of a SemanticSteve-specific doc that might get dynamically passed to/rendered into sr-OLTHAD prompts.
