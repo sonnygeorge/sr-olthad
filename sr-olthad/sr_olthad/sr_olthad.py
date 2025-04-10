@@ -5,16 +5,22 @@ import sr_olthad.config as cfg
 from sr_olthad.agents import AttemptSummarizer, Backtracker, Forgetter, Planner
 from sr_olthad.framework.agents import LmRetryHandler
 from sr_olthad.framework.schema import LmStreamsHandler
+from sr_olthad.framework.utils import call_or_await
 from sr_olthad.lm_step import (
     LmStepTemplate,
     PostLmStepApprover,
     PreLmStepHandler,
 )
 from sr_olthad.olthad import OlthadTraversal
-from sr_olthad.schema import GetDomainSpecificSysPromptInputData
+from sr_olthad.schema import GetDomainSpecificSysPromptInputData, TaskStatus
 
 # TODO: Forgetter(?)
 
+
+# TODO: The idea of calling the next-most planned subtask in-progress is semantically wrong.
+# TODO: Furthermore, when we hit the planner on the second go-around, we have an awkward in-progress
+# subtask that's really a planned subtask.
+# TODO: Recurse inward is the only thing that should set something to in-progress.
 
 JsonSerializable = (
     None
@@ -81,8 +87,11 @@ class SrOlthad:
             streams_handler=streams_handler,
         )
 
-    async def _traverse_and_get_next_skill_invocation(self, env_state: str) -> None:
-        if self.has_been_called_at_least_once_before:
+    async def _traverse_and_get_next_skill_invocation(self, env_state: str) -> str | None:
+        if (
+            self.has_been_called_at_least_once_before
+            or self.traversal.cur_node.parent_id == self.traversal.root_node.id
+        ):
             #############################################################
             ## Deliberate backtracking and backtrack if deemed prudent ##
             #############################################################
@@ -101,21 +110,25 @@ class SrOlthad:
         ## Update tentatively planned subtasks ##
         #########################################
 
-        raise NotImplementedError
-
-        # ...
+        await self.planner.run(env_state=env_state)
 
         #################################################################################
         ## Check if the next of the planned subtasks is an executable skill invocation ##
         #################################################################################
 
-        # if self.is_task_executable_action(
-        #     self.traversal.cur_node.in_progress_subtask.task
-        # ):
-        #     self.traversal.cur_node.in_progress_subtask.task
-        # else:
-        #     self.traversal.recurse_inward()
-        #     return await _traverse_and_get_executable_action(env_state)
+        if await call_or_await(
+            self.is_task_executable_skill_invocation,
+            self.traversal.cur_node.next_planned_subtask.task,
+        ):
+            # Time to invoke this skill in the env (set status to in-progress and return)
+            self.traversal.update_status_and_retrospective_of(
+                self.traversal.cur_node.next_planned_subtask,
+                TaskStatus.IN_PROGRESS,
+            ).commit()
+            return self.traversal.cur_node.in_progress_subtask.task
+        else:
+            self.traversal.recurse_inward()
+            return await self._traverse_and_get_next_skill_invocation(env_state)
 
     async def get_next_skill_invocation(
         self, env_state: str | JsonSerializable
@@ -136,9 +149,9 @@ class SrOlthad:
         if not isinstance(env_state, str):
             env_state = json.dumps(env_state, cfg.SrOlthadCfg.JSON_DUMPS_INDENT)
 
-        # if self.has_been_called_at_least_once_before:
-        #     # Summarize previous execution (action attempt)
-        #     await self.attempt_summarizer.run(env_state=env_state)
+        if self.has_been_called_at_least_once_before:
+            # Summarize previous execution (action attempt)
+            await self.attempt_summarizer.run(env_state=env_state)
 
         # Enter recursive process to get next action (or `None` to signal exit of
         # highest-level task/root OLTHAD node)

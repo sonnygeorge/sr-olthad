@@ -107,8 +107,11 @@ class OlthadTraversal:
         self._cur_node = self._nodes[self._cur_node._parent_id]
 
     def recurse_inward(self) -> None:
-        """Sets the current node to the in-progress subtask."""
-        self._cur_node = self._cur_node.in_progress_subtask
+        assert len(self._cur_node._planned_subtasks) > 0
+        new_cur_node = self._cur_node._planned_subtasks.pop(0)
+        self._cur_node._non_planned_subtasks.append(new_cur_node)
+        self._cur_node = new_cur_node
+        self._cur_node._status = TaskStatus.IN_PROGRESS
 
     def update_planned_subtasks_of_cur_node(
         self, new_planned_subtasks: list[str]
@@ -118,9 +121,11 @@ class OlthadTraversal:
             raise OlthadUsageError(msg)
 
         new_subtask_node_objects: list[TaskNode] = []
-        for i, new_planned_subtask in enumerate(new_planned_subtasks):
+        for i in range(len(new_planned_subtasks)):
+            new_planned_subtask = new_planned_subtasks[i]
+            id_offset = len(self._cur_node._non_planned_subtasks)
             new_subtask_node = TaskNode(
-                _id=f"{self._cur_node._id}.{i + 1}",
+                _id=f"{self._cur_node._id}.{id_offset + i + 1}",
                 _parent_id=self._cur_node._id,
                 _task=new_planned_subtask,
                 _status=TaskStatus.PLANNED,
@@ -132,18 +137,18 @@ class OlthadTraversal:
             for new_subtask_node in new_subtask_node_objects:
                 self._nodes[new_subtask_node._id] = new_subtask_node
             self._cur_node._planned_subtasks = new_subtask_node_objects
-            if (
-                len(self._cur_node._non_planned_subtasks) > 0
-                and self._cur_node._non_planned_subtasks[-1]._status
-                != TaskStatus.IN_PROGRESS
-            ):
-                # We need to pop the next planned sibling and make it the new in-progress subtask
-                next_planned_sibling = self._cur_node._planned_subtasks.pop(0)
-                next_planned_sibling._status = TaskStatus.IN_PROGRESS
-                self._cur_node._non_planned_subtasks.append(next_planned_sibling)
 
         def get_diff():
-            pending_changes = {n._id: n for n in new_subtask_node_objects}
+            current_node_copy_with_changes = TaskNode(
+                _id=self._cur_node._id,
+                _parent_id=self._cur_node._parent_id,
+                _task=self._cur_node._task,
+                _status=self._cur_node._status,
+                _retrospective=self._cur_node._retrospective,
+                _non_planned_subtasks=self._cur_node._non_planned_subtasks,
+                _planned_subtasks=new_subtask_node_objects,
+            )
+            pending_changes = {self._cur_node.id: current_node_copy_with_changes}
             return self._root_node.stringify(pending_changes=pending_changes)
 
         return PendingOlthadUpdate(
@@ -155,37 +160,26 @@ class OlthadTraversal:
         self,
         node: "TaskNode",
         new_status: BacktrackedFromTaskStatus | AttemptedTaskStatus,
-        new_retrospective: str,
+        new_retrospective: str | None = None,
     ):
         if node != self._cur_node and node._parent_id != self._cur_node._id:
             msg = "`node` can only be the current node or one of its subtasks."
             raise OlthadUsageError(msg)
 
-        if node.status != TaskStatus.IN_PROGRESS:
-            msg = "This method should only be called on an in-progress task."
-            raise OlthadUsageError(msg)
-
         if new_status == TaskStatus.IN_PROGRESS:
-            raise OlthadUsageError(
-                f"{TaskStatus.IN_PROGRESS} was passed as the new status to "
-                "`update_status_and_retrospective_od`, which is not allowed/supported."
-            )
+            parent = self._nodes[node._parent_id]
+            if len(parent._non_planned_subtasks) > 0:
+                assert parent._non_planned_subtasks[-1].status != TaskStatus.IN_PROGRESS
+                assert parent._planned_subtasks[0].id == node.id
 
         def do_update():
             node._retrospective = new_retrospective
             node._status = new_status
-
-            if node._parent_id is None:
-                return
-
-            # Because we know we've just changed the status of an in-progress (sub)task,
-            # we need to make the next planned sibling (if one exists) be the new
-            # in-progress (sub)task for their mutual parent.
-            parent = self._nodes[node._parent_id]
-            if len(parent._planned_subtasks) > 0:
-                next_planned_sibling = parent._planned_subtasks.pop(0)
-                next_planned_sibling._status = TaskStatus.IN_PROGRESS
-                parent._non_planned_subtasks.append(next_planned_sibling)
+            if new_status == TaskStatus.IN_PROGRESS:
+                # We need to move it into the non-planned subtasks
+                # (we've already asserted that it's the first planned subtask)
+                self._cur_node._planned_subtasks.remove(node)
+                self._cur_node._non_planned_subtasks.append(node)
 
         def get_diff():
             pending_change = TaskNode(
@@ -196,22 +190,6 @@ class OlthadTraversal:
                 _retrospective=new_retrospective,  # (changed)
             )
             pending_changes = {node.id: pending_change}
-
-            # (See above comment for why this is also a pending change)
-            parent = None
-            if node._parent_id is not None:
-                parent = self._nodes[node._parent_id]
-            if parent is not None and len(parent._planned_subtasks) > 0:
-                next_planned_sibling = parent._planned_subtasks[0]
-                pending_change = TaskNode(
-                    _id=next_planned_sibling._id,
-                    _parent_id=next_planned_sibling._parent_id,
-                    _task=next_planned_sibling._task,
-                    _status=TaskStatus.IN_PROGRESS,  # (changed)
-                    _retrospective=next_planned_sibling._retrospective,
-                )
-                pending_changes[next_planned_sibling._id] = pending_change
-
             return self._root_node.stringify(pending_changes=pending_changes)
 
         return PendingOlthadUpdate(
@@ -270,21 +248,16 @@ class TaskNode:
 
     @property
     def in_progress_subtask(self) -> Self | None:
-        return self._get_in_progress_subtask()
-
-    def _get_in_progress_subtask(self) -> Self | None:
         if len(self._non_planned_subtasks) == 0 and len(self._planned_subtasks) == 0:
             return None
-
-        if len(self._non_planned_subtasks) == 0 or (
-            self._non_planned_subtasks[-1]._status != TaskStatus.IN_PROGRESS
-        ):
-            raise CorruptedOlthadError(
-                "`self._non_planned_subtasks[-1]` must be in-progress if there are "
-                "planned subtasks."
-            )
-
+        assert self._non_planned_subtasks[-1].status == TaskStatus.IN_PROGRESS
         return self._non_planned_subtasks[-1]
+
+    @property
+    def next_planned_subtask(self) -> Self | None:
+        assert len(self._planned_subtasks) > 0
+        assert self._planned_subtasks[0]._status == TaskStatus.PLANNED
+        return self._planned_subtasks[0]
 
     def is_root(self) -> bool:
         """Returns whether the node is the root of an OLTHAD."""
@@ -339,7 +312,7 @@ class TaskNode:
                 break
 
             for subtask in cur_in_progress_node.subtasks:
-                # Rebuild subtask and add it to the rebuild
+                # Partially reconstruct subtask
                 subtask_childless_copy = TaskNode(
                     _id=subtask._id,
                     _parent_id=subtask._parent_id,
@@ -350,6 +323,7 @@ class TaskNode:
                     _non_planned_subtasks=[],
                     _planned_subtasks=[],
                 )
+                # Add it to the rebuild
                 if subtask._status == TaskStatus.PLANNED:
                     cur_in_progress_node_childless_copy._planned_subtasks.append(
                         subtask_childless_copy
@@ -359,10 +333,10 @@ class TaskNode:
                         subtask_childless_copy
                     )
 
-                cur_in_progress_node = cur_in_progress_node.in_progress_subtask
-                cur_in_progress_node_childless_copy = (
-                    cur_in_progress_node_childless_copy.in_progress_subtask
-                )
+            cur_in_progress_node = cur_in_progress_node.in_progress_subtask
+            cur_in_progress_node_childless_copy = (
+                cur_in_progress_node_childless_copy.in_progress_subtask
+            )
 
     def stringify(
         self,
@@ -425,12 +399,24 @@ class TaskNode:
             node: TaskNode,
             indent_lvl: int = 0,
             should_redact_planned: bool = False,
+            parent_subtasks: list[TaskNode] | None = None,
         ) -> str:
             nonlocal output_str
             nonlocal output_str_w_changes
 
+            parent_is_a_pending_change = (
+                node.parent_id is not None
+                and pending_changes is not None
+                and node.parent_id in pending_changes
+            )
+
             if pending_changes is not None and node._id in pending_changes:
                 node_for_update = pending_changes[node._id]
+            elif parent_is_a_pending_change and isinstance(parent_subtasks, list):
+                idx_of_node_in_parent_subtasks = parent_subtasks.index(node)
+                node_for_update = pending_changes[node.parent_id].subtasks[
+                    idx_of_node_in_parent_subtasks
+                ]
             else:
                 node_for_update = node
 
@@ -448,7 +434,14 @@ class TaskNode:
             ):
                 should_redact_planned = True
 
-            if len(node.subtasks) > 0:
+            # Increment subtasks
+            if parent_is_a_pending_change and node.task != node_for_update.task:
+                assert len(node.subtasks) == 0
+                assert len(node_for_update.subtasks) == 0
+                prepend = indent * (indent_lvl + 1)
+                output_str += prepend + '"subtasks": null\n'
+                output_str_w_changes += prepend + '"subtasks": null\n'
+            elif len(node.subtasks) > 0:
                 # Open the subtasks list/array
                 prepend = indent * (indent_lvl + 1)
                 output_str += prepend + '"subtasks": ['
@@ -473,6 +466,7 @@ class TaskNode:
                         node=subtask,
                         indent_lvl=indent_lvl + 2,
                         should_redact_planned=should_redact_planned,
+                        parent_subtasks=node.subtasks,
                     )
 
                     # Add comma if not last subtask
@@ -486,6 +480,40 @@ class TaskNode:
                 output_str += prepend + "]\n"
                 if node_for_update is not None:
                     output_str_w_changes += prepend + "]\n"
+            elif (
+                node_for_update is not None and len(node_for_update.subtasks) > 0
+            ):  # I.e., the update = addition of these subtasks
+                # Open the subtasks list/array
+                prepend = indent * (indent_lvl + 1)
+                output_str += prepend + '"subtasks": null\n'
+                output_str_w_changes += prepend + '"subtasks": ['
+                # Iterate through subtasks
+                n_subtasks = len(node_for_update.subtasks)
+                for i, subtask in enumerate(node_for_update.subtasks):
+                    # Add subtask to the output string with changes
+                    subtask_dict = {
+                        "id": subtask._id,
+                        "task": subtask._task,
+                        "status": subtask._status,
+                        "retrospective": subtask._retrospective,
+                        "subtasks": None,
+                    }
+                    subtask_dump = json.dumps(
+                        subtask_dict, indent=SrOlthadCfg.JSON_DUMPS_INDENT
+                    )
+                    subtask_dump = "\n".join(  # Add indent to each line
+                        [
+                            indent * (indent_lvl + 2) + line
+                            for line in subtask_dump.splitlines()
+                        ]
+                    )
+                    output_str_w_changes += "\n" + subtask_dump
+                    # Add comma if not last subtask
+                    if i < n_subtasks - 1:
+                        output_str_w_changes += ","
+                # Finally, close the subtasks list/array
+                prepend = "\n" + indent * (indent_lvl + 1)
+                output_str_w_changes += prepend + "]\n"
             else:
                 prepend = indent * (indent_lvl + 1)
                 output_str += prepend + '"subtasks": null\n'

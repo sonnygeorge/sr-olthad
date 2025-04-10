@@ -59,7 +59,7 @@ QUESTION:
 {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[True].letter}. {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[True].text}
 {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[False].letter}. {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[False].text}
 
-### Your Response
+### Food For Thought
 
 Now, there are many possible reasons why answer choice "B" might be better. Here are a few examples:
 1. The "task in question" was foolishly proposed/poorly conceived in the first place (e.g., was not the best idea or was ambiguously phrased).
@@ -74,8 +74,15 @@ Now, there are many possible reasons why answer choice "B" might be better. Here
 
 IMPORTANT: The highest-level task with id "1" is was requested of you by a human user. Therefore, if it is the "task in question", you should never favor pursuing something else (such an opinion would not override the user's). The root task with id "1" is inherently more worthwhile than alternatives BECAUSE THE USER REQUESTED IT! Nevertheless, you should propose dropping the root task if it is immoral or learned to be impossible, otherwise answer {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[True].letter} if the user-requested root task with id "1" is the "task in question".
 
-Think things through step-by-step, considering each of the above points as you go. Finally, only once you've concluded your deliberation, provide your final response in a JSON that strictly adheres to the following format:
+### Your Response
 
+YOU MUST FOLLOW THESE INSTRUCTIONS:
+
+Instructions:
+1. If the task in question is the highest-level task (id "1") and it is _not_ immoral (according to you judgment) or _truly_ impossible (e.g., because of some discovered thing), answer {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[True].letter}. This is because if the user requested the task, it is always inherently more worthwhile than alternatives. If this user-requested root task is immoral or impossible, answer {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[False].letter} and explain why in you final response JSON.
+2. If the task in question is not the highest-level task (id "1"). Think things through step-by-step, considering each of the points in ['Food For Thought'](#food-for-thought). Finally, only once you've concluded your deliberation, provide your final response JSON.
+
+In all cases, you will conclude by outputting your final response JSON that strictly adheres to the following format:
 ```json
 {get_prompt_json_spec(BacktrackerSubAgentLmResponseOutputData)}
 ```
@@ -99,6 +106,8 @@ QUESTION:
 {V1_0_QUESTION}
 {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[True].letter}. {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[True].text}
 {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[False].letter}. {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[False].text}
+
+Remember to follow your instructions by first checking if the task in question is the root task (id "1") and adapting your evaluation accordingly.
 """
 
 V1_0_PROMPTS = SingleTurnPromptTemplates(

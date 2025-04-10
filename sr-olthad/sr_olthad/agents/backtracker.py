@@ -258,11 +258,11 @@ class Backtracker:
         # Prepare prompt input used by all classifiers except most_worthwhile_pursuit_clf
         prompt_input_data = UserPromptInputData(
             env_state=env_state,
-            olthad=self.traversal._root_node.stringify(
+            olthad=self.traversal.root_node.stringify(
                 redact_planned_subtasks_below=self.traversal.cur_node.id,
                 obfuscate_status_of=self.traversal.cur_node.id,
             ),
-            task_in_question=self.traversal._cur_node.stringify(
+            task_in_question=self.traversal.cur_node.stringify(
                 redact_planned_subtasks_below=self.traversal.cur_node.id,
                 obfuscate_status_of=self.traversal.cur_node.id,
             ),
@@ -378,6 +378,10 @@ class Backtracker:
                     # Backtrack to the parent of this current node in the gradual reconstruction
                     self.traversal.backtrack_to(cur_node_reconstructed_copy.parent_id)
                     return True
+
+                if cur_node_reconstructed_copy.id == self.traversal.cur_node.id:
+                    # We have reached and assessed the original current node, we are done
+                    break
 
             # Finally, if ancestors (including cur task in question) are still deemed
             # worthwhile, indicate that no backtracking occurred
