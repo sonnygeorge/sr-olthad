@@ -43,6 +43,7 @@ unfixable = []
 "__init__.py" = ["F401"]
 "quick_tests.py" = ["E402"]
 "run_gui.py" = ["E402"]
+"run_gui_semantic_steve.py" = ["E402"]
 
 [tool.ruff.format]
 quote-style = "double"

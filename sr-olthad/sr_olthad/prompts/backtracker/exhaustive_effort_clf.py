@@ -37,13 +37,13 @@ SYS_1_0 = f"""You are a helpful thinking assistant that {{{{ {DomainSpecificSysP
 
 You will be provided:
 
-1. A JSON depicting your ongoing progress (memory) and ever-evolving hierarchical plans, where the highest-most (root) task is requested from a human user.
+1. A JSON depicting your ongoing progress (memory) and ever-evolving hierarchical plans, where the highest-most (root) task is requested of you by a human user.
 PROGRESS/PLANS:
 ```json
 ...
 ```
 
-2. An indication of the "task in question" (i.e., the task you are evaluating the completion of). Please note that the "status" of your "task in question" will be a question mark since you are evaluating it.
+2. An indication of the "task in question" (i.e., the task you are evaluating the effort of). Please note that the "status" of your "task in question" will be a question mark since you are evaluating it.
 TASK IN QUESTION:
 ```json
 ...

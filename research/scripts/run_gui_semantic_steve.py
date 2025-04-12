@@ -1,14 +1,12 @@
-from dotenv import load_dotenv
 from nicegui import app, ui
 from semantic_steve import SemanticSteve
 
-from research.experiments.semantic_steve_utils import (
+from research.experiments.semantic_steve.prompts import (
     get_semantic_steve_sys_prompt_input_data,
 )
+from research.utils import is_function_call
 from sr_olthad import SrOlthad
 from sr_olthad.gui.gui import GuiApp
-
-load_dotenv()
 
 gui_app = GuiApp()
 
@@ -18,7 +16,7 @@ async def run_sr_olthad_with_semantic_steve_and_gui(
 ):
     sr_olthad = SrOlthad(
         highest_level_task=highest_level_task,
-        is_task_executable_skill_invocation=gui_app.classify_task_executability,
+        is_task_executable_skill_invocation=is_function_call,
         pre_lm_step_handler=gui_app.handle_pre_generation_event,
         lm_retry_handler=gui_app.handle_lm_retry,
         post_lm_step_approver=gui_app.approve_lm_step,
@@ -27,8 +25,7 @@ async def run_sr_olthad_with_semantic_steve_and_gui(
     )
 
     with SemanticSteve(
-        # should_rebuild_typescript=True,
-        debug=True,  # TODO: Remove
+        should_rebuild_typescript=True,
     ) as ss:
         data_from_minecraft = await ss.wait_for_data_from_minecraft()
         while True:

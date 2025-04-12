@@ -40,7 +40,7 @@ SYS_1_0 = f"""You are a helpful thinking assistant that {{{{ {DomainSpecificSysP
 
 You will be provided:
 
-1. A JSON depicting your ongoing progress (memory) and ever-evolving hierarchical plans, where the highest-most (root) task is requested from a human user.
+1. A JSON depicting your ongoing progress (memory) and ever-evolving hierarchical plans, where the highest-most (root) task is requested of you by a human user.
 PROGRESS/PLANS:
 ```json
 ...

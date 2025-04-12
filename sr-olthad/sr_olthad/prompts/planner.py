@@ -39,34 +39,33 @@ class PlannerLmResponseOutputData(BaseModel):
 ######## v1.0 ########
 ######################
 
-SYS_1_0 = f"""You are a helpful AI agent who plays a crucial role in a hierarchical reasoning and acting system. Your specific job is to create and update tentative plans at a conservative next-most-logical level of granularity.
+SYS_1_0 = f"""You are a helpful thinking assistant that {{{{ {DomainSpecificSysPromptInputFields.LM_ROLE_AS_VERB_PHRASE} }}}}. Your specific job is to create and update tentative plans at a conservative next-most level of granularity.
 
-You will be given:
+### Your Inputs
 
-1. Information representing/describing the current, up-to-date state of the environment:
+You will be provided:
 
-```text
-CURRENT ACTOR/ENVIRONMENT STATE:
+1. A representation of the most recently observed state of the world (i.e., the environment you are in).
+CURRENT ENVIRONMENT STATE:
 ...
-```
 
-2. A representation of the ongoing progress/plans, e.g.:
-
-```text
+1. A JSON depicting your ongoing progress (memory) and ever-evolving hierarchical plans, where the highest-most (root) task is requested of you by a human user. E.g.:
 PROGRESS/PLANS:
+```json
 {EXAMPLE_OLTHAD_FOR_SYS_PROMPT}
 ```
 
-3. Followed by an indication of which in-progress task about which you will be questioned, e.g.:
-
+3. An indication of the "task in question" (i.e., the task for which you will be determining appropriate planned subtasks). E.g.:
 ```text
 TASK IN QUESTION:
 {EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT}
 ```
 
+### Your Response
+
 Regardless of whether the task in question has tentatively planned subtasks, your job is to consider how things are progressing (with respect to the aims/plans towards parent outcomes) and provide an updated set of tentatively planned subtasks for the task in question. This, your updated set will replace any existing tentatively planned subtasks. Therefore, e.g., if the existing tentatively planned subtasks are fine as-is, simply list them back and they will be fed back into system with no change.
 
-Since the system is designed to gradually break down tasks as much as needed, you should not over-granularize the planned subtasks too early. Instead focus on planning at a sensible next-most level of abstraction that will help define crucial task-concepts without planning forward too much detail. After all, the future is often uncertain and it would inefficient to speculate too granularly too far into the future. When planning at high levels of abstraction, focus on crucial strategic steps that will roughly outline good strategies. Then, when planning at lower levels of abstraction, you'll have enough strategical context to inform more detailed steps. Focus intently on conforming your plans to be intelligent given what you are observing in the environment. Think about past retrospectives and try not to fall into the same repetitive patterns or repeat futile actions/strategies.
+Since the system is designed to gradually break down tasks as much as needed, you should not over-granularize the planned subtasks too early. Instead focus on planning at a sensible next-most level of abstraction that will help define crucial task-concepts without planning forward too much detail. After all, the future is often uncertain and it would be inefficient to speculate too granularly far into the future. When planning at high levels of abstraction, focus on crucial strategic steps that will roughly outline good strategies. Then, when planning at lower levels of abstraction, you'll have enough strategical context to inform more detailed steps. Focus intently on conforming your plans to be intelligent given what you are observing in the environment. Think about past retrospectives and try not to fall into the same repetitive patterns or repeat futile actions/strategies.
 
 Carefully think step-by-step. Finally, only once you've concluded your deliberation, provide your final response in a JSON that strictly adheres to the following format:
 
@@ -74,12 +73,12 @@ Carefully think step-by-step. Finally, only once you've concluded your deliberat
 {get_prompt_json_spec(PlannerLmResponseOutputData)}
 ```
 
+### Potentially Useful Auxiliary Information About Domain
+
 {{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}"""
 
-USER_1_0 = f"""CURRENT ACTOR/ENVIRONMENT STATE:
-```text
+USER_1_0 = f"""CURRENT ENVIRONMENT STATE:
 {{{{ {UserPromptInputFields.ENV_STATE} }}}}
-```
 
 PROGRESS/PLANS:
 ```json
@@ -89,8 +88,7 @@ PROGRESS/PLANS:
 TASK IN QUESTION:
 ```json
 {{{{ {UserPromptInputFields.TASK_IN_QUESTION} }}}}
-```
-"""
+```"""
 
 V1_0_PROMPTS = SingleTurnPromptTemplates(
     sys_prompt_template=Template(SYS_1_0),
