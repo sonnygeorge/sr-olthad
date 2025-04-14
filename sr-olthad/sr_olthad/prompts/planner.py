@@ -49,7 +49,7 @@ You will be provided:
 CURRENT ENVIRONMENT STATE:
 ...
 
-1. A JSON depicting your ongoing progress (memory) and ever-evolving hierarchical plans, where the highest-most (root) task is requested of you by a human user. E.g.:
+2. A JSON depicting your ongoing progress (memory) and ever-evolving hierarchical plans, where the highest-most (root) task is requested of you by a human user. E.g.:
 PROGRESS/PLANS:
 ```json
 {EXAMPLE_OLTHAD_FOR_SYS_PROMPT}
