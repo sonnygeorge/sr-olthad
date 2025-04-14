@@ -1,3 +1,8 @@
+# Load dotenv before imports
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from nicegui import app, ui
 from semantic_steve import SemanticSteve
 
@@ -41,4 +46,4 @@ async def startup_actions():
 
 
 # Run the UI
-ui.run(title="sr-OLTHAD")
+ui.run(title="sr-OLTHAD", port=8080)

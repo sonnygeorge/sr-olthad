@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.11"
 dependencies = [
     "sr-olthad",
+    "semantic-steve",
 ]
 
 [tool.uv.workspace]
@@ -16,6 +17,7 @@ members = ["sr-olthad"]
 
 [tool.uv.sources]
 sr-olthad = { workspace = true }
+semantic-steve = { git = "https://github.com/sonnygeorge/semantic-steve.git", branch = "dev" }
 
 [dependency-groups]
 dev = [
