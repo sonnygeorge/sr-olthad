@@ -1,7 +1,3 @@
-from dotenv import load_dotenv
-
-load_dotenv()
-
 from sr_olthad import DomainSpecificSysPromptInputData
 from sr_olthad.olthad import TaskNode
 from sr_olthad.schema import LmAgentName, TaskStatus, UserPromptInputData
@@ -141,26 +137,5 @@ def print_backtracker_agent_prompts():
     print(messages[1]["content"])
 
 
-def test_obfuscate_and_redact_in_stringification():
-    # First, let's test stringify with obfuscate status and redact planned subtasks
-    print("\n##############################################" * 2)
-    print("######### Obfuscate Status and Redact ########")
-    print("##############################################\n" * 2)
-    print(
-        DUMMY_ROOT_TASK_NODE.stringify(
-            obfuscate_status_of=DUMMY_TASK_IN_QUESTION._id,
-            redact_planned_subtasks_below=DUMMY_TASK_IN_QUESTION._id,
-        )
-    )
-
-
-# class PrintOneLmStreamsHandler(LmStreamsHandler):
-#     def __call__(self, chunk_str: str, async_call_idx: int | None = None):
-#         # I.e. don't print more than the first of a series of async calls
-#         if async_call_idx is None or async_call_idx == 0:
-#             print(chunk_str, end="", flush=True)
-
-
 if __name__ == "__main__":
     print_backtracker_agent_prompts()
-    # test_obfuscate_and_redact_in_stringification()

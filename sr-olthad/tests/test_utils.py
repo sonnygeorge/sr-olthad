@@ -4,8 +4,8 @@ from sr_olthad.utils import extract_letter_from_multiple_choice_response
 
 class TestExtractLetterFromMultipleChoiceResponse:
     def test_output_is_letter_when_answer_contains_letter_and_text(self):
-        # TODO: Technically this is an integration test so we would, in theory, want to remove
-        # the dependency on the details of the EFFORT_WAS_EXHAUSTIVE_OPTIONS constant.
+        # TODO: Technically, this is an integration test. So, we would, in theory, want to
+        # remove the dependency on the details of EFFORT_WAS_EXHAUSTIVE_OPTIONS.
         ans = "B. No, there are still reasonable things that could be done to accomplish the task."
         opts = EFFORT_WAS_EXHAUSTIVE_OPTIONS
         assert extract_letter_from_multiple_choice_response(ans, opts) == opts[False].letter
