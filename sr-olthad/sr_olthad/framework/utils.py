@@ -26,10 +26,11 @@ def get_prompt_json_spec(model_class: type[BaseModel]) -> str:
     schema_properties: dict[str, dict[str, Any]] = schema.get("properties", {})
     result = {}
     for field_name, field_props in schema_properties.items():
+        # Pull from json_schema_extra if present
         field_type = field_props.get("field_type", "Any?")
         description = field_props.get("description", f"The {field_name}.")
         result[field_name] = f"({field_type}) {description}"
-    return json.dumps(result)
+    return json.dumps(result, indent=2)
 
 
 def render_single_turn_prompt_templates_and_get_messages(

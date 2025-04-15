@@ -34,11 +34,11 @@ class AttemptSummarizerLmResponseOutputData(BaseModel):
     # Fields
     status_to_assign: AttemptedTaskStatus = Field(
         description="The status to assign to the attempted subtask.",
-        field_type="str",
+        json_schema_extra={"field_type": "str"},
     )
     retrospective_to_assign: str = Field(
         description="The retrospective to assign to the attempted subtask.",
-        field_type="str",
+        json_schema_extra={"field_type": "str"},
     )
 
 

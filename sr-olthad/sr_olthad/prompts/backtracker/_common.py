@@ -11,9 +11,9 @@ class BacktrackerSubAgentLmResponseOutputData(BaseModel):
     # Fields
     answer: str = Field(
         description="Your answer choice.",
-        field_type="str",
+        json_schema_extra={"field_type": "str"},
     )
     retrospective: str = Field(
         description="A short retrospective that could be added to the OLTHAD.",
-        field_type="str",
+        json_schema_extra={"field_type": "str"},
     )

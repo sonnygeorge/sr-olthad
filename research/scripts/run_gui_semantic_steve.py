@@ -46,4 +46,4 @@ async def startup_actions():
 
 
 # Run the UI
-ui.run(title="sr-OLTHAD", port=8080)
+ui.run(title="sr-OLTHAD", port=8080, show=False, reload=False)

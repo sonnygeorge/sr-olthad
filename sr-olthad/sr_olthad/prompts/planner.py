@@ -31,7 +31,7 @@ class PlannerLmResponseOutputData(BaseModel):
     # Fields
     new_planned_subtasks: list[str] = Field(
         description="The new set of planned subtasks for the node in question.",
-        field_type="list[str]",
+        json_schema_extra={"field_type": "list[str]"},
     )
 
 
