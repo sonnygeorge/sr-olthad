@@ -1,9 +1,3 @@
-<!--
-TODO: Move config as options passed to SrOlthad __init__?
-TODO: Wrap lines in LM `TextBox`s?
-TODO: Internal "notepad"
--->
-
 # sr-OLTHAD
 
 <div align="left">
@@ -48,11 +42,13 @@ This project uses the following tooling:
 
 #### 1️⃣ Build the Docker image:
 
+- ❗ **IMPORTANT:** ~1-4 GBs of disk space is required for the image.
+
 ```bash
 docker build -t sr-olthad-ss-gui .
 ```
 
-⚠️ (this takes a while, ~4-6 minutes)
+⚠️ (this takes a while, ~1.5-8 minutes)
 
 #### 2️⃣ Run the Docker container:
 
@@ -77,6 +73,7 @@ docker run -it \
 -e OPENAI_API_KEY="$OPENAI_API_KEY" \
 -e GROQ_API_KEY="$GROQ_API_KEY" \
 -e MC_USERNAME="microsoftaccountemail@example.com" \
+-e HIGHEST_LEVEL_TASK="Acquire iron." \
 sr-olthad-ss-gui
 ```
 
@@ -102,6 +99,25 @@ Follow this link and do the Microsoft login flow.
 #### 🏁 Voila!
 
 🥳 You are now running sr-OLTHAD with SemanticSteve and the GUI!
+
+#### ❗😎 Pro Tip ❗
+
+Since every re-run requires (1) logging in to Microsoft and (2) waiting for the server to start, invoking `docker run` every time you want to run the `run_gui_semantic_steve.py` script is a _major_ hassle!
+
+Instead, we recommend leveraging the in-container terminal accessible via [Docker Desktop](https://www.docker.com/products/docker-desktop/) to re-run the script.
+
+![image-of-how-to-open](https://i.imgur.com/4lMADEk.png)
+
+Here are some useful commands (assumes `pwd` is `/app`, which it should be by default):
+- `pkill -2 python`
+  - Sends SIGINT to any running Python processes (stopping any previously running script)
+- `export HIGHEST_LEVEL_TASK="Acquire diamond."`
+  - Re-sets sr-OLTHAD's highest-level task.
+- `uv run research/scripts/run_gui_semantic_steve.py`
+  - Re-runs the script.
+
+![image-of-running-commands](https://i.imgur.com/CesE0vR.png)
+
 
 ---
 

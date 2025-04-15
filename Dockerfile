@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     python3.11 \
     python3.11-venv \
     python3.11-distutils \
+    python-is-python3 \
     pkg-config \
     build-essential \
     libcairo2-dev \
@@ -54,23 +55,25 @@ COPY sr-olthad /app/sr-olthad
 COPY research /app/research
 COPY pyproject.toml /app/pyproject.toml
 COPY uv.lock /app/uv.lock
-
-# Set the working directory
-WORKDIR /app
-ENV PYTHONPATH=/app
+# Copy the entrypoint script to control startup
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
 # Install Python dependencies using uv
+WORKDIR /app
 RUN which uv || echo "uv not found in PATH" && \
     ls -la /usr/local/bin/ && \
     /usr/local/bin/uv sync --python 3.11
 
-# Copy a wrapper script to control startup
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
+# Pre-install SemanticSteve's javascript dependencies
+WORKDIR /app/.venv/lib/python3.11/site-packages/semantic_steve/js
+RUN yarn install
 
-# Set environment variables for Minecraft server
+# Set environment variables
 ENV VERSION=1.21.1
 ENV DIFFICULTY=peaceful
+ENV PYTHONPATH=/app
 
-# Use wrapper script as entrypoint
+# Use script as entrypoint to control startup
+WORKDIR /app
 ENTRYPOINT ["/bin/bash", "/app/start.sh"]

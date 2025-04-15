@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# NOTE: This script is invoked by the Dockerfile and is responsible for starting the Minecraft server and running the sr-OLTHAD + SemanticSteve + GUI script.
+# NOTE: This script is invoked by `Dockerfile`` and is responsible for starting the Minecraft server and running the sr-OLTHAD + SemanticSteve + GUI script.
 
 set -e  # Exit on any error
 
@@ -62,8 +62,12 @@ timeout 60 bash -c 'until nc -z localhost 25565; do sleep 2; done' || {
     exit 1
 }
 
+# Run the Python script in the background
 echo "Minecraft server is running. Running 'run_gui_semantic_steve.py'..."
-/usr/local/bin/uv run --python 3.11 python3.11 /app/research/scripts/run_gui_semantic_steve.py
+/usr/local/bin/uv run --python 3.11 python3.11 /app/research/scripts/run_gui_semantic_steve.py &
+
+echo "The sr-OLTHAD, GUI, and Semantic Steve Python process has been run in the background."
+echo "Container will remain running as long as the Minecraft server is active."
 
 # Keep container alive
 wait $MC_PID

@@ -1,7 +1,9 @@
-# Load dotenv before imports
+# Load dotenv BEFORE imports
 from dotenv import load_dotenv
 
 load_dotenv()
+
+import os
 
 from nicegui import app, ui
 from semantic_steve import SemanticSteve
@@ -16,9 +18,12 @@ from sr_olthad.gui.gui import GuiApp
 gui_app = GuiApp()
 
 
-async def run_sr_olthad_with_semantic_steve_and_gui(
-    highest_level_task: str,
-):
+async def run_sr_olthad_with_semantic_steve_and_gui():
+    if "HIGHEST_LEVEL_TASK" in os.environ:
+        highest_level_task = os.environ["HIGHEST_LEVEL_TASK"]
+    else:
+        highest_level_task = "Acquire iron."
+
     sr_olthad = SrOlthad(
         highest_level_task=highest_level_task,
         is_task_executable_skill_invocation=is_function_call,
@@ -42,7 +47,7 @@ async def run_sr_olthad_with_semantic_steve_and_gui(
 
 @app.on_startup
 async def startup_actions():
-    await run_sr_olthad_with_semantic_steve_and_gui(highest_level_task="Acquire iron")
+    await run_sr_olthad_with_semantic_steve_and_gui()
 
 
 # Run the UI
