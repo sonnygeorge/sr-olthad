@@ -22,7 +22,7 @@ async def run_sr_olthad_with_semantic_steve_and_gui():
     if "HIGHEST_LEVEL_TASK" in os.environ:
         highest_level_task = os.environ["HIGHEST_LEVEL_TASK"]
     else:
-        highest_level_task = "Acquire iron."
+        highest_level_task = "Take a screenshot of some dirt that you placed."
 
     sr_olthad = SrOlthad(
         highest_level_task=highest_level_task,
