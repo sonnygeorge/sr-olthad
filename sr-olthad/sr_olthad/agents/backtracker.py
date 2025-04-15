@@ -298,7 +298,7 @@ class Backtracker:
         # Compose lm step
         lm_step = self.lm_step_template.compose(
             run_step=self.exhaustive_effort_clf.run,
-            process_output=self._process_successful_completion_clf_output,
+            process_output=self._process_exhaustive_effort_clf_output,
             lm_agent_name=LmAgentName.EXHAUSTIVE_EFFORT_CLF,
             cur_node_id=self.traversal.cur_node.id,
             prompt_input_data=prompt_input_data,

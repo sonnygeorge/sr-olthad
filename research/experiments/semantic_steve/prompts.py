@@ -27,6 +27,10 @@ Remember, however, that you are to break down tasks into further high-level subt
 
 Pay attention to the documentation for how to use the functions to make sure you are invoking them correctly in appropriate situations (i.e., when they are likely to succeed). Do not hallicinate functions that are not available to you. Only use the functions that are documented above."""
 
+ATTEMPT_SUMMARIZER_INSERT = (
+    'IMPORTANT: Pay close attention to the "skillInvocationResults" and "inventoryChanges"!'
+)
+
 
 get_semantic_steve_sys_prompt_input_data: GetDomainSpecificSysPromptInputData
 
@@ -40,6 +44,8 @@ def get_semantic_steve_sys_prompt_input_data(
     domain_exposition = DOMAIN_EXPOSITION_TEMPLATE
     if lm_agent_name == LmAgentName.PLANNER:
         domain_exposition += "\n\n" + PLANNER_INSERT
+    elif lm_agent_name == LmAgentName.ATTEMPT_SUMMARIZER:
+        domain_exposition += "\n\n" + ATTEMPT_SUMMARIZER_INSERT
 
     return DomainSpecificSysPromptInputData(
         lm_role_as_verb_phrase=LM_ROLE_AS_VERB_PHRASE,

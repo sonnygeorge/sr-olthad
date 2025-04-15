@@ -80,12 +80,11 @@ def detect_extract_and_parse_json_from_text(
         # Pattern to match JSON objects (including nested) between curly braces
         json_pattern = r"\{(?:[^{}]|\{[^{}]*\})*\}"
         matches = re.findall(json_pattern, text)
-        if not matches:
+        if len(matches) == 0:
             raise ValueError("No valid JSON found in the text")
-        for match in matches:
+        for json_str_match in reversed(matches):
             try:
-                json_data = json.loads(match)
-                return model_to_extract(**json_data)
+                return model_to_extract.model_validate_json(json_str_match)
             except json.JSONDecodeError:
                 continue  # Silently try next match if JSON parsing fails
             except ValidationError as e:

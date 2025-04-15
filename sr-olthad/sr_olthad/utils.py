@@ -38,6 +38,8 @@ def extract_letter_from_multiple_choice_response(
     (i.e., the field that's meant to contain the final answer).
     """
     for option in options.values():
+        if text[0] == option.letter and text[1:3] == ". ":
+            return option.letter
         option_letter_clean = "".join(c for c in option.letter if c.isalpha()).lower()
         option_text_clean = "".join(c for c in option.text if c.isalpha()).lower()
         chosen_clean = "".join(c for c in text if c.isalpha()).lower()

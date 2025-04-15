@@ -9,6 +9,9 @@ class TestExtractLetterFromMultipleChoiceResponse:
         ans = "B. No, there are still reasonable things that could be done to accomplish the task."
         opts = EFFORT_WAS_EXHAUSTIVE_OPTIONS
         assert extract_letter_from_multiple_choice_response(ans, opts) == opts[False].letter
+        ans = "B. No, there are still things to do."
+        opts = EFFORT_WAS_EXHAUSTIVE_OPTIONS
+        assert extract_letter_from_multiple_choice_response(ans, opts) == opts[False].letter
 
 
 if __name__ == "__main__":

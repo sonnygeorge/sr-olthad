@@ -73,7 +73,9 @@ Carefully think step-by-step. Finally, only once you've concluded your deliberat
 {get_prompt_json_spec(PlannerLmResponseOutputData)}
 ```
 
-### Potentially Useful Auxiliary Information About Domain
+IMPORTANT: For determing your response, pay close attention to following the domain-specific information so that your outputs adhere to the system and best practices of the domain!
+
+### Crucial Information About Domain
 
 {{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}"""
 
