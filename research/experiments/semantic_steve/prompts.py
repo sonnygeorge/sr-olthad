@@ -1,3 +1,4 @@
+from jinja2 import Template
 from semantic_steve import SemanticSteve
 
 from sr_olthad import (
@@ -9,11 +10,9 @@ from sr_olthad import (
 
 LM_ROLE_AS_VERB_PHRASE = SemanticSteve.get_user_role_as_verb_phrase()
 SKILLS_DOCS_STR = "\n\n".join(SemanticSteve.get_skills_docs())
-DOMAIN_EXPOSITION_TEMPLATE = f"""You are controlling a Minecraft player using SemanticSteve, a library that wraps playing the game of Minecraft with textual world-state observations and idiomatic "skill"-function calling.
-
-Here is the documentation for all usable SemanticSteve skill functions:
-{SKILLS_DOCS_STR}
-
+SKILLS_DOCS_INSERT = f"\nHere is the documentation for what skill functions are available to you:\n{SKILLS_DOCS_STR}\n"
+DOMAIN_EXPOSITION_TEMPLATE = """You are controlling a Minecraft player using SemanticSteve, a library that wraps playing the game of Minecraft with textual world-state observations and idiomatic "skill"-function calling.
+{{ skills_docs }}
 Here are some general tips for using SemanticSteve:
 - The best way to find things is to think about what is visible in each direction and approach something in the direction that you think is most likely to get you closer to your goals/the things you want to find.
 - To dig down, you can call the pathFindToCoordinates function with a y-coordinate that is below your current level. It is recommended that you dig down at (i.e., pick coordinates) at a diagonal angle (and not straight down) to avoid falling into lava or other hazards."""
@@ -27,7 +26,7 @@ Remember, however, that you are to break down tasks into further high-level subt
 
 Pay attention to the documentation for how to use the functions to make sure you are invoking them correctly in appropriate situations (i.e., when they are likely to succeed). Do not hallicinate functions that are not available to you. Only use the functions that are documented above.
 
-IMPORTANT: IF THE TASK IN QUESTION IS GRANULAR ENOUGH FOR AN APPROPRIATE NEXT FUNCTION CALL TO BE THE NEXT-MOST PLAN, OUTPUT A VALID SKILL FUNCTION CALL, e.g., if the task was 'get planks' and you had 6 'oak_logs' in your inventory: ```json\n{\n"new_planned_subtasks": ["craftItems('oak_planks', 24)"]\n}```."""
+IMPORTANT: IF THE TASK IN QUESTION IS GRANULAR ENOUGH FOR AN APPROPRIATE NEXT FUNCTION CALL TO BE THE NEXT-MOST PLAN, OUTPUT A VALID SKILL FUNCTION CALL, e.g., if the task was 'get planks' and you had 6 'oak_logs' in your inventory:\n```json\n{\n"new_planned_subtasks": ["craftItems('oak_planks', 24)"]\n}```."""
 
 ATTEMPT_SUMMARIZER_INSERT = (
     'IMPORTANT: Pay close attention to the "skillInvocationResults" and "inventoryChanges"!'
@@ -42,8 +41,13 @@ def get_semantic_steve_sys_prompt_input_data(
 ) -> DomainSpecificSysPromptInputData:
     # TODO: Dynamically render in situation-relevent tips
     # TODO: Dynamically render in situation-relevent examples
-    # TODO: Withhold skills docs from agents that don't need to see them
-    domain_exposition = DOMAIN_EXPOSITION_TEMPLATE
+
+    template: Template = Template(DOMAIN_EXPOSITION_TEMPLATE)
+    if lm_agent_name in (LmAgentName.PLANNER, LmAgentName.ATTEMPT_SUMMARIZER):
+        domain_exposition = template.render(skills_docs=SKILLS_DOCS_INSERT)
+    else:
+        domain_exposition = template.render(skills_docs="")
+
     if lm_agent_name == LmAgentName.PLANNER:
         domain_exposition += "\n\n" + PLANNER_INSERT
     elif lm_agent_name == LmAgentName.ATTEMPT_SUMMARIZER:

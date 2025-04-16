@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from typing import ClassVar, Self
 
 from sr_olthad.config import SrOlthadCfg
-from sr_olthad.schema import AttemptedTaskStatus, BacktrackedFromTaskStatus, TaskStatus
+from sr_olthad.schema import TaskStatus
 
 # TODO: How would the "Forgetter" agent update the OLTHAD?
 # ...Pruning one node at a time?
@@ -87,6 +87,15 @@ class OlthadTraversal:
             msg = f"Node with id '{node_id}' not found in `self.nodes`"
             raise OlthadUsageError(msg)
 
+        def backtrack_once():
+            # Prune subtasks
+            for subtask_node in self._cur_node.subtasks:
+                del self._nodes[subtask_node._id]
+            self._cur_node._non_planned_subtasks = []
+            self._cur_node._planned_subtasks = []
+            # Backtrack
+            self._cur_node = self._nodes[self._cur_node._parent_id]
+
         # Prune children and backtrack until the cur_node is the child of the target node
         # This prevents grandchildren after backtracking
         while self._cur_node._parent_id != node_id:
@@ -94,17 +103,10 @@ class OlthadTraversal:
                 msg = "Provided `node_id` is not an ancestor of the current node."
                 raise OlthadUsageError(msg)
 
-            # Prune subtasks
-            for subtask_node in self._cur_node.subtasks:
-                del self._nodes[subtask_node._id]
-            self._cur_node._non_planned_subtasks = []
-            self._cur_node._planned_subtasks = []
-
-            # Backtrack
-            self._cur_node = self._nodes[self._cur_node._parent_id]
+            backtrack_once()
 
         # Backtrack once more since we know the node_id == self.cur_node.parent_id
-        self._cur_node = self._nodes[self._cur_node._parent_id]
+        backtrack_once()
 
     def recurse_inward(self) -> None:
         assert len(self._cur_node._planned_subtasks) > 0
@@ -159,11 +161,14 @@ class OlthadTraversal:
     def update_status_and_retrospective_of(
         self,
         node: "TaskNode",
-        new_status: BacktrackedFromTaskStatus | AttemptedTaskStatus,
+        new_status: TaskStatus,
         new_retrospective: str | None = None,
     ):
-        if node != self._cur_node and node._parent_id != self._cur_node._id:
-            msg = "`node` can only be the current node or one of its subtasks."
+        is_current_node = node == self._cur_node
+        is_subtask = node._parent_id == self._cur_node._id
+        is_ancestor = self._cur_node._id.startswith(node._id)
+        if not is_current_node and not is_subtask and not is_ancestor:
+            msg = "The node to update must be the current node, a subtask of the current node, or an ancestor of the current node."
             raise OlthadUsageError(msg)
 
         if new_status == TaskStatus.IN_PROGRESS:
@@ -188,6 +193,8 @@ class OlthadTraversal:
                 _task=node._task,
                 _status=new_status,  # (changed)
                 _retrospective=new_retrospective,  # (changed)
+                _non_planned_subtasks=node._non_planned_subtasks,
+                _planned_subtasks=node._planned_subtasks,
             )
             pending_changes = {node.id: pending_change}
             return self._root_node.stringify(pending_changes=pending_changes)
@@ -243,7 +250,7 @@ class TaskNode:
         return self._parent_id
 
     @property
-    def subtasks(self) -> list[Self]:
+    def subtasks(self) -> list[Self] | None:
         return self._non_planned_subtasks + self._planned_subtasks
 
     @property
@@ -412,8 +419,13 @@ class TaskNode:
 
             if pending_changes is not None and node._id in pending_changes:
                 node_for_update = pending_changes[node._id]
-            elif parent_is_a_pending_change and isinstance(parent_subtasks, list):
+            elif parent_is_a_pending_change and len(parent_subtasks) > 0:
                 idx_of_node_in_parent_subtasks = parent_subtasks.index(node)
+                if (
+                    len(pending_changes[node.parent_id].subtasks)
+                    <= idx_of_node_in_parent_subtasks
+                ):
+                    pass  # Abitrary line of code in order to catch w/ break point
                 node_for_update = pending_changes[node.parent_id].subtasks[
                     idx_of_node_in_parent_subtasks
                 ]
@@ -450,29 +462,46 @@ class TaskNode:
 
                 # Iterate through subtasks
                 n_subtasks = len(node.subtasks)
-                for i, subtask in enumerate(node.subtasks):
-                    # Check if we've reached a planned subtask that should be redacted
-                    if should_redact_planned and subtask._status == TaskStatus.PLANNED:
-                        # Redact from here on (break the loop)
-                        prepend = "\n" + indent * (indent_lvl + 2)
-                        output_str += prepend + TaskNode._REDACTED_PLANS_STR
-                        if node_for_update is not None:
-                            output_str_w_changes += prepend
-                            output_str_w_changes += TaskNode._REDACTED_PLANS_STR
-                        break
-
-                    # Recursive call to increment the subtask to the output string
-                    increment_node_str_to_output_str(
-                        node=subtask,
-                        indent_lvl=indent_lvl + 2,
-                        should_redact_planned=should_redact_planned,
-                        parent_subtasks=node.subtasks,
-                    )
-
-                    # Add comma if not last subtask
-                    if i < n_subtasks - 1:
-                        output_str += ","
-                        if node_for_update is not None:
+                if isinstance(node_for_update, TaskNode):
+                    n_subtasks_of_node_for_update = len(node_for_update.subtasks)
+                else:
+                    n_subtasks_of_node_for_update = 0
+                for i in range(max(n_subtasks, n_subtasks_of_node_for_update)):
+                    if len(node.subtasks) > i:
+                        subtask = node.subtasks[i]
+                        # Check if we've reached a planned subtask that should be redacted
+                        if should_redact_planned and subtask._status == TaskStatus.PLANNED:
+                            # Redact from here on (break the loop)
+                            prepend = "\n" + indent * (indent_lvl + 2)
+                            output_str += prepend + TaskNode._REDACTED_PLANS_STR
+                            if node_for_update is not None:
+                                output_str_w_changes += prepend
+                                output_str_w_changes += TaskNode._REDACTED_PLANS_STR
+                            break
+                        # Recursive call to increment the subtask to the output string
+                        increment_node_str_to_output_str(
+                            node=subtask,
+                            indent_lvl=indent_lvl + 2,
+                            should_redact_planned=should_redact_planned,
+                            parent_subtasks=node.subtasks,
+                        )
+                        # Add comma if not last
+                        if i < n_subtasks - 1:
+                            output_str += ","
+                            if node_for_update is not None:
+                                output_str_w_changes += ","
+                    else:
+                        new_subtask_in_update = node_for_update.subtasks[i]
+                        partial_dumps = get_partial_json_dumps(
+                            new_subtask_in_update, indent_lvl + 2
+                        )
+                        output_str_w_changes += partial_dumps + ",\n"
+                        prepend = indent * (indent_lvl + 3)
+                        output_str_w_changes += prepend + '"subtasks": null\n'
+                        prepend = indent * (indent_lvl + 2)
+                        output_str_w_changes += prepend + "}"
+                        # Add comma if not last
+                        if i < n_subtasks_of_node_for_update - 1:
                             output_str_w_changes += ","
 
                 # Finally, close the subtasks list/array

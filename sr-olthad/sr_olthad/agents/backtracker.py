@@ -325,7 +325,7 @@ class Backtracker:
             )
 
             # Run lm step
-            cur_task_was_deemed_to_have_been_a_partial_success = await lm_step()  # noqa: F841
+            cur_task_was_deemed_a_partial_success = await lm_step()  # noqa: F841
 
             # React to lm step result (always backtrack)
             # Backtrack to the parent of the current node

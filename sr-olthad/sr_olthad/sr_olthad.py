@@ -49,8 +49,9 @@ class SrOlthad:
         # TODO: Make this non-optional since sr-OLTHAD will never been run w/out domains?
         # ...or keep it optional for _true_ plug-and-play to enable seeing if the LM can
         # just infer good plans/actions without explicit domain exposition?
-        get_domain_specific_sys_prompt_input_data: GetDomainSpecificSysPromptInputData
-        | None = None,
+        get_domain_specific_sys_prompt_input_data: (
+            GetDomainSpecificSysPromptInputData | None
+        ) = None,
         streams_handler: LmStreamsHandler | None = None,
     ):
         super().__init__()
@@ -90,7 +91,7 @@ class SrOlthad:
     async def _traverse_and_get_next_skill_invocation(self, env_state: str) -> str | None:
         if (
             self.has_been_called_at_least_once_before
-            or self.traversal.cur_node.parent_id == self.traversal.root_node.id
+            or not self.traversal.cur_node.is_root()
         ):
             #############################################################
             ## Deliberate backtracking and backtrack if deemed prudent ##

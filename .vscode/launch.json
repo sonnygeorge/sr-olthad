@@ -11,6 +11,17 @@
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       }
+    },
+    {
+      "name": "Python Debugger: run_gui_semantic_steve.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/research/scripts/run_gui_semantic_steve.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
     }
   ]
 }

@@ -79,7 +79,7 @@ IMPORTANT: The highest-level task with id "1" is was requested of you by a human
 YOU MUST FOLLOW THESE INSTRUCTIONS:
 
 Instructions:
-1. If the task in question is the highest-level task (id "1") and it is _not_ immoral (according to you judgment) or _truly_ impossible (e.g., because of some discovered thing), answer {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[True].letter}. This is because if the user requested the task, it is always inherently more worthwhile than alternatives. If this user-requested root task is immoral or impossible, answer {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[False].letter} and explain why in you final response JSON.
+1. If the task in question is the highest-level task (id "1") and it is _not_ immoral (according to your judgment) or _truly_ impossible (e.g., because of some discovered thing), answer {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[True].letter}. This is because if the user requested the task, it is always inherently more worthwhile than alternatives. If this user-requested root task is immoral or impossible, answer {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[False].letter} and explain why in you final response JSON.
 2. If the task in question is not the highest-level task (id "1"). Think things through step-by-step, considering each of the points in ['Food For Thought'](#food-for-thought). Finally, only once you've concluded your deliberation, provide your final response JSON.
 
 In all cases, you will conclude by outputting your final response JSON that strictly adheres to the following format:
