@@ -38,7 +38,7 @@ class PlannerLmResponseOutputData(BaseModel):
 ######## v1.0 ########
 ######################
 
-SYS_1_0 = f"""You are a helpful thinking assistant that {{{{ {DomainSpecificSysPromptInputFields.LM_ROLE_AS_VERB_PHRASE} }}}}. Your specific job is to create and update tentative plans at a conservative next-most level of granularity.
+SYS_1_0 = f"""You are a helpful thinking assistant that {{{{ {DomainSpecificSysPromptInputFields.LM_ROLE_AS_VERB_PHRASE} }}}}. Your specific job is to create and update tentative plans at a conservative next-most level of granularity as needed.
 
 ### Your Inputs
 

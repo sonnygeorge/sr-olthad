@@ -17,7 +17,7 @@ Here are some general tips for using SemanticSteve:
 - To dig down, you can call the pathFindToCoordinates function with a y-coordinate that is below your current level. It is recommended that you dig down at (i.e., pick coordinates) at a diagonal angle (and not straight down) to avoid falling into lava or other hazards."""
 
 
-PLANNER_INSERT = """IMPORTANT: Since you are responsible for creating and updating tentative plans, it is important to remember that when the level of granularity is appropriately narrow, you must output tasks that are syntactically-valid function calls to the SemanticSteve skill functions.
+PLANNER_INSERT = """IMPORTANT: When a subtask aligns with an available function, you must output tasks that are syntactically-valid function calls to the SemanticSteve skill functions.
 
 For example, if the "task in question" was "gather wood" and an "oak_log" was visible in your immediate surroundings, you probably ought to plan at least a task that is a syntactically-valid invocation of the `mineBlocks` function, e.g., you could output something like `["mineBlocks('oak_log')"]`.
 
