@@ -45,11 +45,13 @@ You will be provided:
 
 1. You will assume the most likely interpretation of the "task in question" in the context of the ongoing progress and plans.
 2. You will think about what outcome state the "task in question" is phrased to achieve.
-3. You will look for evidence that the task has been completed or not. Do **not** extrapolate about hypothetical alternatives to the task in question. Instead, focus on the provided context:
-    * The current environment state
-    * The "task in question's" history of previously attempted subtasks (if any)
-4. You will reason about any evidence (or lack thereof).
-5. After completing steps 1-4, you will output your final answer as a JSON that strictly adheres to this specification:
+3. Considering only how the task is worded. Do **not** extrapolate about hypothetical alternatives to the task in question. Instead, focus on the provided context:
+    a. The current environment state
+        - Example: Consider the quantitative evidence of the environment state. E.g., if you want 4 'strawberries', and you currently have 2 'strawberries', that is not enough to consider the task completed.
+    b. Previous retrospectives and tasks.
+        - Example: If you want 4 'strawberries' and you currently have 8, there may be a reason why you still want 4 'more'. If so, it will be inferrable by reflecting over the previous retrospectives and task trajectory.
+4. You will reason about any found evidence (or lack thereof).
+5. Only after completing steps 1-5, you will output your final answer as a JSON that strictly adheres to this specification:
 
 ```json
 {get_prompt_json_spec(BacktrackerSubAgentLmResponseOutputData)}
@@ -80,6 +82,8 @@ QUESTION:
 Remember to follow your 5-step instructions for your response.
 
 IMPORTANT: Retrospectives should be short: 1-2 sentences of the important takeaways.
+IMPORTANT: Completion of a task should be kept in context to that task only. Completion of higher-level tasks is not decided with the completion of a subtask.
+IMPORTANT: Having the "ability" to complete the current task, given the current environment state, is NOT completing the current task.
 """
 
 V1_0_PROMPTS = SingleTurnPromptTemplates(

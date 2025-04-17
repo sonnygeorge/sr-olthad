@@ -10,6 +10,7 @@ requires-python = ">=3.11"
 dependencies = [
     "sr-olthad",
     "semantic-steve",
+    "python-dotenv",
 ]
 
 [tool.uv.workspace]
@@ -18,11 +19,6 @@ members = ["sr-olthad"]
 [tool.uv.sources]
 sr-olthad = { workspace = true }
 semantic-steve = { git = "https://github.com/sonnygeorge/semantic-steve.git", branch = "gen/refactor" }
-
-[dependency-groups]
-dev = [
-    "python-dotenv>=1.1.0",
-]
 
 [tool.ruff]
 line-length = 93
@@ -45,10 +41,10 @@ unfixable = []
 "__init__.py" = ["F401"]
 "quick_tests.py" = ["E402"]
 "run_gui.py" = ["E402"]
-"run_gui_semantic_steve.py" = ["E402"]
+"research/scripts/*" = ["E402"]
 
 [tool.ruff.format]
 quote-style = "double"
 
 [tool.ruff.lint.isort]
-known-first-party = ["sr_olthad"]
+known-first-party = ["sr_olthad", "research"]
