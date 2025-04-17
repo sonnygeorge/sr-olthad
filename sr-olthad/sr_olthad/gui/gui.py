@@ -140,6 +140,7 @@ def stringify_instruct_lm_messages(messages: list[InstructLmMessage]) -> str:
         output_str += msg["content"] + "\n\n"
     return output_str.strip()
 
+
 class GuiApp:
     OLTHAD_UPDATE_LABEL_FSTR = "Pending OLTHAD Update⠀⠀(cur node={task_id})"
     CUR_AGENT_LABEL_FSTR = "Current Agent = {lm_agent_name}"
@@ -227,10 +228,10 @@ class GuiApp:
         # Update the prompt column text with prompt messages
         msgs_str = stringify_instruct_lm_messages(emission.input_messages)
         self.prompt_col_text_box.reset(msgs_str.split("\n"))
-        
+
         # Only clear the OLTHAD update column text if we have new content to display
         # (Don't clear it during pre-generation, this will happen in approve_lm_step when new content is available)
-        
+
         # Update LM response columns to have enough text boxes for streams
         self.lm_response_col.clear()
         self.lm_response_text_boxes = []
@@ -252,11 +253,11 @@ class GuiApp:
         # Update OLTHAD update columns text only when we have new content
         if emission.diff:
             self.olthad_update_col_text_box.reset(emission.diff)
-        
+
         # If auto-accept is enabled, return the value of the accept switch without waiting for button click
         if self.auto_accept_switch.value:
             return self.accept_switch.value
-            
+
         # Otherwise, await user to indicate acceptance or rejection of the OLTHAD update
         await self.submit_btn.clicked()
         return self.accept_switch.value

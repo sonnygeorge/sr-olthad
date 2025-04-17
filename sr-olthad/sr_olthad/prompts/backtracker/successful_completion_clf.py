@@ -65,17 +65,17 @@ QUESTION:
 ### Your Response
 
 1. You will assume the most likely face-value interpretation of the "task in question" (in the context of the ongoing progress and plans).
-    a. "face-value" interpretation can also include the task already being completed. 
+    a. "face-value" interpretation can also include the task already being completed.
         - Example: If a task is about retrieval, and the target is already retrieved, the task is complete.
 2. You will think about what outcome state the "task in question" is phrased to achieve.
 3. Considering the only semantic interpretations that are in-scope for _how the task is worded_ (e.g., do **not** extrapolate about hypothetical "alternatives" for "_effectively_ accomplishing the same thing"), you will look for evidence (for whether the "task in question" has or has not been completed) in:
     a. The current environment state
         - Example: Consider the quantitative evidence of the environment state. E.g., if you want 4 'strawberries', and you currently have 2 'strawberries', that is not enough for the task to be completed.
-    b. previous retrospectives and tasks. 
+    b. previous retrospectives and tasks.
         - Example: If you want 4 'strawberries' and you currently have 8, there may be a reason why you still want 4 'more' (you need the extra 4 'strawberries' to make something, for example). If this is the case, this task should not be dropped.
         - If the logic matches the example above, IT IS NOT COMPLETE!
     c. The "task in question's" history of previously attempted subtasks (if any)
-    
+
 4. You will reason about any found evidence (or lack thereof).
 5. Only after completing steps 1-5, you will output your final answer as a JSON that strictly adheres to this specification:
 
@@ -109,7 +109,7 @@ Remember to follow your 5-step instructions for your response.
 
 IMPORTANT: Retrospectives should be short: 1-2 sentences of the important takeaways.
 IMPORTANT: Completion of a task should be kept in context to that task only. Completion of higher-level tasks is not decided with the completion of a subtask.
-IMPORTANT: Having the "ability" to complete the current task, given the current environment state, is NOT completing the current task. 
+IMPORTANT: Having the "ability" to complete the current task, given the current environment state, is NOT completing the current task.
 """
 
 V1_0_PROMPTS = SingleTurnPromptTemplates(

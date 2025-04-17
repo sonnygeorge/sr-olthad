@@ -29,7 +29,7 @@ Remember, however, that you are to break down tasks into further high-level subt
 Pay attention to the documentation for how to use the functions to make sure you are invoking them correctly in appropriate situations (i.e., when they are likely to succeed). Do not hallicinate functions that are not available to you. Only use the functions that are documented above.
 
 IMPORTANT: If you are interacting with items, the amount of an item you want to craft, place, insert, take, etc., must be explicitly specified in the task. Then, include a total count.
-    - Example: If we want to craft 2 blocks, and we have 4 in our inventory, the task is: "Craft 2 blocks". 
+    - Example: If we want to craft 2 blocks, and we have 4 in our inventory, the task is: "Craft 2 blocks".
     - Example: "Acquire more oak planks" should be "Acquire X oak planks".
     - Example: "do craft oak door from oak planks" should be "Craft 1 door from 6 oak planks".
     - Example: "craft iron nuggets from iron ingots" should be "craft 9 iron nuggets from 1 iron ingot".
@@ -47,7 +47,7 @@ IMPORTANT: NEVER output a function call with surrounding text, like \"Execute <f
 #     - Example: "craft 1 door from 6 planks" REQUIRES its first subtask to be "getRecipesForItem('door')".
 #         - Reasoning: You do not know the recipes for items. The skill will tell you what you need explicitly.
 #     - Exception: If they have already been looked up before, you can use the cached recipes. If it was skipped, you may also skip them.
-        
+
 
 ATTEMPT_SUMMARIZER_INSERT = (
     'IMPORTANT: Pay close attention to the "skillInvocationResults" and "inventoryChanges"!'

@@ -426,10 +426,14 @@ class TaskNode:
                     <= idx_of_node_in_parent_subtasks
                 ):
                     pass  # Abitrary line of code in order to catch w/ break point
-                
-                assert len(pending_changes[node.parent_id].subtasks) > idx_of_node_in_parent_subtasks, \
+
+                assert (
+                    len(pending_changes[node.parent_id].subtasks)
+                    > idx_of_node_in_parent_subtasks
+                ), (
                     f"Pending changes for parent node: {len(pending_changes[node.parent_id].subtasks)} | {idx_of_node_in_parent_subtasks}"
-                
+                )
+
                 node_for_update = pending_changes[node.parent_id].subtasks[
                     idx_of_node_in_parent_subtasks
                 ]
