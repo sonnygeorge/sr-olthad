@@ -2,7 +2,6 @@ from typing import ClassVar
 
 from jinja2 import Template
 from pydantic import BaseModel, Field
-
 from sr_olthad.framework.utils import get_prompt_json_spec
 from sr_olthad.prompts._strings import (
     EXAMPLE_OLTHAD_FOR_SYS_PROMPT,
@@ -45,17 +44,12 @@ SYS_1_0 = f"""You are a helpful thinking assistant that {{{{ {DomainSpecificSysP
 
 You will be provided:
 
-1. A representation of the most recently observed state of the world (i.e., the environment you are in).
-CURRENT ENVIRONMENT STATE:
-...
-
-2. A JSON depicting your ongoing progress (memory) and ever-evolving hierarchical plans, where the highest-most (root) task is requested of you by a human user. E.g.:
-PROGRESS/PLANS:
+1. CURRENT ENVIRONMENT STATE: a representation of the most recently observed state of the environment you are in.
+2. PROGRESS/PLANS: a JSON depicting your ongoing progress and hierarchical plans, where the root task is your overall goal. E.g.,
 ```json
 {EXAMPLE_OLTHAD_FOR_SYS_PROMPT}
 ```
-
-3. An indication of the "task in question" (i.e., the task for which you will be determining appropriate planned subtasks). E.g.:
+3. TASK IN QUESTION: a JSON object defining the task you are evaluating the completion of. Please note that the `status` of your "task in question" will be a question mark since you are evaluating it. E.g.,
 ```text
 TASK IN QUESTION:
 {EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT}
@@ -63,11 +57,11 @@ TASK IN QUESTION:
 
 ### Your Response
 
-Regardless of whether the task in question has tentatively planned subtasks, your job is to consider how things are progressing (with respect to the aims/plans towards parent outcomes) and provide an updated set of tentatively planned subtasks for the task in question. This, your updated set will replace any existing tentatively planned subtasks. Therefore, e.g., if the existing tentatively planned subtasks are fine as-is, simply list them back and they will be fed back into system with no change.
+Regardless of whether the task in question has tentatively planned subtasks, your job is to consider how things are progressing (with respect to the aims/plans towards parent outcomes) and provide an updated set of tentatively planned subtasks for the task in question. Your updated set will replace any existing tentatively planned subtasks. If the existing tentatively planned subtasks are sufficient, simply repeat them to indicate that no update was necessary.
 
-Since the system is designed to gradually break down tasks as much as needed, you should not over-granularize the planned subtasks too early. Instead focus on planning at a sensible next-most level of abstraction that will help define crucial task-concepts without planning forward too much detail. After all, the future is often uncertain and it would be inefficient to speculate too granularly far into the future. When planning at high levels of abstraction, focus on crucial strategic steps that will roughly outline good strategies. Then, when planning at lower levels of abstraction, you'll have enough strategical context to inform more detailed steps. Focus intently on conforming your plans to be intelligent given what you are observing in the environment. Think about past retrospectives and try not to fall into the same repetitive patterns or repeat futile actions/strategies.
+Since the system is designed to gradually break down tasks as much as needed, you should not over-granularize the planned subtasks too early. Instead, focus on planning sensible next steps that will help define goals without too much detail. Do not speculate too granularly about future subtasks. When planning at high levels of abstraction, focus on crucial strategic steps that will roughly outline good strategies. Then, when planning at lower levels of abstraction, you'll have enough strategic context to inform more detailed steps. Focus intently on conforming your plans to be intelligent given what you are observing in the environment. Consider past retrospectives and avoid repeating futile actions and strategies.
 
-Carefully think step-by-step. Finally, only once you've concluded your deliberation, provide your final response in a JSON that strictly adheres to the following format:
+Carefully think step-by-step. Finally, only once you've concluded your thinking, provide your final response in a JSON that strictly adheres to the following format:
 
 ```json
 {get_prompt_json_spec(PlannerLmResponseOutputData)}
@@ -95,7 +89,7 @@ TASK IN QUESTION:
 
 IMPORTANT: Planned subtasks MUST be phrased in imperative tense, e.g. "Do X".
 IMPORTANT: Do not phrase subtasks with any conditionals, e.g. "If X, then do Y".
-IMPORTANT: Do not repeat previous subtasks unnecessarily! (necessicity is largely determined by the environment state)"""
+IMPORTANT: Do not repeat previous subtasks unnecessarily."""
 
 V1_0_PROMPTS = SingleTurnPromptTemplates(
     sys_prompt_template=Template(SYS_1_0),

@@ -1,5 +1,4 @@
 from jinja2 import Template
-
 from sr_olthad.framework.utils import get_prompt_json_spec
 from sr_olthad.prompts.backtracker._common import (
     BacktrackerSubAgentLmResponseOutputData,
@@ -20,7 +19,7 @@ WAS_PARTIAL_SUCCESS_OPTIONS: BinaryChoiceOptions = {
     ),
     False: MultipleChoiceQuestionOption(
         letter="B",
-        text="It's better to consider the attempt a failure (i.e., semantically, it's more of a one-or-the-other kind of thing).",
+        text="It's better to consider the attempt a failure.",
     ),
 }
 
@@ -37,37 +36,20 @@ SYS_1_0 = f"""You are a helpful thinking assistant that {{{{ {DomainSpecificSysP
 
 You will be provided:
 
-1. A JSON depicting your ongoing progress (memory) and ever-evolving hierarchical plans, where the highest-most (root) task is requested of you by a human user.
-PROGRESS/PLANS:
-```json
-...
-```
-
-2. An indication of the "task in question" (i.e., the task you are evaluating the completion of). Please note that the "status" of your "task in question" will be a question mark since you are evaluating it.
-TASK IN QUESTION:
-```json
-...
-```
-
-3. A representation of the most recently observed state of the world (i.e., the environment you are in).
-CURRENT ENVIRONMENT STATE:
-...
-
-4. The question you are being asked:
-QUESTION:
-{V1_0_QUESTION}
-{WAS_PARTIAL_SUCCESS_OPTIONS[True].letter}. {WAS_PARTIAL_SUCCESS_OPTIONS[True].text}
-{WAS_PARTIAL_SUCCESS_OPTIONS[False].letter}. {WAS_PARTIAL_SUCCESS_OPTIONS[False].text}
+1. PROGRESS/PLANS: a JSON depicting your ongoing progress and hierarchical plans, where the root task is your overall goal.
+2. TASK IN QUESTION: a JSON object defining the task you are evaluating the completion of. Please note that the `status` of your "task in question" will be a question mark since you are evaluating it.
+3. CURRENT ENVIRONMENT STATE: a representation of the most recently observed state of the environment you are in.
+4. QUESTION: The question you are to answer.
 
 ### Your Response
 
-Carefully think things through step-by-step. Finally, only once you've concluded your deliberation, provide your final response in a JSON that strictly adheres to the following format:
+Carefully think things through step-by-step. Finally, once you've concluded your thinking, provide your final response in a JSON that strictly adheres to the following format:
 
 ```json
 {get_prompt_json_spec(BacktrackerSubAgentLmResponseOutputData)}
 ```
 
-### Potentially Useful Auxiliary Information About Domain
+### Auxiliary Information About Domain
 
 {{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}"""
 
