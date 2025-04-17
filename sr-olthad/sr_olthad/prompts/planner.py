@@ -61,23 +61,53 @@ TASK IN QUESTION:
 {EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT}
 ```
 
+
+IMPORTANT: For determining your response, pay close attention to following the domain-specific information so that your outputs adhere to the system and best practices of the domain!
+
+### Crucial Information About Domain
+
+{{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}
+
+
 ### Your Response
 
 Regardless of whether the task in question has tentatively planned subtasks, your job is to consider how things are progressing (with respect to the aims/plans towards parent outcomes) and provide an updated set of tentatively planned subtasks for the task in question. This, your updated set will replace any existing tentatively planned subtasks. Therefore, e.g., if the existing tentatively planned subtasks are fine as-is, simply list them back and they will be fed back into system with no change.
 
 Since the system is designed to gradually break down tasks as much as needed, you should not over-granularize the planned subtasks too early. Instead focus on planning at a sensible next-most level of abstraction that will help define crucial task-concepts without planning forward too much detail. After all, the future is often uncertain and it would be inefficient to speculate too granularly far into the future. When planning at high levels of abstraction, focus on crucial strategic steps that will roughly outline good strategies. Then, when planning at lower levels of abstraction, you'll have enough strategical context to inform more detailed steps. Focus intently on conforming your plans to be intelligent given what you are observing in the environment. Think about past retrospectives and try not to fall into the same repetitive patterns or repeat futile actions/strategies.
 
-Carefully think step-by-step. Finally, only once you've concluded your deliberation, provide your final response in a JSON that strictly adheres to the following format:
+Rules for subtasks:
+1. If the current "task in question" is a "skill" function call, LEAVE IT. you are done, this is the most that we can subdivide it. This is an atomic operation.
+2. Sub-tasks should not incorporate the same broad goal as its parent task. A sub task should be a more granularized, specific section of the parent task. There should definitely be zero repeats.
+3. Interacting with the environment can ONLY happen through the above "skills". If your subtasks involve interacting with the environment, you must use a skill to do so. If you are attempting to interact with the environment and it appears that there is no skill to do so, this is an INVALID subtask and MUST not be considered.
+4. There may be multiple solutions to a given problem. Prioritize subtasks that utilize information known from the current environment over solutions that require exploration.
+5. When creating subtasks, remember to look up at the parent task's ancestors to see if you are repeating logic. If you are, do not include those repeated subtasks.
+6. subtasks that cover a broad scope should not use suggestive language.
+    - Example: If you need to get ingredients for a cake, you should not say "Buy ingredients", but "Acquire ingredients". 
+        - Reasoning: You may have ingredients at home, but you would not "plan" for that if you suggest "buying" ingredients.
 
+
+Carefully think step-by-step. Finally, only once you've concluded your deliberation, provide your final response in list that strictly adheres to the following format:
+
+current task: <task>
+<explanation about why these subtasks, one bullet point per each>
+
+subtasks: [...] (string list)
+
+Now, before we show this response, we need to consider the following:
+Look at the "task in question". Then, compare each subtask to it. If they are essentially the same task, just reworded, remove the subtask entirely from the list.
+
+Tell the user this comparison for every subtask. put it at the end of your output.
+
+If there are no more subtasks remaining, you need to reconsider the task again, focusing on granularizing it down to more specific tasks.
+
+
+The final, final output of the fully completed list of subtasks should be a JSON string that strictly adheres to the following format:
 ```json
 {get_prompt_json_spec(PlannerLmResponseOutputData)}
 ```
 
-IMPORTANT: For determing your response, pay close attention to following the domain-specific information so that your outputs adhere to the system and best practices of the domain!
 
-### Crucial Information About Domain
-
-{{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}"""
+"""
 
 USER_1_0 = f"""CURRENT ENVIRONMENT STATE:
 {{{{ {UserPromptInputFields.ENV_STATE} }}}}
@@ -92,10 +122,26 @@ TASK IN QUESTION:
 {{{{ {UserPromptInputFields.TASK_IN_QUESTION} }}}}
 ```
 
+IMPORTANT: Top level tasks, that cover a broad scope, should not use suggestive language.
+    - Example: If you need to get ingredients for a cake, you should not say "Buy ingredients", but "Acquire ingredients". 
+        - Reasoning: You may have ingredients at home, but you would not "plan" for that if you suggest "buying" ingredients.
 
 IMPORTANT: Planned subtasks MUST be phrased in imperative tense, e.g. "Do X".
-IMPORTANT: Do not phrase subtasks with any conditionals, e.g. "If X, then do Y".
-IMPORTANT: Do not repeat previous subtasks unnecessarily! (necessicity is largely determined by the environment state)"""
+
+IMPORTANT: Do not phrase subtasks with any conditionals, e.g. "If X, then do Y", "do Y if X".
+    - Example: "If I have 5 apples, then do X" should be "Do X with 5 apples".
+        - Reasoning: 
+            - You are not trying to reason about the future, you are trying to plan for it.
+            - If you need to do something if a condition is met, you should just plan for that condition to be met.
+ 
+IMPORTANT: Do not repeat previous tasks unnecessarily!
+    - Example: "Do X with 5 apples" task leading to "With 5 apples do X"
+    - Example: If your task was "get 5 apples", ALL of your subtasks CANNOT include "get 5 apples", or any close derivative of the original task.
+        - Fix: "get 5 apples" task needs new_planned_subtasks like: ["move to the store", "buy 5 apples"]
+        
+IMPORTANT: Logical precursors to our current state may have already occurred. Reflect on the environment state and determine whether you have completed the prerequesites for the current task.
+"""
+
 
 V1_0_PROMPTS = SingleTurnPromptTemplates(
     sys_prompt_template=Template(SYS_1_0),

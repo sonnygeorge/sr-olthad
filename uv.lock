@@ -1196,11 +1196,7 @@ wheels = [
 [[package]]
 name = "semantic-steve"
 version = "0.0.1"
-<<<<<<< HEAD
 source = { editable = "../semantic-steve" }
-=======
-source = { git = "https://github.com/sonnygeorge/semantic-steve.git?branch=gen%2Frefactor#682a580f4d8c636c0748bd43088cb01cd53a44be" }
->>>>>>> origin/dev
 dependencies = [
     { name = "prompt-toolkit" },
     { name = "pydantic" },
@@ -1282,13 +1278,9 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-<<<<<<< HEAD
     { name = "nicegui" },
     { name = "python-dotenv" },
     { name = "semantic-steve", editable = "../semantic-steve" },
-=======
-    { name = "semantic-steve", git = "https://github.com/sonnygeorge/semantic-steve.git?branch=gen%2Frefactor" },
->>>>>>> origin/dev
     { name = "sr-olthad", editable = "sr-olthad" },
 ]
 

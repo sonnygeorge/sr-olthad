@@ -19,16 +19,7 @@ members = ["./sr-olthad"]
 
 [tool.uv.sources]
 sr-olthad = { workspace = true }
-<<<<<<< HEAD
 semantic-steve = { path = "/home/generel/Documents/code/Steve/semantic-steve", editable = true }
-=======
-semantic-steve = { git = "https://github.com/sonnygeorge/semantic-steve.git", branch = "gen/refactor" }
-
-[dependency-groups]
-dev = [
-    "python-dotenv>=1.1.0",
-]
->>>>>>> origin/dev
 
 [tool.ruff]
 line-length = 93
