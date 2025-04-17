@@ -99,6 +99,8 @@ QUESTION:
 {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[False].letter}. {WAS_SUCCESSFULLY_COMPLETED_OPTIONS[False].text}
 
 Remember to follow your 5-step instructions for your response.
+
+IMPORTANT: Retrospectives should be short: 1-2 sentences of the important takeaways.
 """
 
 V1_0_PROMPTS = SingleTurnPromptTemplates(

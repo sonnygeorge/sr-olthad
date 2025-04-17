@@ -90,7 +90,12 @@ PROGRESS/PLANS:
 TASK IN QUESTION:
 ```json
 {{{{ {UserPromptInputFields.TASK_IN_QUESTION} }}}}
-```"""
+```
+
+
+IMPORTANT: Planned subtasks MUST be phrased in imperative tense, e.g. "Do X".
+IMPORTANT: Do not phrase subtasks with any conditionals, e.g. "If X, then do Y".
+IMPORTANT: Do not repeat previous subtasks unnecessarily! (necessicity is largely determined by the environment state)"""
 
 V1_0_PROMPTS = SingleTurnPromptTemplates(
     sys_prompt_template=Template(SYS_1_0),

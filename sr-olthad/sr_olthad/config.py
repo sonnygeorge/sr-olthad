@@ -19,6 +19,7 @@ class LmAgentConfig(Protocol):
     PROMPTS_VERSION: str
 
 
+# OpenAIInstructLm(model="gpt-4.1-2025-04-14")
 class AttemptSummarizerCfg:
     MAX_TRIES_TO_GET_VALID_LM_RESPONSE: int = 5
     INSTRUCT_LM: InstructLm = OpenAIInstructLm(model="gpt-4o-mini-2024-07-18")
@@ -63,5 +64,5 @@ class ForgetterCfg:
 
 class PlannerCfg:
     MAX_TRIES_TO_GET_VALID_LM_RESPONSE: int = 5
-    INSTRUCT_LM: InstructLm = OpenAIInstructLm(model="gpt-4o-mini-2024-07-18")
+    INSTRUCT_LM: InstructLm = GroqInstructLm(model="llama-3.1-8b-instant")
     PROMPTS_VERSION = "1.0"

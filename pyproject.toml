@@ -17,7 +17,7 @@ members = ["sr-olthad"]
 
 [tool.uv.sources]
 sr-olthad = { workspace = true }
-semantic-steve = { git = "https://github.com/sonnygeorge/semantic-steve.git", branch = "dev" }
+semantic-steve = { git = "https://github.com/sonnygeorge/semantic-steve.git", branch = "gen/refactor" }
 
 [dependency-groups]
 dev = [
