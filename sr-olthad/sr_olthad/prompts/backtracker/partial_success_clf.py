@@ -88,6 +88,8 @@ QUESTION:
 {V1_0_QUESTION}
 {WAS_PARTIAL_SUCCESS_OPTIONS[True].letter}. {WAS_PARTIAL_SUCCESS_OPTIONS[True].text}
 {WAS_PARTIAL_SUCCESS_OPTIONS[False].letter}. {WAS_PARTIAL_SUCCESS_OPTIONS[False].text}
+
+IMPORTANT: Retrospectives should be short: 1-2 sentences of the important takeaways.
 """
 
 V1_0_PROMPTS = SingleTurnPromptTemplates(

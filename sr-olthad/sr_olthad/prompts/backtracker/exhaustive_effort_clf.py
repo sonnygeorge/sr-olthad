@@ -91,6 +91,8 @@ QUESTION:
 {V1_0_QUESTION}
 {EFFORT_WAS_EXHAUSTIVE_OPTIONS[True].letter}. {EFFORT_WAS_EXHAUSTIVE_OPTIONS[True].text}
 {EFFORT_WAS_EXHAUSTIVE_OPTIONS[False].letter}. {EFFORT_WAS_EXHAUSTIVE_OPTIONS[False].text}
+
+IMPORTANT: Retrospectives should be short: 1-2 sentences of the important takeaways.
 """
 
 V1_0_PROMPTS = SingleTurnPromptTemplates(

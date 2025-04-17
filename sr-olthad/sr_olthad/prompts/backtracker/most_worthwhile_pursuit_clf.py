@@ -108,6 +108,8 @@ QUESTION:
 {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[False].letter}. {IS_MOST_WORTHWHILE_PURSUIT_OPTIONS[False].text}
 
 Remember to follow your instructions by first checking if the task in question is the root task (id "1") and adapting your evaluation accordingly.
+
+IMPORTANT: Retrospectives should be short: 1-2 sentences of the important takeaways.
 """
 
 V1_0_PROMPTS = SingleTurnPromptTemplates(
