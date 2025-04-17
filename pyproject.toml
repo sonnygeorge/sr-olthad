@@ -10,16 +10,15 @@ requires-python = ">=3.11"
 dependencies = [
     "sr-olthad",
     "semantic-steve",
-    "nicegui",
     "python-dotenv",
 ]
 
 [tool.uv.workspace]
-members = ["./sr-olthad"]
+members = ["sr-olthad"]
 
 [tool.uv.sources]
 sr-olthad = { workspace = true }
-semantic-steve = { path = "/home/generel/Documents/code/Steve/semantic-steve", editable = true }
+semantic-steve = { git = "https://github.com/sonnygeorge/semantic-steve.git", branch = "gen/refactor" }
 
 [tool.ruff]
 line-length = 93

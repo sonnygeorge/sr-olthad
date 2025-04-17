@@ -77,12 +77,12 @@ Since the system is designed to gradually break down tasks as much as needed, yo
 
 Rules for subtasks:
 1. If the current "task in question" is a "skill" function call, LEAVE IT. you are done, this is the most that we can subdivide it. This is an atomic operation.
-2. Sub-tasks should not incorporate the same broad goal as its parent task. A sub task should be a more granularized, specific section of the parent task. There should definitely be zero repeats.
+2. Subtasks should not incorporate the same broad goal as its parent task. A sub task should be a more granularized, specific section of the parent task. There should definitely be zero repeats of parent tasks in subtasks.
 3. Interacting with the environment can ONLY happen through the above "skills". If your subtasks involve interacting with the environment, you must use a skill to do so. If you are attempting to interact with the environment and it appears that there is no skill to do so, this is an INVALID subtask and MUST not be considered.
 4. There may be multiple solutions to a given problem. Prioritize subtasks that utilize information known from the current environment over solutions that require exploration.
 5. When creating subtasks, remember to look up at the parent task's ancestors to see if you are repeating logic. If you are, do not include those repeated subtasks.
-6. subtasks that cover a broad scope should not use suggestive language.
-    - Example: If you need to get ingredients for a cake, you should not say "Buy ingredients", but "Acquire ingredients". 
+6. Subtasks that cover a broad scope should not use suggestive language.
+    - Example: If you need to get ingredients for a cake, you should not say "Buy ingredients", but "Acquire ingredients".
         - Reasoning: You may have ingredients at home, but you would not "plan" for that if you suggest "buying" ingredients.
 
 
@@ -105,8 +105,6 @@ The final, final output of the fully completed list of subtasks should be a JSON
 ```json
 {get_prompt_json_spec(PlannerLmResponseOutputData)}
 ```
-
-
 """
 
 USER_1_0 = f"""CURRENT ENVIRONMENT STATE:
@@ -123,22 +121,22 @@ TASK IN QUESTION:
 ```
 
 IMPORTANT: Top level tasks, that cover a broad scope, should not use suggestive language.
-    - Example: If you need to get ingredients for a cake, you should not say "Buy ingredients", but "Acquire ingredients". 
+    - Example: If you need to get ingredients for a cake, you should not say "Buy ingredients", but "Acquire ingredients".
         - Reasoning: You may have ingredients at home, but you would not "plan" for that if you suggest "buying" ingredients.
 
 IMPORTANT: Planned subtasks MUST be phrased in imperative tense, e.g. "Do X".
 
 IMPORTANT: Do not phrase subtasks with any conditionals, e.g. "If X, then do Y", "do Y if X".
     - Example: "If I have 5 apples, then do X" should be "Do X with 5 apples".
-        - Reasoning: 
+        - Reasoning:
             - You are not trying to reason about the future, you are trying to plan for it.
             - If you need to do something if a condition is met, you should just plan for that condition to be met.
- 
+
 IMPORTANT: Do not repeat previous tasks unnecessarily!
     - Example: "Do X with 5 apples" task leading to "With 5 apples do X"
     - Example: If your task was "get 5 apples", ALL of your subtasks CANNOT include "get 5 apples", or any close derivative of the original task.
         - Fix: "get 5 apples" task needs new_planned_subtasks like: ["move to the store", "buy 5 apples"]
-        
+
 IMPORTANT: Logical precursors to our current state may have already occurred. Reflect on the environment state and determine whether you have completed the prerequesites for the current task.
 """
 
