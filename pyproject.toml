@@ -3,32 +3,28 @@ name = "sr-olthad-research"
 version = "0.1.0"
 description = "sr-OLTHAD research repository"
 readme = "README.md"
-requires-python = ">=3.11"
 authors = [
     { name = "Sonny George", email = "sonnygeorge5@gmail.com" },
 ]
+requires-python = ">=3.11"
 dependencies = [
     "sr-olthad",
-    "semantic-steve @ file:///home/generel/Documents/code/Steve/semantic-steve",
+    "semantic-steve",
+    "nicegui",
+    "python-dotenv",
 ]
 
-# Define optional dependencies
-[project.optional-dependencies]
-dev = [
-    "python-dotenv>=1.1.0",
-]
-
-# Workspace configuration
 [tool.uv.workspace]
-members = ["sr-olthad"]
+members = ["./sr-olthad"]
 
 [tool.uv.sources]
 sr-olthad = { workspace = true }
+semantic-steve = { path = "/home/generel/Documents/code/Steve/semantic-steve", editable = true }
 
-# Ruff linter configuration
 [tool.ruff]
 line-length = 93
 target-version = "py311"
+
 extend-exclude = [
     ".venv",
     "venv",
@@ -37,34 +33,19 @@ extend-exclude = [
 ]
 
 [tool.ruff.lint]
-select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflakes
-    "I",  # isort
-    "B",  # flake8-bugbear
-    "C4", # flake8-comprehensions
-    "UP", # pyupgrade
-]
-ignore = [
-    "E203",  # whitespace before ':' (black-compatible)
-    "E266",  # too many leading '#' for block comment
-    "E501",  # line too long (handled by line-length setting)
-]
+select = ["E", "W", "F", "I", "B", "C4", "UP"]
+ignore = ["E203", "E266", "E501"]
 fixable = ["A", "B", "C", "D", "E", "F", "I"]
 unfixable = []
 
-# Per-file rule exceptions
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 "quick_tests.py" = ["E402"]
 "run_gui.py" = ["E402"]
 "run_gui_semantic_steve.py" = ["E402"]
 
-# Formatting options
 [tool.ruff.format]
 quote-style = "double"
 
-# Import sorting configuration
 [tool.ruff.lint.isort]
-known-first-party = ["sr_olthad"]
+known-first-party = ["sr_olthad", "research"]
