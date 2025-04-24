@@ -1,16 +1,8 @@
-from jinja2 import Template
 from semantic_steve import SemanticSteve
-
-from sr_olthad import (
-    DomainSpecificSysPromptInputData,
-    GetDomainSpecificSysPromptInputData,
-    LmAgentName,
-    UserPromptInputData,
-)
 
 LM_ROLE_AS_VERB_PHRASE = SemanticSteve.get_user_role_as_verb_phrase()
 SKILLS_DOCS_STR = "\n\n".join(SemanticSteve.get_skills_docs())
-SKILLS_DOCS_INSERT = f"\nHere is the documentation for what skill functions are available to you:\n{SKILLS_DOCS_STR}\n"
+SKILLS_DOCS_INSERT = f"\n### Skill Functions Available\n\nHere is the documentation for what skill functions are available to you:\n{SKILLS_DOCS_STR}\n"
 DOMAIN_EXPOSITION_TEMPLATE = """You are controlling a Minecraft player using SemanticSteve, a library that wraps playing the game of Minecraft with textual world-state observations and idiomatic "skill"-function calling. You are playing VANILLA survival minecraft in peaceful mode. All normal game mechanics, concepts, recipes, etc. apply. There are no mods or plugins. DO NOT hallucinate game mechanics.
 {{ skills_docs }}
 """
@@ -36,37 +28,18 @@ IMPORTANT: If you have postualted a task that is semantically equivalent to a fu
 
 IMPORTANT: NEVER output a function call with surrounding text, like \"Execute <function\", \"Perform <function>\", \"Call <function>\", etc. Just output the function call as a JSON string, e.g., `["mineBlocks('oak_log')"]`. The system will take care of executing the function call for you."""
 
-# IMPORTANT: If you are crafting, you MUST look up the recipes for the item you are crafting. THERE IS A SKILL PROVIDED FOR THIS.
-#     - Example: "craft 1 door from 6 planks" REQUIRES its first subtask to be "getRecipesForItem('door')".
-#         - Reasoning: You do not know the recipes for items. The skill will tell you what you need explicitly.
-#     - Exception: If they have already been looked up before, you can use the cached recipes. If it was skipped, you may also skip them.
 
 ATTEMPT_SUMMARIZER_INSERT = (
     'IMPORTANT: Pay close attention to the "skillInvocationResults" and "inventoryChanges"!'
 )
 
+EXAMPLES_TEMPLATE_STR = """
+### Examples
 
-get_semantic_steve_sys_prompt_input_data: GetDomainSpecificSysPromptInputData
+Here are some (abbreviated) examples for how to do your job:
+{% for example in examples %}
+#### Example {{ loop.index }}:
 
-
-def get_semantic_steve_sys_prompt_input_data(
-    lm_agent_name: LmAgentName, user_prompt_input_data: UserPromptInputData
-) -> DomainSpecificSysPromptInputData:
-    # TODO: Dynamically render in situation-relevent tips
-    # TODO: Dynamically render in situation-relevent examples
-
-    template: Template = Template(DOMAIN_EXPOSITION_TEMPLATE)
-    if lm_agent_name in (LmAgentName.PLANNER, LmAgentName.ATTEMPT_SUMMARIZER):
-        domain_exposition = template.render(skills_docs=SKILLS_DOCS_INSERT)
-    else:
-        domain_exposition = template.render(skills_docs="")
-
-    if lm_agent_name == LmAgentName.PLANNER:
-        domain_exposition += "\n\n" + PLANNER_INSERT
-    elif lm_agent_name == LmAgentName.ATTEMPT_SUMMARIZER:
-        domain_exposition += "\n\n" + ATTEMPT_SUMMARIZER_INSERT
-
-    return DomainSpecificSysPromptInputData(
-        lm_role_as_verb_phrase=LM_ROLE_AS_VERB_PHRASE,
-        domain_exposition=domain_exposition,
-    )
+{{ example }}
+{% endfor %}
+"""

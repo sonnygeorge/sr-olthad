@@ -1,4 +1,5 @@
 from jinja2 import Template
+
 from sr_olthad.framework.utils import get_prompt_json_spec
 from sr_olthad.prompts.backtracker._common import (
     BacktrackerSubAgentLmResponseOutputData,
@@ -33,7 +34,7 @@ V1_0_QUESTION = "Can the task in question be considered done? Select the multipl
 
 SYS_1_0 = f"""You are a helpful thinking assistant that {{{{ {DomainSpecificSysPromptInputFields.LM_ROLE_AS_VERB_PHRASE} }}}}. Your job is to evaluate whether a task has been successfully completed.
 
-### Your Inputs
+## Your Inputs
 
 You will be provided:
 1. PROGRESS/PLANS: a JSON depicting your ongoing progress and hierarchical plans, where the root task is your overall goal.
@@ -41,7 +42,7 @@ You will be provided:
 3. CURRENT ENVIRONMENT STATE: a representation of the most recently observed state of the environment you are in.
 4. QUESTION: The question you are to answer.
 
-### Your Response
+## Your Response
 
 1. You will assume the most likely interpretation of the "task in question" in the context of the ongoing progress and plans.
 2. You will think about what outcome state the "task in question" is phrased to achieve.
@@ -57,7 +58,7 @@ You will be provided:
 {get_prompt_json_spec(BacktrackerSubAgentLmResponseOutputData)}
 ```
 
-### Auxiliary Information About Domain
+## Auxiliary Information About Domain
 
 {{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}"""
 
@@ -81,8 +82,10 @@ QUESTION:
 
 Remember to follow your 5-step instructions for your response.
 
-IMPORTANT: Retrospectives should be short: 1-2 sentences of the important takeaways.
+IMPORTANT: Retrospectives should be short: 1-4 sentences of the important takeaways.
+
 IMPORTANT: Completion of a task should be kept in context to that task only. Completion of higher-level tasks is not decided with the completion of a subtask.
+
 IMPORTANT: Having the "ability" to complete the current task, given the current environment state, is NOT completing the current task.
 """
 

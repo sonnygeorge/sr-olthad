@@ -1,4 +1,5 @@
 from jinja2 import Template
+
 from sr_olthad.framework.utils import get_prompt_json_spec
 from sr_olthad.prompts.backtracker._common import (
     BacktrackerSubAgentLmResponseOutputData,
@@ -32,19 +33,16 @@ V1_0_QUESTION = "Thinking ONLY about what's been done so far, has the task been 
 
 SYS_1_0 = f"""You are a helpful thinking assistant that {{{{ {DomainSpecificSysPromptInputFields.LM_ROLE_AS_VERB_PHRASE} }}}}. Your specific job is to decide whether a task has been given a reasonably exhaustive effort given your situation.
 
-### Your Inputs
+## Your Inputs
 
 You will be provided:
 
 1. PROGRESS/PLANS: a JSON depicting your ongoing progress and hierarchical plans, where the root task is your overall goal.
-
 2. TASK IN QUESTION: a JSON object defining the task you are evaluating the completion of. Please note that the `status` of your "task in question" will be a question mark since you are evaluating it.
-
 3. CURRENT ENVIRONMENT STATE: a representation of the most recently observed state of the environment you are in.
-
 4. QUESTION: The question you are to answer.
 
-### Your Response
+## Your Response
 
 1. You will think step-by-step about (1) what, in your current situation, a "reasonably exhaustive effort" might entail, and (2) whether the attempted effort (attempted subtasks of the "TASK IN QUESTION", if any) has been exhaustive:
     - Given a realistic evaluation of your capabilities, have you exhausted all situationally *reasonable* strategies for accomplishing this task?
@@ -55,7 +53,7 @@ You will be provided:
 {get_prompt_json_spec(BacktrackerSubAgentLmResponseOutputData)}
 ```
 
-### Auxiliary Information About Domain
+## Auxiliary Information About Domain
 
 {{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}"""
 

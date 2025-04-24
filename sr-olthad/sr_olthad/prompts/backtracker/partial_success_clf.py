@@ -1,4 +1,5 @@
 from jinja2 import Template
+
 from sr_olthad.framework.utils import get_prompt_json_spec
 from sr_olthad.prompts.backtracker._common import (
     BacktrackerSubAgentLmResponseOutputData,
@@ -32,7 +33,7 @@ V1_0_QUESTION = "Should the task be considered a partial success?"
 
 SYS_1_0 = f"""You are a helpful thinking assistant that {{{{ {DomainSpecificSysPromptInputFields.LM_ROLE_AS_VERB_PHRASE} }}}}.  Your job is to determine whether a task should be considered a partial success or a failure.
 
-### Your Inputs
+## Your Inputs
 
 You will be provided:
 
@@ -41,7 +42,7 @@ You will be provided:
 3. CURRENT ENVIRONMENT STATE: a representation of the most recently observed state of the environment you are in.
 4. QUESTION: The question you are to answer.
 
-### Your Response
+## Your Response
 
 Carefully think things through step-by-step. Finally, once you've concluded your thinking, provide your final response in a JSON that strictly adheres to the following format:
 
@@ -49,7 +50,7 @@ Carefully think things through step-by-step. Finally, once you've concluded your
 {get_prompt_json_spec(BacktrackerSubAgentLmResponseOutputData)}
 ```
 
-### Auxiliary Information About Domain
+## Auxiliary Information About Domain
 
 {{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}"""
 

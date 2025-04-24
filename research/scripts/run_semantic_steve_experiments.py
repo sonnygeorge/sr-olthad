@@ -3,12 +3,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from experiments.semantic_steve.prompt import (
+    get_semantic_steve_sys_prompt_input_data,
+)
 from pydantic import BaseModel
 from semantic_steve import SemanticSteve
 
-from research.experiments.semantic_steve.prompts import (
-    get_semantic_steve_sys_prompt_input_data,
-)
 from research.utils import is_function_call
 from sr_olthad import LmAgentName, SrOlthad
 

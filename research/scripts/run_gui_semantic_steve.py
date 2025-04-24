@@ -8,7 +8,7 @@ import os
 from nicegui import app, ui
 from semantic_steve import SemanticSteve
 
-from research.experiments.semantic_steve.prompts import (
+from research.experiments.semantic_steve.prompt import (
     get_semantic_steve_sys_prompt_input_data,
 )
 from research.utils import is_function_call
@@ -22,7 +22,7 @@ async def run_sr_olthad_with_semantic_steve_and_gui():
     if "HIGHEST_LEVEL_TASK" in os.environ:
         highest_level_task = os.environ["HIGHEST_LEVEL_TASK"]
     else:
-        highest_level_task = "Take a screenshot of some dirt that you placed."
+        highest_level_task = "Take a screenshot of a tree you chopped down."
 
     sr_olthad = SrOlthad(
         highest_level_task=highest_level_task,

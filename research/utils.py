@@ -1,6 +1,15 @@
 import re
 
 
+def to_lower_snake_case(s: str) -> str:
+    # Replace non-alphanumeric characters with spaces
+    cleaned: str = re.sub(r"[^a-zA-Z0-9]", " ", s)
+    # Extract words from the cleaned string
+    words: list[str] = re.findall(r"[a-zA-Z0-9]+", cleaned)
+    # Convert all words to lowercase and join with underscores
+    return "_".join(word.lower() for word in words)
+
+
 def is_function_call(s: str) -> bool:
     """
     Check if a string represents a valid function call using regex.

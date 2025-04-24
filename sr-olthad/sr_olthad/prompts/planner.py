@@ -2,6 +2,7 @@ from typing import ClassVar
 
 from jinja2 import Template
 from pydantic import BaseModel, Field
+
 from sr_olthad.framework.utils import get_prompt_json_spec
 from sr_olthad.prompts._strings import (
     EXAMPLE_OLTHAD_FOR_SYS_PROMPT,
@@ -40,7 +41,7 @@ class PlannerLmResponseOutputData(BaseModel):
 
 SYS_1_0 = f"""You are a helpful thinking assistant that {{{{ {DomainSpecificSysPromptInputFields.LM_ROLE_AS_VERB_PHRASE} }}}}. Your specific job is to create and update tentative plans at a conservative next-most level of granularity as needed.
 
-### Your Inputs
+## Your Inputs
 
 You will be provided:
 
@@ -55,15 +56,13 @@ TASK IN QUESTION:
 {EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT}
 ```
 
-
 IMPORTANT: For determining your response, pay close attention to following the domain-specific information so that your outputs adhere to the system and best practices of the domain!
 
-### Crucial Information About Domain
+## Crucial Information About Domain
 
 {{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}
 
-
-### Your Response
+## Your Response
 
 Regardless of whether the task in question has tentatively planned subtasks, your job is to consider how things are progressing (with respect to the aims/plans towards parent outcomes) and provide an updated set of tentatively planned subtasks for the task in question. Your updated set will replace any existing tentatively planned subtasks. If the existing tentatively planned subtasks are sufficient, simply repeat them to indicate that no update was necessary.
 

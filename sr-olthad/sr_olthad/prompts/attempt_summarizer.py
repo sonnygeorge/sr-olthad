@@ -2,9 +2,9 @@ from typing import ClassVar
 
 from jinja2 import Template
 from pydantic import BaseModel, Field
+
 from sr_olthad.framework.utils import get_prompt_json_spec
 from sr_olthad.prompts._strings import (
-    EXAMPLE_OLTHAD_FOR_SYS_PROMPT,
     EXAMPLE_TASK_IN_QUESTION_FOR_SYS_PROMPT,
 )
 from sr_olthad.schema import (
@@ -49,7 +49,7 @@ V1_0_QUESTION = "Which status is the most appropriate to assign and why?"
 
 SYS_1_0 = f"""You are a helpful thinking assistant that {{{{ {DomainSpecificSysPromptInputFields.LM_ROLE_AS_VERB_PHRASE} }}}}. Your specific job is to reflect over the environment state to decide how successful a recently attempted skill (task) seems to have been and produce a summative retrospective account of the attempt, making sure to include any details that could be useful to remember in the future.
 
-### Your Inputs
+## Your Inputs
 
 You will be provided:
 
@@ -62,7 +62,7 @@ ATTEMPTED TASK IN QUESTION:
 ```
 4. QUESTION: The question you are to answer.
 
-### Your Response
+## Your Response
 
 Think step-by-step before providing your final response to the QUESTION.
 
@@ -78,7 +78,7 @@ Only after expounding your reasoning process, you will output your final answer 
 
 The attempt statuses you can assign are limited to: "{AttemptedTaskStatus.SUCCESS}", "{AttemptedTaskStatus.PARTIAL_SUCCESS}", or "{AttemptedTaskStatus.FAILURE}".
 
-### Auxiliary Information About Domain
+## Auxiliary Information About Domain
 
 {{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}"""
 

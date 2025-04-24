@@ -1,4 +1,5 @@
 from jinja2 import Template
+
 from sr_olthad.framework.utils import get_prompt_json_spec
 from sr_olthad.prompts.backtracker._common import (
     BacktrackerSubAgentLmResponseOutputData,
@@ -32,7 +33,7 @@ V1_0_QUESTION = "Which statement is more true?"
 
 SYS_1_0 = f"""You are a helpful thinking assistant that {{{{ {DomainSpecificSysPromptInputFields.LM_ROLE_AS_VERB_PHRASE} }}}}. Your job is to determine whether a task is still your most worthy pursuit.
 
-### Your Inputs
+## Your Inputs
 
 You will be provided:
 
@@ -41,7 +42,7 @@ You will be provided:
 3. CURRENT ENVIRONMENT STATE: a representation of the most recently observed state of the environment you are in.
 4. QUESTION: The question you are to answer.
 
-### Food for Thought
+## Food for Thought
 
 There are many possible reasons why answer choice "B" should be chosen. Here are a few examples:
 
@@ -61,7 +62,7 @@ That being said, there are a few possible reasons why answer choice "A" IS bette
     - Example: you have 5 candies, but your task is to acquire more candies and you need 8 candies for your friends. You cannot assume the task is complete because you have 5 candies, you need to acquire 3 more.
 3. If B only "might" be better, as in there is a possibility of it being better, but we do not know, default to assuming "A" is the CORRECT choice.
 
-### Your Response
+## Your Response
 
 YOU MUST FOLLOW THESE INSTRUCTIONS:
 
@@ -78,7 +79,7 @@ Format:
 {get_prompt_json_spec(BacktrackerSubAgentLmResponseOutputData)}
 ```
 
-### Auxiliary Information About Domain
+## Auxiliary Information About Domain
 
 {{{{ {DomainSpecificSysPromptInputFields.DOMAIN_EXPOSITION} }}}}"""
 

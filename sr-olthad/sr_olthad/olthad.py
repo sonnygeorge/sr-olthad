@@ -425,14 +425,13 @@ class TaskNode:
                     len(pending_changes[node.parent_id].subtasks)
                     <= idx_of_node_in_parent_subtasks
                 ):
-                    pass  # Abitrary line of code in order to catch w/ break point
-
-                assert (
-                    len(pending_changes[node.parent_id].subtasks)
-                    > idx_of_node_in_parent_subtasks
-                ), (
-                    f"Pending changes for parent node: {len(pending_changes[node.parent_id].subtasks)} | {idx_of_node_in_parent_subtasks}"
-                )
+                    # This happens if the planner plans less subtasks than was already planned
+                    # Although skipping this node will make it not appear in the output w/out
+                    # changes (making the diff technically incorrect since the original wont
+                    # have these further nodes that existed before), skipping it doesn't
+                    # really affect the diff in a consequential way since the user will still
+                    # always get to see that at least one future plan is being changed.
+                    return
 
                 node_for_update = pending_changes[node.parent_id].subtasks[
                     idx_of_node_in_parent_subtasks

@@ -11,6 +11,8 @@ dependencies = [
     "sr-olthad",
     "semantic-steve",
     "python-dotenv",
+    "sentence-transformers>=4.1.0",
+    "chromadb>=1.0.6",
 ]
 
 [tool.uv.workspace]
@@ -18,7 +20,7 @@ members = ["sr-olthad"]
 
 [tool.uv.sources]
 sr-olthad = { workspace = true }
-semantic-steve = { git = "https://github.com/sonnygeorge/semantic-steve.git", branch = "gen/refactor" }
+semantic-steve = { git = "https://github.com/sonnygeorge/semantic-steve.git", branch = "dev" }
 
 [tool.ruff]
 line-length = 93
