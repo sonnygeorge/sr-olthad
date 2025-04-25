@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from sr_olthad.framework.lms import OpenAIInstructLm
+from sr_olthad.framework.lms import GeminiInstructLm, OpenAIInstructLm
 from sr_olthad.framework.schema import InstructLm
 
 # General config
@@ -23,7 +23,7 @@ class AttemptSummarizerCfg:
     MAX_TRIES_TO_GET_VALID_LM_RESPONSE: int = 5
     INSTRUCT_LM: InstructLm = OpenAIInstructLm(
         model="gpt-4.1-2025-04-14"
-    )  # GroqInstructLm(model="llama-3.3-70b-versatile")
+    )  # GeminiInstructLm(model='gemini-2.0-flash-lite') # GroqInstructLm(model="llama-3.3-70b-versatile")
     PROMPTS_VERSION = "1.0"
 
 
@@ -34,7 +34,7 @@ class BacktrackerCfg:
         MAX_TRIES_TO_GET_VALID_LM_RESPONSE: int = 7
         INSTRUCT_LM: InstructLm = OpenAIInstructLm(
             model="gpt-4.1-2025-04-14"
-        )  # GroqInstructLm(model="llama-3.3-70b-versatile")
+        )  # GeminiInstructLm(model='gemini-2.0-flash-lite') # GroqInstructLm(model="llama-3.3-70b-versatile")
         PROMPTS_VERSION = "1.0"
 
     class MostWorthwhilePursuitClfCfg:
@@ -43,7 +43,7 @@ class BacktrackerCfg:
         MAX_TRIES_TO_GET_VALID_LM_RESPONSE: int = 5
         INSTRUCT_LM: InstructLm = OpenAIInstructLm(
             model="gpt-4.1-2025-04-14"
-        )  # GroqInstructLm(model="llama-3.3-70b-versatile")
+        )  # GeminiInstructLm(model='gemini-2.0-flash-lite') # GroqInstructLm(model="llama-3.3-70b-versatile")
         PROMPTS_VERSION = "1.0"
 
     class PartialSuccessClfCfg:
@@ -52,7 +52,7 @@ class BacktrackerCfg:
         MAX_TRIES_TO_GET_VALID_LM_RESPONSE: int = 7
         INSTRUCT_LM: InstructLm = OpenAIInstructLm(
             model="gpt-4.1-2025-04-14"
-        )  # GroqInstructLm(model="llama-3.3-70b-versatile")
+        )  # GeminiInstructLm(model='gemini-2.0-flash-lite') # GroqInstructLm(model="llama-3.3-70b-versatile")
         PROMPTS_VERSION = "1.0"
 
     class SuccessfulCompletionClfCfg:
@@ -61,21 +61,21 @@ class BacktrackerCfg:
         MAX_TRIES_TO_GET_VALID_LM_RESPONSE: int = 7
         INSTRUCT_LM: InstructLm = OpenAIInstructLm(
             model="gpt-4.1-2025-04-14"
-        )  # GroqInstructLm(model="llama-3.3-70b-versatile")
+        )  # GeminiInstructLm(model='gemini-2.0-flash-lite') # GroqInstructLm(model="llama-3.3-70b-versatile")
         PROMPTS_VERSION = "1.0"
 
 
 class ForgetterCfg:
     MAX_TRIES_TO_GET_VALID_LM_RESPONSE: int = 5
-    INSTRUCT_LM: InstructLm = OpenAIInstructLm(
-        model="gpt-4.1-2025-04-14"
-    )  # GroqInstructLm(model="llama-3.3-70b-versatile")
+    INSTRUCT_LM: InstructLm = GeminiInstructLm(
+        model="gemini-2.5-pro-exp-03-25"
+    )  # OpenAIInstructLm(model="gpt-4.1-2025-04-14")  # GroqInstructLm(model="llama-3.3-70b-versatile")
     PROMPTS_VERSION = "1.0"
 
 
 class PlannerCfg:
     MAX_TRIES_TO_GET_VALID_LM_RESPONSE: int = 5
     INSTRUCT_LM: InstructLm = OpenAIInstructLm(
-        model="gpt-4.1-2025-04-14"
-    )  # GroqInstructLm(model="llama-3.3-70b-versatile")
+        model="o4-mini-2025-04-16"
+    )  # GeminiInstructLm(model='gemini-2.0-flash-lite') # GroqInstructLm(model="llama-3.3-70b-versatile")
     PROMPTS_VERSION = "1.0"
