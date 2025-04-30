@@ -42,7 +42,7 @@ You will be provided:
 3. CURRENT ENVIRONMENT STATE: a representation of the most recently observed state of the environment you are in.
 4. QUESTION: The question you are to answer.
 
-## Food for Thought
+## Things To Consider
 
 There are many possible reasons why answer choice "B" should be chosen. Here are a few examples:
 

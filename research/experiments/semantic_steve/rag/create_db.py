@@ -1,10 +1,12 @@
 import importlib
 import os
+import shutil
 import sys
 
 from chromadb import PersistentClient
 
 from research.experiments.semantic_steve.rag.constants import (
+    EMBEDDING_WEIGHTS,
     PATH_TO_VECTOR_DB,
     PATHS_TO_EXAMPLE_DIRS_BY_AGENT,
 )
@@ -49,7 +51,10 @@ def create_vector_db():
     """
     Create a vector database for all agent examples.
     """
-    print("Creating vector db for SemanticSteve in-context examples...")
+    print(f"Creating vector db for in-context examples with weights: {EMBEDDING_WEIGHTS}")
+    if os.path.exists(PATH_TO_VECTOR_DB):
+        print(f"Deleting existing vector database at {PATH_TO_VECTOR_DB}")
+        shutil.rmtree(PATH_TO_VECTOR_DB)
     chroma_client = PersistentClient(path=PATH_TO_VECTOR_DB)
     for agent_name, examples in import_all_examples().items():
         agent_name_lower_snake = to_lower_snake_case(agent_name)

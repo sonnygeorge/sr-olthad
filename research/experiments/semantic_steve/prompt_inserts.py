@@ -26,8 +26,8 @@ IMPORTANT: If the context IS granularly scoped such that a next-most planned sub
 
 IMPORTANT: If you have postualted a task that is semantically equivalent to a function call, e.g., \"pathfind to coordinates <x,y,z>\", make sure to output it as a function call in your final JSON, e.g., `{"new_planned_subtasks": ["pathfindToCoordinates([12, 12, 12])"]}`. Do all the thinking you need to do before outputting the final JSON.
 
-IMPORTANT: NEVER output a function call with surrounding text, like \"Execute <function\", \"Perform <function>\", \"Call <function>\", etc. Just output the function call as a JSON string, e.g., `["mineBlocks('oak_log')"]`. The system will take care of executing the function call for you."""
-
+IMPORTANT: To dig down, just call `pathfindToCoordinates` with a y-coordinate that is lower than your current y-coordinate. DO NOT use `mineBlocks` for this purpose!
+"""
 
 ATTEMPT_SUMMARIZER_INSERT = (
     'IMPORTANT: Pay close attention to the "skillInvocationResults" and "inventoryChanges"!'

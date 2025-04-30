@@ -34,7 +34,7 @@ async def run_sr_olthad_with_semantic_steve_and_gui():
         streams_handler=gui_app.handle_streams,
     )
 
-    with SemanticSteve() as ss:
+    with SemanticSteve(screenshot_dir=os.getcwd()) as ss:
         data_from_minecraft = await ss.wait_for_data_from_minecraft()
         while True:
             env_state = f"```json\n{data_from_minecraft.get_readable_string()}\n```"

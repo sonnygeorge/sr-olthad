@@ -10,6 +10,7 @@ from sr_olthad.framework.agents import (
     LmRetryHandler,
 )
 from sr_olthad.framework.schema import InstructLmMessage
+from sr_olthad.framework.utils import call_or_await
 from sr_olthad.olthad import PendingOlthadUpdate
 from sr_olthad.schema import (
     GetDomainSpecificSysPromptInputData,
@@ -110,7 +111,7 @@ class LmStepTemplate:
             # Run step until approved
             step_is_approved = False
             while not step_is_approved:
-                await self.pre_lm_step_handler(pre_step_emission)
+                await call_or_await(self.pre_lm_step_handler, pre_step_emission)
                 output = await run_step(
                     input_messages=input_messages,
                     retry_callback=self.lm_retry_handler,
@@ -120,7 +121,9 @@ class LmStepTemplate:
                     diff=pending_update.get_diff(),
                     full_messages=output.messages,
                 )
-                step_is_approved = await self.post_lm_step_approver(post_step_emission)
+                step_is_approved = await call_or_await(
+                    self.post_lm_step_approver, post_step_emission
+                )
                 if step_is_approved:
                     pending_update.commit()
                     return return_if_approved

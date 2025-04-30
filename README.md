@@ -206,3 +206,13 @@ uv run research/scripts/run_gui_semantic_steve.py
 #### 🏁 Voila!
 
 🥳 You are now running sr-OLTHAD with SemanticSteve and the GUI!
+
+
+
+
+|                                      | AlfWord                                  | Minecraft Tech Tree                     | ScreenshotSteve                                                           |
+|--------------------------------------|-----------------------------------------|-----------------------------------------|---------------------------------------------------------------------------|
+| Benchmarking of Closed-Loop 3D-Embodied Skill Planning | ✓                                       | ✓                                       | ✓                                                                         |
+| Possible Environment Scenarios is Effectively Open-Ended |                                         | ✓                                       | ✓                                                                         |
+| Possible Tasks is Effectively Open-Ended |                                         |                                         | ✓                                                                         |
+| How Task-Completion is Programatically Verified | Condition in PDDL Model                              | Check for item in inventory             | VLM judges whether screenshot depicts ______ (which can be anything) |

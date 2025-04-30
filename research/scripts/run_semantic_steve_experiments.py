@@ -3,14 +3,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from experiments.semantic_steve.prompt import (
+import asyncio
+import csv
+import os
+
+from semantic_steve import DataFromMinecraft, SemanticSteve
+from semantic_steve.screenshot_steve import (
+    TaskRunResult,
+    run_and_score_task,
+)
+
+from research.experiments.semantic_steve.prompt import (
     get_semantic_steve_sys_prompt_input_data,
 )
-from pydantic import BaseModel
-from semantic_steve import SemanticSteve
-
 from research.utils import is_function_call
-from sr_olthad import LmAgentName, SrOlthad
+from sr_olthad import SrOlthad
 
 TASKS = [
     "take a screenshot of some stairs that you placed onto some cobblestone",
@@ -21,42 +28,46 @@ TASKS = [
 ]
 
 
-async def get_vlm_score(screenshot, task):
-    pass
+def append_task_result_to_csv(csv_fpath: str, result: TaskRunResult) -> None:
+    should_write_header = False if os.path.isfile(csv_fpath) else True
+    # Open in append mode ('a') to add to existing file
+    with open(csv_fpath, "a", newline="") as f:
+        writer = csv.writer(f)
+        if should_write_header:
+            headers = list(TaskRunResult.__annotations__.keys())
+            writer.writerow(headers)
+        writer.writerow(
+            [
+                result.task,
+                result.screenshot_fpath,
+                result.score,
+                result.n_skills_invoked,
+                result.time_elapsed_seconds,
+            ]
+        )
 
 
-class TaskRunResult(BaseModel):
-    task: str
-    screenshot_fpath: str
-    vlm_score: float
-    skills_invoked: int
-    tokens_used: dict[LmAgentName, int]
-    lm_steps_run: dict[LmAgentName, int]
-
-
-async def run_task(task: str) -> TaskRunResult:
-    # TODO: Parameterize this fn w/ sr-OLTHAD config
-    # TODO: Move these functions to experiments/semantic_steve
+async def run_one_experiment(
+    task: str, csv_fpath: str = "results.csv", screenshot_dir: str = os.getcwd()
+) -> None:
+    # TODO: Parameterize this fn w/ sr-OLTHAD config?
     sr_olthad = SrOlthad(
         highest_level_task=task,
         is_task_executable_skill_invocation=is_function_call,
         get_domain_specific_sys_prompt_input_data=get_semantic_steve_sys_prompt_input_data,
     )
 
-    n_skills_invoked = 0
-    with SemanticSteve() as ss:
-        data_from_minecraft = await ss.wait_for_data_from_minecraft()
-        while True:
-            env_state = f"```json\n{data_from_minecraft.get_readable_string()}\n```"
-            skill_invocation = await sr_olthad.get_next_skill_invocation(env_state)
-            if skill_invocation is None:
-                print("Root task completed or dropped")
-                break
-            n_skills_invoked += 1
-            data_from_minecraft = await ss.invoke(skill_invocation)
+    async def get_next_skill_invocation(data_from_minecraft: DataFromMinecraft) -> str:
+        env_state_str = f"```json\n{data_from_minecraft.get_readable_string()}\n```"
+        return await sr_olthad.get_next_skill_invocation(env_state_str)
 
-        # TODO: Get resulting screenshot (if any)
-        # TODO: Get vlm score using task and screenshot
-        get_vlm_score(None, task)
-        # TODO: Get tokens used and lm steps run
-        # TODO: Return TaskRunResult
+    semantic_steve = SemanticSteve(screenshot_dir=screenshot_dir)
+    result = await run_and_score_task(task, get_next_skill_invocation, semantic_steve)
+    print(f"Score for '{task}' was {result.score}.")
+    append_task_result_to_csv(csv_fpath, result)
+    print(f"Results for '{task}' written to {csv_fpath}.")
+
+
+if __name__ == "__main__":
+    # asyncio.run(run_one_experiment(TASKS[0]))
+    asyncio.run(run_one_experiment("Take a screenshot of a grass block"))
