@@ -1,7 +1,7 @@
 from typing import ClassVar
 
 from jinja2 import Template
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from sr_olthad.framework.utils import get_prompt_json_spec
 from sr_olthad.prompts._strings import (
@@ -33,6 +33,13 @@ class PlannerLmResponseOutputData(BaseModel):
         description="The new set of planned subtasks for the node in question.",
         json_schema_extra={"field_type": "list[str]"},
     )
+
+    @field_validator("new_planned_subtasks")
+    @classmethod
+    def validate_non_empty(cls, v):
+        if not v:  # This checks if the list is empty
+            raise ValueError("new_planned_subtasks must not be empty")
+        return v
 
 
 ######################
@@ -109,7 +116,7 @@ TASK IN QUESTION:
 ```
 
 IMPORTANT: Higher-level tasks, should describe steps and desired outcomes generally, without suggesting lower-level strategies. Then, in future chats, we'll break down strategic subtasks further.
-    - Example: If you hoping to make stroganoff, it is better to first plan the generally, e.g., "Obtain ingredients" and not "Go to the store to buy ingredients". The latter pidgeon-holes you whereas the former, "obtain ingredients", allows you figure out the the "how" in subsequent subtask breakdowns.
+    - Example: If you're hoping to make stroganoff, it is better to first plan the generally, e.g., "Obtain ingredients" and not "Go to the store to buy ingredients". The latter pidgeon-holes you whereas the former, "obtain ingredients", allows you figure out the the "how" in subsequent subtask breakdowns.
 IMPORTANT: Planned subtasks MUST be phrased in imperative tense, e.g. "Do X".
 IMPORTANT: Do NOT phrase subtasks with ANY conditionals, e.g. "If X, then do Y", "do Y if X".
 IMPORTANT: Do NOT repeat previous tasks unnecessarily.
@@ -128,3 +135,15 @@ V1_0_PROMPTS = SingleTurnPromptTemplates(
 PROMPT_REGISTRY: PromptRegistry = {
     "1.0": V1_0_PROMPTS,
 }
+
+
+if __name__ == "__main__":
+    print("JSON spec for PlannerLmResponseOutputData:")
+    print(get_prompt_json_spec(PlannerLmResponseOutputData))
+
+    # Try setting w/ empty list to see if it raises error
+    try:
+        PlannerLmResponseOutputData(new_planned_subtasks=[])
+        print("Validation passed with empty list.")
+    except ValueError as e:
+        print(f"As expected, validation failed with empty list: {e}")

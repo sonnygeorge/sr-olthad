@@ -1,0 +1,19 @@
+task,screenshot_fpath,score,n_skills_invoked,time_elapsed_seconds
+take a screenshot of a trap door,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-04T18:07:11.385Z_birch_trapdoor.png,1.0,23,1424.841239
+take a screenshot of a trap door,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-04T18:24:34.899Z_oak_trapdoor.png,0.9166666666666666,15,646.638838
+take a screenshot of a trap door,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-04T18:37:48.742Z_oak_trapdoor.png,1.0,9,402.396091
+take a screenshot of a trap door,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-04T19:04:17.116Z_oak_trapdoor.png,1.0,7,364.095542
+take a screenshot of a trap door,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-04T19:14:31.726Z_oak_trapdoor.png,1.0,8,316.564284
+take a screenshot of a trap door,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-04T19:23:49.572Z_oak_trapdoor.png,1.0,9,388.818381
+take a screenshot of some stairs that you placed onto some cobblestone,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-04T19:39:30.559Z_cobblestone_stairs.png,0.9166666666666666,18,773.555056
+take a screenshot of some stairs that you placed onto some cobblestone,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-04T19:55:37.394Z_cobblestone_stairs.png,1.0,17,733.167737
+take a screenshot of some stairs that you placed onto some cobblestone,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-04T20:08:23.905Z_oak_stairs.png,0.25,12,584.059331
+take a screenshot of some stairs that you placed onto some cobblestone,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-04T21:28:47.672Z_cobblestone_stairs.png,0.8333333333333334,21,945.022538
+take a screenshot of some stairs that you placed onto some cobblestone,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-04T21:45:18.844Z_cobblestone_stairs.png,1.0,14,669.356787
+take a screenshot of some stairs that you placed onto some cobblestone,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-05T15:21:33.004Z_cobblestone_stairs.png,0.9166666666666666,11,1079.085022
+take a screenshot of smooth stone placed adjacent to a furnace,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-04T23:34:05.828Z_smooth_stone.png,0.0,33,1556.146472
+take a screenshot of smooth stone placed adjacent to a furnace,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-05T00:37:08.971Z_smooth_stone.png,0.9166666666666666,19,1321.503646
+take a screenshot of smooth stone placed adjacent to a furnace,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-05T15:49:05.114Z_smooth_stone.png,1.0,17,1329.04784
+take a screenshot of smooth stone placed adjacent to a furnace,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-05T02:20:48.846Z_smooth_stone.png,1.0,17,943.100726
+take a screenshot of smooth stone placed adjacent to a furnace,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-05T16:23:36.215Z_smooth_stone.png,0.75,16,1272.005147
+take a screenshot of smooth stone placed adjacent to a furnace,/Users/sonnygeorge/sr-olthad/research/scripts/../experiments/semantic_steve/screenshots/2025-05-05T17:31:38.682Z_smooth_stone.png,0.08333333333333333,18,1238.942998

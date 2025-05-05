@@ -22,6 +22,9 @@ def retrieve(
 
 
 if __name__ == "__main__":
+    # Sanity check to make sure the system retrieves relevant examples for the task,
+    # "Dig down through grass and dirt until stone is exposed."
+
     import re
 
     from sr_olthad.olthad import TaskNode, TaskStatus

@@ -1,5 +1,10 @@
 from scipy.optimize import fsolve
 
+# NOTE: Unfinished code to solve a system of equations to get n dimensions to broadcast
+# normalized scalars (e.g., depth of current task) to for embedding concatenation based on
+# a relative influence coefficient
+
+# # The func below but w/ descriptive naming
 # def func(dimensions_to_brodcast_to):
 #     # out = []
 #     # for i in range(len(bs)):

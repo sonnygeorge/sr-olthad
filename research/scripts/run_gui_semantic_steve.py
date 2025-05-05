@@ -8,7 +8,7 @@ import os
 from nicegui import app, ui
 from semantic_steve import SemanticSteve
 
-from research.experiments.semantic_steve.prompt import (
+from research.experiments.semantic_steve.get_prompt_input import (
     get_semantic_steve_sys_prompt_input_data,
 )
 from research.utils import is_function_call
@@ -17,12 +17,14 @@ from sr_olthad.gui.gui import GuiApp
 
 gui_app = GuiApp()
 
+# NOTE: set env var USE_COMPUTER_CONTROL_FOR_SCREENSHOT to true if desired
+
 
 async def run_sr_olthad_with_semantic_steve_and_gui():
     if "HIGHEST_LEVEL_TASK" in os.environ:
         highest_level_task = os.environ["HIGHEST_LEVEL_TASK"]
     else:
-        highest_level_task = "Take a screenshot of a tree you chopped down."
+        highest_level_task = "take a screenshot of smooth stone placed on top of a furnace"
 
     sr_olthad = SrOlthad(
         highest_level_task=highest_level_task,

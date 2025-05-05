@@ -1,4 +1,12 @@
+from jinja2 import Template
 from semantic_steve import SemanticSteve
+
+from research.experiments.semantic_steve.rag.retrieve import retrieve
+from sr_olthad import (
+    DomainSpecificSysPromptInputData,
+    LmAgentName,
+    UserPromptInputData,
+)
 
 LM_ROLE_AS_VERB_PHRASE = SemanticSteve.get_user_role_as_verb_phrase()
 SKILLS_DOCS_STR = "\n\n".join(SemanticSteve.get_skills_docs())
@@ -24,14 +32,21 @@ IMPORTANT: You define a task as "granular enough" to be a valid skill function c
 
 IMPORTANT: If the context IS granularly scoped such that a next-most planned subtask could be a function call, it is IMPERATIVE that you plan a task that is a function call, e.g., if the task was 'get planks' and you had 6 `oak_logs` in your inventory:\n```json\n{\n"new_planned_subtasks": ["craftItems('oak_planks', 24)"]\n}```.
 
-IMPORTANT: If you have postualted a task that is semantically equivalent to a function call, e.g., \"pathfind to coordinates <x,y,z>\", make sure to output it as a function call in your final JSON, e.g., `{"new_planned_subtasks": ["pathfindToCoordinates([12, 12, 12])"]}`. Do all the thinking you need to do before outputting the final JSON.
+IMPORTANT: If you have postulated a task that is semantically equivalent to a function call, e.g., \"pathfind to coordinates <x,y,z>\", make sure to output it as a function call in your final JSON, e.g., `{"new_planned_subtasks": ["pathfindToCoordinates([12, 12, 12])"]}`. Do all the thinking you need to do before outputting the final JSON.
 
 IMPORTANT: To dig down, just call `pathfindToCoordinates` with a y-coordinate that is lower than your current y-coordinate. DO NOT use `mineBlocks` for this purpose!
+
+IMPORTANT: The best way to explore is to approach things in the distant surroundings that you think might lead you to your goal. Make sure not to backtrack! Every now and then, use pathfindToCoordinates to move you to a new location entirely.
 """
 
 ATTEMPT_SUMMARIZER_INSERT = (
     'IMPORTANT: Pay close attention to the "skillInvocationResults" and "inventoryChanges"!'
 )
+
+SUCCESSFUL_COMPLETION_CLF_INSERT = "IMPORTANT: Under no circumstances should you ever consider a task that involves taking a screenshot to be complete without a screenshot being taken! Even if all of the setup for the screenshot has occured, there must be evidence that a screenshot has been taken!!!\n"
+
+EXHAUSTIVE_EFFORT_CLF_INSERT = "IMPORTANT: Under no circumstances should you ever consider a task that involves taking a screenshot to have been given an exhaustive effort if no attempt to take a screenshot has been made! Unless all courses of action for setting up the screenshot have been exhausted to no avail, you must NEVER say that a screenshot task has been given an exhaustive effort without a screenshot actually being taken/attempted!!! NEVER, EVER DO THIS!!!\n"
+
 
 EXAMPLES_TEMPLATE_STR = """
 ### Examples
@@ -43,3 +58,46 @@ Here are some (abbreviated) examples for how to do your job:
 {{ example }}
 {% endfor %}
 """
+
+
+AGENTS_FOR_WHICH_TO_SHOW_EXAMPLES = [LmAgentName.PLANNER]
+AGENTS_FOR_WHICH_TO_SHOW_SKILLS_DOCS = [LmAgentName.PLANNER, LmAgentName.ATTEMPT_SUMMARIZER]
+
+
+def get_semantic_steve_sys_prompt_input_data(
+    lm_agent_name: LmAgentName,
+    user_prompt_input_data: UserPromptInputData,
+    n_few_shot_examples: int = 0,
+) -> DomainSpecificSysPromptInputData:
+    # TODO: (Dynamically?) render in (situation-relevent) tips?
+
+    main_template: Template = Template(DOMAIN_EXPOSITION_TEMPLATE)
+
+    # Insert skills docs if applicable
+    if lm_agent_name in AGENTS_FOR_WHICH_TO_SHOW_SKILLS_DOCS:
+        domain_exposition = main_template.render(skills_docs=SKILLS_DOCS_INSERT)
+    else:
+        domain_exposition = main_template.render(skills_docs="")
+
+    # Insert specialized inserts
+    if lm_agent_name == LmAgentName.PLANNER:
+        domain_exposition += "\n\n" + PLANNER_INSERT
+    elif lm_agent_name == LmAgentName.ATTEMPT_SUMMARIZER:
+        domain_exposition += "\n\n" + ATTEMPT_SUMMARIZER_INSERT
+    elif lm_agent_name == LmAgentName.SUCCESSFUL_COMPLETION_CLF:
+        domain_exposition += "\n\n" + SUCCESSFUL_COMPLETION_CLF_INSERT
+    elif lm_agent_name == LmAgentName.EXHAUSTIVE_EFFORT_CLF:
+        domain_exposition += "\n\n" + EXHAUSTIVE_EFFORT_CLF_INSERT
+
+    # Insert few shot examples if applicable
+    if n_few_shot_examples > 0 and lm_agent_name in AGENTS_FOR_WHICH_TO_SHOW_EXAMPLES:
+        examples_template: Template = Template(EXAMPLES_TEMPLATE_STR)
+        if n_few_shot_examples > 0:
+            examples = retrieve(n_few_shot_examples, user_prompt_input_data, lm_agent_name)
+            examples_str = examples_template.render(examples=examples)
+            domain_exposition += "\n\n" + examples_str
+
+    return DomainSpecificSysPromptInputData(
+        lm_role_as_verb_phrase=LM_ROLE_AS_VERB_PHRASE,
+        domain_exposition=domain_exposition,
+    )

@@ -76,6 +76,7 @@ class ForgetterCfg:
 class PlannerCfg:
     MAX_TRIES_TO_GET_VALID_LM_RESPONSE: int = 5
     INSTRUCT_LM: InstructLm = OpenAIInstructLm(
-        model="o4-mini-2025-04-16"
+        model="gpt-4.1-2025-04-14"
+        # model="o4-mini-2025-04-16"
     )  # GeminiInstructLm(model='gemini-2.0-flash-lite') # GroqInstructLm(model="llama-3.3-70b-versatile")
     PROMPTS_VERSION = "1.0"

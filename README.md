@@ -27,14 +27,72 @@ Think the project is interesting? Give it a star! ⭐
 
 ### Contributing
 
+(contact me directly)
+
 This project uses the following tooling:
 
 - [uv](https://docs.astral.sh/uv/) for dependency/version management
 - [ruff](https://docs.astral.sh/ruff/) for linting and formatting
 
+## 📒 ℹ️ How to run sr-OLTHAD + GUI
+
+You can run sr-OLTHAD with the GUI and manually input environment states (like you are the dungeon master in D&D) as follows:
+
+#### 1️⃣ Install Python requirements into a virtual environment w/ `uv`:
+
+```bash
+uv sync
+```
+
+(Learn how to install `uv` [here](https://docs.astral.sh/uv/#installation))
+
+#### 2️⃣ Make sure you have this project directory as your `PYTHONPATH` env variable:
+
+You can set this by running:
+
+```bash
+export PYTHONPATH=$(pwd)
+```
+
+You can verify this by running:
+
+```bash
+echo $PYTHONPATH
+```
+
+#### 3️⃣ Set up your `.env` to have the necessary LLM API keys (or export them as env variables)
+
+For whatever API's sr-OLTHAD is currently configured to use (see `sr-olthad/sr_olthad/config.py`), you will need API keys.
+
+These need to be environment variables at run time. To accomplish this, you can either:
+1. Create a `.env` file with their declaration (python will load them at run time), e.g.:
+
+```
+OPENAI_API_KEY="..."
+GROQ_API_KEY="..."
+...
+```
+2. ...or export them to your terminal session manually, e.g.:
+
+```bash
+export OPENAI_API_KEY="..."
+export GROQ_API_KEY="..."
+...
+```
+
+#### 4️⃣ Run the script:
+
+```bash
+uv run research/scripts/run_gui.py
+```
+
+#### 🏁 Voila!
+
+🥳 You are now running sr-OLTHAD with the GUI!
+
 ## 📒 ℹ️ How to run sr-OLTHAD + GUI w/ [SemanticSteve](https://github.com/sonnygeorge/semantic-steve)
 
-### 📒 🐋 Using Docker (recommended)
+### 📕 🐋 Using Docker (recommended)
 
 ---
 
@@ -121,7 +179,7 @@ Here are some useful commands (assumes `pwd` is `/app`, which it should be by de
 
 ---
 
-### 📒 🚫🐋 **_Not_** Using Docker (_not_ recommended)
+### 📕 🚫🐋 **_Not_** Using Docker (_not_ recommended)
 
 ---
 
@@ -206,13 +264,3 @@ uv run research/scripts/run_gui_semantic_steve.py
 #### 🏁 Voila!
 
 🥳 You are now running sr-OLTHAD with SemanticSteve and the GUI!
-
-
-
-
-|                                      | AlfWord                                  | Minecraft Tech Tree                     | ScreenshotSteve                                                           |
-|--------------------------------------|-----------------------------------------|-----------------------------------------|---------------------------------------------------------------------------|
-| Benchmarking of Closed-Loop 3D-Embodied Skill Planning | ✓                                       | ✓                                       | ✓                                                                         |
-| Possible Environment Scenarios is Effectively Open-Ended |                                         | ✓                                       | ✓                                                                         |
-| Possible Tasks is Effectively Open-Ended |                                         |                                         | ✓                                                                         |
-| How Task-Completion is Programatically Verified | Condition in PDDL Model                              | Check for item in inventory             | VLM judges whether screenshot depicts ______ (which can be anything) |
