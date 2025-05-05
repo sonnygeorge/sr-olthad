@@ -1,5 +1,0 @@
-Jinja2
-nicegui==2.12.1
-openai
-pydantic
-python-dotenv

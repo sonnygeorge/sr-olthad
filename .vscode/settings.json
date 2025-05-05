@@ -1,0 +1,12 @@
+{
+  "makefile.configureOnOpen": false,
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/sr-olthad",
+    "${workspaceFolder}/research"
+  ],
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/sr-olthad",
+    "${workspaceFolder}/research"
+  ],
+  "terminal.integrated.env.osx": { "PYTHONPATH": "${workspaceFolder}" }
+}
